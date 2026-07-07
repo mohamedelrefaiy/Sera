@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task Board — Target Triage</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel-2: #1e222b; --border: #2a2f3a;
+    --text: #e6e9ef; --muted: #8b93a3; --accent: #5b9dff; --done: #3ecf8e;
+    --wait: #f0b429; --someday: #a78bfa; --card: #212632; --card-hover: #262c3a;
+    --danger: #ff6b6b;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f5f6f8; --panel: #ffffff; --panel-2: #eef0f4; --border: #d9dde5;
+      --text: #1a1d24; --muted: #6b7280; --accent: #2563eb; --done: #059669;
+      --wait: #b45309; --someday: #7c3aed; --card: #ffffff; --card-hover: #f0f2f6;
+      --danger: #dc2626;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+  }
+  header {
+    display: flex; align-items: center; gap: 16px; padding: 16px 24px;
+    border-bottom: 1px solid var(--border); background: var(--panel);
+    position: sticky; top: 0; z-index: 10; flex-wrap: wrap;
+  }
+  header h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+  header .spacer { flex: 1; }
+  .status { font-size: 13px; color: var(--muted); }
+  .status.dirty { color: var(--wait); }
+  .status.saved { color: var(--done); }
+  button {
+    font: inherit; font-size: 13px; padding: 7px 14px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--panel-2); color: var(--text);
+    cursor: pointer; transition: background .15s, border-color .15s;
+  }
+  button:hover { background: var(--card-hover); border-color: var(--accent); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.primary:hover { filter: brightness(1.08); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .board {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    padding: 24px; align-items: start;
+  }
+  @media (max-width: 900px) { .board { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .board { grid-template-columns: 1fr; } }
+  .col {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    display: flex; flex-direction: column; min-height: 120px;
+  }
+  .col-head {
+    display: flex; align-items: center; gap: 8px; padding: 12px 14px;
+    border-bottom: 1px solid var(--border); font-weight: 600; font-size: 14px;
+    position: sticky; top: 0;
+  }
+  .col-head .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .col[data-section="Active"] .dot { background: var(--accent); }
+  .col[data-section="Waiting On"] .dot { background: var(--wait); }
+  .col[data-section="Someday"] .dot { background: var(--someday); }
+  .col[data-section="Done"] .dot { background: var(--done); }
+  .count { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .cards { padding: 10px; display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 60px; }
+  .cards.dragover { background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 8px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 9px;
+    padding: 10px 12px; cursor: grab; position: relative; transition: background .15s, transform .05s;
+    display: flex; gap: 9px; align-items: flex-start;
+  }
+  .card:hover { background: var(--card-hover); }
+  .card.dragging { opacity: .5; }
+  .card.done .text { text-decoration: line-through; color: var(--muted); }
+  .card .check {
+    flex: none; width: 16px; height: 16px; margin-top: 2px; border-radius: 4px;
+    border: 1.5px solid var(--muted); cursor: pointer; display: grid; place-items: center;
+    font-size: 11px; color: #fff; line-height: 1;
+  }
+  .card.done .check { background: var(--done); border-color: var(--done); }
+  .card .text { flex: 1; word-break: break-word; white-space: pre-wrap; }
+  .card .text[contenteditable] { outline: none; }
+  .card .text[contenteditable]:focus { box-shadow: 0 0 0 2px var(--accent); border-radius: 4px; padding: 0 2px; margin: 0 -2px; }
+  .card .del {
+    flex: none; opacity: 0; color: var(--muted); background: none; border: none;
+    cursor: pointer; padding: 0 2px; font-size: 15px; line-height: 1;
+  }
+  .card:hover .del { opacity: 1; }
+  .card .del:hover { color: var(--danger); }
+  .add-btn {
+    margin: 4px 10px 12px; background: transparent; border: 1px dashed var(--border);
+    color: var(--muted); text-align: left;
+  }
+  .add-btn:hover { color: var(--accent); border-color: var(--accent); background: transparent; }
+  .banner {
+    margin: 0 24px; padding: 10px 14px; border-radius: 8px; font-size: 13px;
+    background: color-mix(in srgb, var(--wait) 15%, var(--panel)); border: 1px solid var(--wait);
+    color: var(--text);
+  }
+  .banner.error { background: color-mix(in srgb, var(--danger) 15%, var(--panel)); border-color: var(--danger); }
+  .hidden { display: none; }
+  kbd { background: var(--panel-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🧬 Task Board</h1>
+  <button id="connectBtn" class="primary" title="Grant read+write access to TASKS.md">Connect TASKS.md</button>
+  <button id="reloadBtn" title="Discard board changes and re-read the file">Reload</button>
+  <button id="saveBtn" disabled>Save</button>
+  <div class="spacer"></div>
+  <span id="status" class="status">Not loaded</span>
+</header>
+
+<div id="banner" class="banner hidden"></div>
+
+<div class="board" id="board"></div>
+
+<script>
+"use strict";
+
+// ---- Model ----------------------------------------------------------------
+// TASKS.md is the source of truth. We parse it into an ordered list of sections,
+// each holding task objects { text, done }. The serializer is the strict inverse
+// of the parser so hand-edits and board-edits stay compatible.
+const SECTIONS = ["Active", "Waiting On", "Someday", "Done"];
+
+let fileHandle = null;   // File System Access API handle (persistent write-back)
+let model = null;        // { preamble: string[], sections: { [name]: task[] } }
+let dirty = false;
+
+// ---- Parse / serialize ----------------------------------------------------
+function parse(md) {
+  const lines = md.split(/\r?\n/);
+  const sections = {};
+  SECTIONS.forEach(s => (sections[s] = []));
+  const preamble = [];
+  let current = null;
+  let seenSection = false;
+
+  for (const line of lines) {
+    const h = line.match(/^##\s+(.+?)\s*$/);
+    if (h) {
+      const name = h[1].trim();
+      current = SECTIONS.includes(name) ? name : null;
+      seenSection = true;
+      continue;
+    }
+    if (!seenSection) { preamble.push(line); continue; }
+    if (current == null) continue; // lines under an unknown section: ignore
+
+    const task = line.match(/^\s*-\s*\[([ xX])\]\s*(.*)$/);
+    if (task) {
+      sections[current].push({ text: task[2].trim(), done: task[1].toLowerCase() === "x" });
+    }
+    // non-task lines inside a known section (comments, blanks) are dropped on save
+  }
+  return { preamble, sections };
+}
+
+function serialize(m) {
+  const out = [];
+  const pre = m.preamble.join("\n").replace(/\s+$/, "");
+  if (pre.trim()) out.push(pre, "");
+  for (const name of SECTIONS) {
+    out.push(`## ${name}`, "");
+    const tasks = m.sections[name] || [];
+    if (tasks.length === 0) {
+      out.push(`<!-- no items -->`, "");
+    } else {
+      for (const t of tasks) out.push(`- [${t.done ? "x" : " "}] ${t.text}`);
+      out.push("");
+    }
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
+}
+
+// ---- Load -----------------------------------------------------------------
+async function loadFromHandle() {
+  const file = await fileHandle.getFile();
+  const text = await file.text();
+  model = parse(text);
+  dirty = false;
+  render();
+  setStatus("Loaded from TASKS.md", "saved");
+}
+
+async function loadFromFetch() {
+  // Fallback path for browsers without the File System Access API, or when
+  // the user hasn't connected the handle yet. Read-only until Connected.
+  const res = await fetch("TASKS.md", { cache: "no-store" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  model = parse(await res.text());
+  dirty = false;
+  render();
+  setStatus("Loaded (read-only — Connect to save)", "saved");
+}
+
+// ---- Save -----------------------------------------------------------------
+async function save() {
+  if (!model) return;
+  const md = serialize(model);
+  if (fileHandle) {
+    const w = await fileHandle.createWritable();
+    await w.write(md);
+    await w.close();
+    dirty = false;
+    setStatus("Saved to TASKS.md · " + new Date().toLocaleTimeString(), "saved");
+    updateSaveBtn();
+  } else {
+    // Fallback: download the updated file for the user to replace TASKS.md.
+    const blob = new Blob([md], { type: "text/markdown" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "TASKS.md";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    setStatus("Downloaded TASKS.md — replace the file to save", "dirty");
+  }
+}
+
+// ---- Connect (File System Access API) -------------------------------------
+async function connect() {
+  if (!window.showOpenFilePicker) {
+    showBanner("This browser can't write files directly (needs Chrome/Edge). " +
+      "The board still works read-only; Save will download an updated TASKS.md you can swap in.", true);
+    return;
+  }
+  try {
+    [fileHandle] = await window.showOpenFilePicker({
+      types: [{ description: "Markdown", accept: { "text/markdown": [".md"] } }],
+      multiple: false,
+    });
+    // Verify/request read-write permission.
+    const perm = await fileHandle.requestPermission({ mode: "readwrite" });
+    if (perm !== "granted") { showBanner("Write permission denied.", true); fileHandle = null; return; }
+    hideBanner();
+    document.getElementById("connectBtn").textContent = "✓ Connected";
+    await loadFromHandle();
+    updateSaveBtn();
+  } catch (e) {
+    if (e && e.name === "AbortError") return; // user cancelled the picker
+    showBanner("Could not connect: " + e.message, true);
+  }
+}
+
+// ---- Mutations (immutable-ish: we rebuild arrays, never edit in place) -----
+function markDirty() { dirty = true; updateSaveBtn(); setStatus("Unsaved changes", "dirty"); }
+
+function moveTask(from, fromIdx, to, toIdx) {
+  const src = model.sections[from];
+  const task = src[fromIdx];
+  if (!task) return;
+  const nextFrom = src.filter((_, i) => i !== fromIdx);
+  model.sections[from] = nextFrom;
+  const dst = from === to ? nextFrom : model.sections[to].slice();
+  const insertAt = toIdx == null ? dst.length : toIdx;
+  dst.splice(insertAt, 0, { ...task });
+  // If moving into Done, mark done; out of Done, mark not-done (natural expectation).
+  if (to === "Done") dst[insertAt].done = true;
+  else if (from === "Done") dst[insertAt].done = false;
+  model.sections[to] = dst;
+  markDirty(); render();
+}
+
+function toggleDone(section, idx) {
+  const tasks = model.sections[section];
+  model.sections[section] = tasks.map((t, i) => i === idx ? { ...t, done: !t.done } : t);
+  markDirty(); render();
+}
+
+function editText(section, idx, text) {
+  const t = model.sections[section];
+  if (t[idx] && t[idx].text === text) return;
+  model.sections[section] = t.map((x, i) => i === idx ? { ...x, text } : x);
+  markDirty();
+}
+
+function addTask(section) {
+  model.sections[section] = [...model.sections[section], { text: "New task", done: section === "Done" }];
+  markDirty(); render();
+  // focus the new card's text for immediate editing
+  requestAnimationFrame(() => {
+    const col = document.querySelector(`.col[data-section="${CSS.escape(section)}"]`);
+    const last = col && col.querySelectorAll(".card .text");
+    if (last && last.length) { const el = last[last.length - 1]; el.focus();
+      const r = document.createRange(); r.selectNodeContents(el);
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  });
+}
+
+function deleteTask(section, idx) {
+  model.sections[section] = model.sections[section].filter((_, i) => i !== idx);
+  markDirty(); render();
+}
+
+// ---- Render ---------------------------------------------------------------
+function render() {
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  for (const name of SECTIONS) {
+    const tasks = model.sections[name];
+    const col = document.createElement("div");
+    col.className = "col"; col.dataset.section = name;
+    col.innerHTML = `
+      <div class="col-head"><span class="dot"></span>${name}
+        <span class="count">${tasks.length}</span></div>
+      <div class="cards"></div>
+      <button class="add-btn">+ Add task</button>`;
+    const cards = col.querySelector(".cards");
+
+    tasks.forEach((t, idx) => cards.appendChild(makeCard(name, idx, t)));
+
+    // drop onto empty area / end of column
+    cards.addEventListener("dragover", e => { e.preventDefault(); cards.classList.add("dragover"); });
+    cards.addEventListener("dragleave", () => cards.classList.remove("dragover"));
+    cards.addEventListener("drop", e => {
+      e.preventDefault(); cards.classList.remove("dragover");
+      const data = getDrag(e);
+      if (data) moveTask(data.section, data.idx, name, null);
+    });
+
+    col.querySelector(".add-btn").addEventListener("click", () => addTask(name));
+    board.appendChild(col);
+  }
+}
+
+function makeCard(section, idx, task) {
+  const card = document.createElement("div");
+  card.className = "card" + (task.done ? " done" : "");
+  card.draggable = true;
+
+  const check = document.createElement("div");
+  check.className = "check"; check.textContent = task.done ? "✓" : "";
+  check.title = "Toggle done";
+  check.addEventListener("click", e => { e.stopPropagation(); toggleDone(section, idx); });
+
+  const text = document.createElement("div");
+  text.className = "text"; text.contentEditable = "true"; text.spellcheck = false;
+  text.textContent = task.text;
+  text.addEventListener("blur", () => editText(section, idx, text.textContent.trim()));
+  text.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); text.blur(); }
+  });
+  // don't start a drag when the user is selecting/editing text
+  text.addEventListener("mousedown", e => e.stopPropagation());
+
+  const del = document.createElement("button");
+  del.className = "del"; del.textContent = "✕"; del.title = "Delete";
+  del.addEventListener("click", e => { e.stopPropagation(); deleteTask(section, idx); });
+
+  card.append(check, text, del);
+
+  card.addEventListener("dragstart", e => {
+    card.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", JSON.stringify({ section, idx }));
+  });
+  card.addEventListener("dragend", () => card.classList.remove("dragging"));
+  // reorder within/into a column by dropping onto a specific card
+  card.addEventListener("dragover", e => { e.preventDefault(); e.stopPropagation(); });
+  card.addEventListener("drop", e => {
+    e.preventDefault(); e.stopPropagation();
+    const data = getDrag(e);
+    if (data) moveTask(data.section, data.idx, section, idx);
+  });
+  return card;
+}
+
+function getDrag(e) {
+  try { return JSON.parse(e.dataTransfer.getData("text/plain")); }
+  catch { return null; }
+}
+
+// ---- UI helpers -----------------------------------------------------------
+function setStatus(msg, cls) {
+  const el = document.getElementById("status");
+  el.textContent = msg; el.className = "status " + (cls || "");
+}
+function updateSaveBtn() {
+  const b = document.getElementById("saveBtn");
+  b.disabled = !dirty && !!fileHandle;
+  b.classList.toggle("primary", dirty);
+}
+function showBanner(msg, isErr) {
+  const b = document.getElementById("banner");
+  b.textContent = msg; b.className = "banner" + (isErr ? " error" : "");
+}
+function hideBanner() { document.getElementById("banner").classList.add("hidden"); }
+
+// ---- Boot -----------------------------------------------------------------
+document.getElementById("connectBtn").addEventListener("click", connect);
+document.getElementById("saveBtn").addEventListener("click", save);
+document.getElementById("reloadBtn").addEventListener("click", async () => {
+  try { fileHandle ? await loadFromHandle() : await loadFromFetch(); }
+  catch (e) { showBanner("Reload failed: " + e.message, true); }
+});
+window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+document.addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "s") { e.preventDefault(); if (dirty || fileHandle) save(); }
+});
+
+(async function init() {
+  try { await loadFromFetch(); }
+  catch (e) {
+    showBanner("Couldn't auto-read TASKS.md (opening the file directly blocks fetch in some " +
+      "browsers). Click “Connect TASKS.md” to load it — that also enables saving.", false);
+    setStatus("Click Connect to load", "");
+  }
+  if (!window.showOpenFilePicker) {
+    document.getElementById("connectBtn").textContent = "Connect (unsupported)";
+  }
+})();
+</script>
+</body>
+</html>
