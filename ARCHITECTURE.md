@@ -131,8 +131,9 @@ Under `marson2025_data/suppl_tables/` (downloaded + inspected, all tiny):
 - **`sgrna_library_metadata.suppl_table.csv` (9.5 MB)** — 26,504 guides; guide→gene map + genomic context
   (`sgRNA`, `target_gene_name`, `target_gene_id`, TSS distance, nearby genes, off-target alignment).
 - **`sample_metadata.suppl_table.csv` (<1 MB)** — 12 samples (4 donors × 3 conditions) with donor demographics.
-- Also present: `Th1Th2_validation_summary.suppl_table.csv` — ARRAYED CRISPRi + bulk-RNA + flow validation of
-  predicted Th1/Th2 regulators. This is a GIFT: a ready-made independent validation set for the held-out check.
+- NOTE (corrected): the README mentions `Th1Th2_validation_summary.suppl_table.csv`, but that file is NOT in
+  the S3 bucket (only 3 CSVs are). The robustness + held-out data we actually use comes from the emdann GitHub
+  repo instead (see the "PROTOTYPE VALIDATED" section below) — a better source.
 
 ### IMPORTANT NUANCE about DE_stats.csv
 This suppl table is a per-perturbation SUMMARY (counts of DE genes + on-target effect), NOT the full
@@ -143,10 +144,14 @@ over S3, or download once to a workstation), or (b) build v1 on the summary tabl
 n_downstream / effect breadth + on-target significance), which is enough for a working demo + controls.
 Recommend: v1 on the CSV (fast, laptop-native), then layer per-gene program scores if time/compute allow.
 
-- **Local libs status (this machine):** python3 = /opt/miniconda3 present; anndata/scanpy/mudata NOT installed; aws CLI NOT installed. P0 setup = `pip install scanpy anndata mudata decoupler gseapy scipy` (only needed if we go to per-gene h5ad).
-- **For the two upgrades:** Open Targets GraphQL (free, no key — https://api.platform.opentargets.org);
-  scipy/numpy for permutation + donor-holdout stats; druggable genome (Finan 2017 / DGIdb).
-  Held-out sources: the built-in Th1Th2 validation table, Shifrut 2018, Schmidt 2022.
+- **Local libs status (this machine):** python3 = /opt/miniconda3 present; anndata/scanpy/mudata NOT installed;
+  aws CLI NOT installed. v1 (CSV + repo tables + Open Targets over stdlib urllib) needs NO extra installs —
+  the prototype ran on stdlib only. `pip install scanpy anndata mudata decoupler gseapy scipy` is ONLY needed
+  if we later reach into the per-gene 16.8 GB h5ad for program scoring (stretch).
+- **For the two upgrades (VALIDATED sources):** Open Targets GraphQL (free, no key — batched+cached in
+  `prototype/ot_cache.json`); cross-donor/cross-guide robustness from the emdann repo (`data/robustness/`);
+  held-out corroboration from Schmidt2022 + Freimer2022 (`data/external_screens/`). Permutation test remains
+  a stretch (needs per-gene z-scores from the big h5ad).
 
 ## VERIFIED control biology (queried DE_stats.csv 2026-07-07) — the truth-test WORKS
 All anchors present with sensible, strong signals (on-target effect size; effect breadth `n_downstream`):
@@ -158,6 +163,54 @@ All anchors present with sensible, strong signals (on-target effect size; effect
 - Sanity: top perturbations by downstream breadth in Stim8hr = TCR-proximal machinery (CD3E/D/G, LAT, ZAP70,
   PLCG1, LCP2, VAV1) — exactly the known TCR signalosome. The data behaves correctly; a naive ranking already
   surfaces real T-cell biology. NOVELTY must therefore come from the druggable+disease overlay, not raw ranking.
+
+## PROTOTYPE VALIDATED (2026-07-07) — the whole pipeline proven on real data, laptop-native
+A pre-kickoff prototype (in `prototype/`, throwaway — NOT the submission) ran the full pipeline end-to-end
+on real public data. Everything below is confirmed by running code, not assumed.
+
+### The tool is FULLY laptop-native — v1 needs NO big files
+The entire v1 (ranking + 3-tier verifier) runs on tiny public tables. The 44 GB / 16.8 GB / 1.84 TB
+`.h5ad` files are NOT needed. Data now lives in the repo under `data/` (see `data/README.md`):
+- `data/marson_perturbseq/DE_stats.suppl_table.csv` (4.6 MB) — core ranking + Tier-A checks
+- `data/robustness/` — precomputed cross-donor + cross-guide correlations (from emdann repo, < 1 MB) — Tier B
+- `data/external_screens/` — Schmidt2022 + Freimer2022 independent CRISPR screens — Tier C3 held-out check
+
+### The ranking (v1) — validated
+5 steps: gate (significant on-target KD only) → score (effect breadth `n_downstream`, log1p, ×KD strength)
+→ fold across 3 conditions (+ context-specificity) → **Open Targets overlay** → rank. Findings:
+- Open Targets GraphQL schema verified live: `tractability` (SM/AB/PR modalities) + `associatedDiseases`
+  `datatypeScores[genetic_association]`. `knownDrugs` is NOT a field (now `drugAndClinicalCandidates`).
+- Disease score MUST be filtered to immune-relevant diseases — raw "best genetic_association" surfaces
+  rare developmental syndromes (CREBBP/NSD1/TRIP12). Immune filter fixed this; a real version should use
+  EFO ontology descendants of "immune system disease" rather than keyword matching.
+- NO raw-impact pre-filter — annotate the FULL significant set (~7,195 genes, batched+cached ~3 min).
+  Pre-filtering by impact discards the exact modest-impact-but-druggable genes the overlay exists to rescue.
+- The overlay works: **PTPN2 raw #812 → actionable #45; CBLB raw #186 → #26; CD3E (obvious) #46 → #1405.**
+
+### The 3-tier adversarial verifier — VALIDATED, has real teeth
+Each check is a computed pass/fail + number a judge can re-run, NOT an LLM opinion. Tiered to available data:
+- **Tier A** (from the 4.6 MB CSV): A1 real_knockdown, A2 not_offtarget, A3 enough_cells [gates];
+  A4 cross_condition [score].
+- **Tier B** (from the repo robustness tables — REPLACES the 16.8 GB h5ad): B1 donor_robustness,
+  B2 cross_guide [gates on cross-donor / cross-guide Pearson correlation ≥ 0.10].
+- **Tier C** (external): C1 disease_is_immune, C2 druggable_handle [Open Targets]; C3 held_out_screen
+  [BONUS — corroboration by Schmidt2022 / Freimer2022].
+Verdict = REJECT if any gate fails; else PROMOTE / PROMOTE (weak) / PROMOTE (corroborated). Proven behavior:
+- A1BG (noise) → REJECT. DGKA/PTPN22 (strong KD, 0/3 downstream reproduction) → PROMOTE (weak).
+- Heroes → PROMOTE (corroborated) with real numbers (CBLB donor 0.75 / guide 0.92; PTPN2 0.59 / 0.86).
+- The checks emit numbers; the real tool's **Claude agent turns them into the verdict + narrative** (the 25% Claude Use).
+
+### HERO DECISION (locked): CBLB is the primary demo hero; PTPN2 is secondary
+The data chose CBLB — it lights up EVERY tier:
+- Ranking: raw #186 → actionable #26 (druggable + MS genetics). Context-specific (Stim8hr 1027 vs Rest 5 downstream).
+- Verifier: PROMOTE (corroborated) — donor 0.75, guide 0.92, AND independent-screen hits in 2 Schmidt readouts.
+- Clinical beat: NX-1607 (Nurix) in Phase 1a/1b with clinical activity → the "already in the clinic" line is real.
+- **PTPN2 caveat (important):** genuine hit (top ~12%, druggable phosphatase, T1D genetics, ABBV-CLS-484 Phase 1)
+  BUT it is NOT a hit in Schmidt2022 or Freimer2022 — so its held-out evidence is CLINICAL + Open Targets
+  genetics, not screen-based. Lead the demo with CBLB (screen-corroborated); use PTPN2 as the "modest raw
+  impact rescued by the overlay" story, backed by its Phase-1 drug rather than an independent screen.
+- Other strong actionable hits surfaced (real immunology, not syndrome noise): NRAS, NFKB2, STAT3, PTPRC,
+  MALT1 (approved), STAT6, INPP5D, RIPK1, PSMB8/9.
 
 ## THE RISKS — de-risk in P0/P1
 1. **Don't fall into "reproduction, not advance."** The preprint is thorough. Novelty MUST come from a
