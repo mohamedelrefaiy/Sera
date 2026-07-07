@@ -1,0 +1,980 @@
+{
+  "top_n": 15,
+  "candidates": [
+    {
+      "rank": 1,
+      "gene": "NRAS",
+      "verdict": "REJECT",
+      "actionable_score": 21.386,
+      "raw_impact_rank": 49,
+      "context_specificity": 0.121,
+      "open_targets": {
+        "druggable_score": 0.5,
+        "disease_score": 0.815,
+        "clinical_stage": "Advanced",
+        "top_immune_disease": "RAS-associated autoimmune leukoproliferative disease"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 41.4,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 1751,
+          "detail": "peak n_cells among significant conditions = 1751 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 1.0,
+          "detail": "reproduces in 3/3 conditions (Rest, Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": false,
+          "value": -0.1,
+          "detail": "best cross-donor corr = -0.10 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": false,
+          "value": 0.08,
+          "detail": "best cross-guide corr = 0.08 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": false,
+          "value": 0,
+          "detail": "not a significant hit in Schmidt2022 or Freimer2022 (not disqualifying)"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "gene": "NFKB2",
+      "verdict": "REJECT",
+      "actionable_score": 20.348,
+      "raw_impact_rank": 28,
+      "context_specificity": 0.284,
+      "open_targets": {
+        "druggable_score": 0.333,
+        "disease_score": 0.876,
+        "clinical_stage": "Advanced",
+        "top_immune_disease": "immunodeficiency, common variable, 10"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 33.8,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": false,
+          "value": 1,
+          "detail": "1 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 2152,
+          "detail": "peak n_cells among significant conditions = 2152 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 1.0,
+          "detail": "reproduces in 3/3 conditions (Rest, Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.42,
+          "detail": "best cross-donor corr = 0.42 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.62,
+          "detail": "best cross-guide corr = 0.62 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": true,
+          "value": 3,
+          "detail": "independent hit \u2014 Schmidt2022:CD4+ IL2(KO_boosts,FDR=0.0); Schmidt2022:CD8+ IFNG(KO_boosts,FDR=0.0001); Freimer2022:IL2RA(KO_reduces,FDR=0.0019)"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "gene": "STAT3",
+      "verdict": "PROMOTE (corroborated)",
+      "actionable_score": 17.328,
+      "raw_impact_rank": 131,
+      "context_specificity": 0.237,
+      "open_targets": {
+        "druggable_score": 0.5,
+        "disease_score": 0.775,
+        "clinical_stage": null,
+        "top_immune_disease": "autoimmune disease"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 17.6,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 255,
+          "detail": "peak n_cells among significant conditions = 255 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 1.0,
+          "detail": "reproduces in 3/3 conditions (Rest, Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.68,
+          "detail": "best cross-donor corr = 0.68 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.76,
+          "detail": "best cross-guide corr = 0.76 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": true,
+          "value": 2,
+          "detail": "independent hit \u2014 Schmidt2022:CD8+ IFNG(KO_reduces,FDR=0.0001); Freimer2022:CTLA4(KO_boosts,FDR=0.002)"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "gene": "CSK",
+      "verdict": "PROMOTE",
+      "actionable_score": 17.14,
+      "raw_impact_rank": 15,
+      "context_specificity": 0.517,
+      "open_targets": {
+        "druggable_score": 0.5,
+        "disease_score": 0.354,
+        "clinical_stage": null,
+        "top_immune_disease": "systemic lupus erythematosus"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 43.7,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 1247,
+          "detail": "peak n_cells among significant conditions = 1247 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 1.0,
+          "detail": "reproduces in 3/3 conditions (Rest, Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.73,
+          "detail": "best cross-donor corr = 0.73 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.5,
+          "detail": "best cross-guide corr = 0.50 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": false,
+          "value": 0,
+          "detail": "not a significant hit in Schmidt2022 or Freimer2022 (not disqualifying)"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "gene": "PTPRC",
+      "verdict": "PROMOTE (corroborated)",
+      "actionable_score": 16.983,
+      "raw_impact_rank": 89,
+      "context_specificity": 0.381,
+      "open_targets": {
+        "druggable_score": 0.333,
+        "disease_score": 0.905,
+        "clinical_stage": "Advanced",
+        "top_immune_disease": "immunodeficiency 104"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 24.8,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 431,
+          "detail": "peak n_cells among significant conditions = 431 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 1.0,
+          "detail": "reproduces in 3/3 conditions (Rest, Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.65,
+          "detail": "best cross-donor corr = 0.65 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": "NA",
+          "detail": "no cross-guide data for this gene (not gated)"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": true,
+          "value": 3,
+          "detail": "independent hit \u2014 Schmidt2022:CD4+ IL2(KO_reduces,FDR=0.0029); Schmidt2022:CD8+ IFNG(KO_reduces,FDR=0.0001); Freimer2022:IL2RA(KO_reduces,FDR=0.001)"
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "gene": "MALT1",
+      "verdict": "PROMOTE (corroborated)",
+      "actionable_score": 15.938,
+      "raw_impact_rank": 223,
+      "context_specificity": 0.852,
+      "open_targets": {
+        "druggable_score": 0.5,
+        "disease_score": 0.839,
+        "clinical_stage": "Approved",
+        "top_immune_disease": "combined immunodeficiency due to MALT1 deficiency"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 12.2,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 391,
+          "detail": "peak n_cells among significant conditions = 391 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 0.67,
+          "detail": "reproduces in 2/3 conditions (Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.64,
+          "detail": "best cross-donor corr = 0.64 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.67,
+          "detail": "best cross-guide corr = 0.67 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": true,
+          "value": 1,
+          "detail": "independent hit \u2014 Schmidt2022:CD8+ IFNG(KO_reduces,FDR=0.0001)"
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "gene": "PSMB9",
+      "verdict": "REJECT",
+      "actionable_score": 15.905,
+      "raw_impact_rank": 331,
+      "context_specificity": 0.0,
+      "open_targets": {
+        "druggable_score": 0.667,
+        "disease_score": 0.761,
+        "clinical_stage": "Approved",
+        "top_immune_disease": "Immunodeficiency by defective expression of HLA class 1"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 26.7,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": false,
+          "value": 2,
+          "detail": "2 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 631,
+          "detail": "peak n_cells among significant conditions = 631 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 1.0,
+          "detail": "reproduces in 3/3 conditions (Rest, Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.28,
+          "detail": "best cross-donor corr = 0.28 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.18,
+          "detail": "best cross-guide corr = 0.18 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": false,
+          "value": 0,
+          "detail": "not a significant hit in Schmidt2022 or Freimer2022 (not disqualifying)"
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "gene": "AHR",
+      "verdict": "PROMOTE (corroborated)",
+      "actionable_score": 15.398,
+      "raw_impact_rank": 99,
+      "context_specificity": 0.056,
+      "open_targets": {
+        "druggable_score": 0.667,
+        "disease_score": 0.432,
+        "clinical_stage": "Approved",
+        "top_immune_disease": "ulcerative colitis"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 17.8,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 1260,
+          "detail": "peak n_cells among significant conditions = 1260 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 1.0,
+          "detail": "reproduces in 3/3 conditions (Rest, Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.77,
+          "detail": "best cross-donor corr = 0.77 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.89,
+          "detail": "best cross-guide corr = 0.89 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": true,
+          "value": 2,
+          "detail": "independent hit \u2014 Schmidt2022:CD4+ IL2(KO_boosts,FDR=0.0983); Schmidt2022:CD8+ IFNG(KO_boosts,FDR=0.0009)"
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "gene": "RIPK1",
+      "verdict": "PROMOTE",
+      "actionable_score": 15.338,
+      "raw_impact_rank": 505,
+      "context_specificity": 0.337,
+      "open_targets": {
+        "druggable_score": 0.667,
+        "disease_score": 0.874,
+        "clinical_stage": "Advanced",
+        "top_immune_disease": "immunodeficiency 57"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 11.5,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 392,
+          "detail": "peak n_cells among significant conditions = 392 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 1.0,
+          "detail": "reproduces in 3/3 conditions (Rest, Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.68,
+          "detail": "best cross-donor corr = 0.68 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 1.0,
+          "detail": "best cross-guide corr = 1.00 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": false,
+          "value": 0,
+          "detail": "not a significant hit in Schmidt2022 or Freimer2022 (not disqualifying)"
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "gene": "PARK7",
+      "verdict": "PROMOTE",
+      "actionable_score": 14.879,
+      "raw_impact_rank": 73,
+      "context_specificity": 0.677,
+      "open_targets": {
+        "druggable_score": 0.333,
+        "disease_score": 0.691,
+        "clinical_stage": null,
+        "top_immune_disease": "ulcerative colitis"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 45.9,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 1821,
+          "detail": "peak n_cells among significant conditions = 1821 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 1.0,
+          "detail": "reproduces in 3/3 conditions (Rest, Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.6,
+          "detail": "best cross-donor corr = 0.60 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.12,
+          "detail": "best cross-guide corr = 0.12 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": false,
+          "value": 0,
+          "detail": "not a significant hit in Schmidt2022 or Freimer2022 (not disqualifying)"
+        }
+      ]
+    },
+    {
+      "rank": 11,
+      "gene": "UBE2L3",
+      "verdict": "PROMOTE (corroborated)",
+      "actionable_score": 14.717,
+      "raw_impact_rank": 5,
+      "context_specificity": 0.278,
+      "open_targets": {
+        "druggable_score": 0.167,
+        "disease_score": 0.448,
+        "clinical_stage": null,
+        "top_immune_disease": "systemic lupus erythematosus"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 38.5,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 2136,
+          "detail": "peak n_cells among significant conditions = 2136 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 1.0,
+          "detail": "reproduces in 3/3 conditions (Rest, Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.43,
+          "detail": "best cross-donor corr = 0.43 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.37,
+          "detail": "best cross-guide corr = 0.37 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": true,
+          "value": 1,
+          "detail": "independent hit \u2014 Schmidt2022:CD8+ IFNG(KO_boosts,FDR=0.0001)"
+        }
+      ]
+    },
+    {
+      "rank": 12,
+      "gene": "STAT6",
+      "verdict": "PROMOTE",
+      "actionable_score": 14.516,
+      "raw_impact_rank": 248,
+      "context_specificity": 0.838,
+      "open_targets": {
+        "druggable_score": 0.5,
+        "disease_score": 0.745,
+        "clinical_stage": null,
+        "top_immune_disease": "asthma"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 18.7,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 779,
+          "detail": "peak n_cells among significant conditions = 779 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 0.67,
+          "detail": "reproduces in 2/3 conditions (Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.74,
+          "detail": "best cross-donor corr = 0.74 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.68,
+          "detail": "best cross-guide corr = 0.68 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": false,
+          "value": 0,
+          "detail": "not a significant hit in Schmidt2022 or Freimer2022 (not disqualifying)"
+        }
+      ]
+    },
+    {
+      "rank": 13,
+      "gene": "PSMB8",
+      "verdict": "PROMOTE",
+      "actionable_score": 14.414,
+      "raw_impact_rank": 565,
+      "context_specificity": 1.0,
+      "open_targets": {
+        "druggable_score": 0.667,
+        "disease_score": 0.838,
+        "clinical_stage": "Approved",
+        "top_immune_disease": "proteosome-associated autoinflammatory syndrome"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 29.7,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 325,
+          "detail": "peak n_cells among significant conditions = 325 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 0.33,
+          "detail": "reproduces in 1/3 conditions (Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.24,
+          "detail": "best cross-donor corr = 0.24 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.13,
+          "detail": "best cross-guide corr = 0.13 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": false,
+          "value": 0,
+          "detail": "not a significant hit in Schmidt2022 or Freimer2022 (not disqualifying)"
+        }
+      ]
+    },
+    {
+      "rank": 14,
+      "gene": "RAC2",
+      "verdict": "PROMOTE (corroborated)",
+      "actionable_score": 14.368,
+      "raw_impact_rank": 48,
+      "context_specificity": 0.47,
+      "open_targets": {
+        "druggable_score": 0.167,
+        "disease_score": 0.824,
+        "clinical_stage": null,
+        "top_immune_disease": "immunodeficiency 73b with defective neutrophil chemotaxis and lymphopenia"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 28.5,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 576,
+          "detail": "peak n_cells among significant conditions = 576 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 1.0,
+          "detail": "reproduces in 3/3 conditions (Rest, Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.63,
+          "detail": "best cross-donor corr = 0.63 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.81,
+          "detail": "best cross-guide corr = 0.81 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": true,
+          "value": 2,
+          "detail": "independent hit \u2014 Schmidt2022:CD4+ IL2(KO_reduces,FDR=0.0001); Schmidt2022:CD8+ IFNG(KO_reduces,FDR=0.0001)"
+        }
+      ]
+    },
+    {
+      "rank": 15,
+      "gene": "NCKAP1L",
+      "verdict": "PROMOTE",
+      "actionable_score": 14.359,
+      "raw_impact_rank": 12,
+      "context_specificity": 0.336,
+      "open_targets": {
+        "druggable_score": 0.0,
+        "disease_score": 0.873,
+        "clinical_stage": null,
+        "top_immune_disease": "immunodeficiency 72 with autoinflammation"
+      },
+      "verifier_checks": [
+        {
+          "check": "real_knockdown",
+          "kind": "gate",
+          "pass": true,
+          "value": 32.4,
+          "detail": "3/3 conditions have a significant KD (|eff|>=2.0)"
+        },
+        {
+          "check": "not_offtarget",
+          "kind": "gate",
+          "pass": true,
+          "value": 0,
+          "detail": "0 significant condition(s) carry the off-target flag"
+        },
+        {
+          "check": "enough_cells",
+          "kind": "gate",
+          "pass": true,
+          "value": 867,
+          "detail": "peak n_cells among significant conditions = 867 (floor 100)"
+        },
+        {
+          "check": "cross_condition",
+          "kind": "score",
+          "pass": true,
+          "value": 1.0,
+          "detail": "reproduces in 3/3 conditions (Rest, Stim48hr, Stim8hr)"
+        },
+        {
+          "check": "donor_robustness",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.68,
+          "detail": "best cross-donor corr = 0.68 (floor 0.1); low/neg = donor-driven artifact"
+        },
+        {
+          "check": "cross_guide",
+          "kind": "gate",
+          "pass": true,
+          "value": 0.92,
+          "detail": "best cross-guide corr = 0.92 (floor 0.1); low = the two guides disagree"
+        },
+        {
+          "check": "held_out_screen",
+          "kind": "bonus",
+          "pass": false,
+          "value": 0,
+          "detail": "not a significant hit in Schmidt2022 or Freimer2022 (not disqualifying)"
+        }
+      ]
+    }
+  ]
+}

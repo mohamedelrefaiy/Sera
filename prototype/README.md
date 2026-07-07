@@ -21,7 +21,9 @@ each candidate with **real computed evidence** — no 16.8 GB download, no GPU.
 | `opentargets.py`  | Live Open Targets GraphQL client (batched, cached to `ot_cache.json`) |
 | `verifier.py`     | Adversarial verifier — Tier A (DE summary) + Tier B (donor/guide robustness) + Tier C3 (held-out screens) |
 | `held_out.py`     | Tier C3: is a pick corroborated by an independent screen (Schmidt2022 / Freimer2022)? |
+| `report.py`       | Emits the bench artifact: `shortlist.json` + `shortlist.md` index + one per-target report per promoted candidate |
 | `ot_cache.json`   | Cached Open Targets results (7,195 genes) so re-runs are instant |
+| `output/`         | Generated artifacts (committed so the tool's output is browsable): the shortlist a scientist takes to the bench |
 
 ## Data (in `../data/`, all public)
 
@@ -36,6 +38,7 @@ cd prototype
 python3 verifier.py      # verdicts on a demo panel (heroes + controls + genes that should fail)
 python3 held_out.py      # just the held-out screen corroboration
 python3 rank_sketch.py   # full ranking (uses cached Open Targets; first run ~3 min uncached)
+python3 report.py        # emit the bench artifact to output/ (shortlist.json + .md + per-target reports)
 ```
 
 ## Key findings (locked into ../ARCHITECTURE.md)
