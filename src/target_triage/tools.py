@@ -17,7 +17,7 @@ from claude_agent_sdk import create_sdk_mcp_server, tool
 from .data import load_perturbations
 from .evidence import load_evidence
 from .ranking import rank_by_impact, significant_records
-from .verify import verify
+from .verify import Thresholds, verify
 from .clients import clinicaltrials, opentargets
 
 # --- load-once immutable state -------------------------------------------------
@@ -38,6 +38,40 @@ OBVIOUS_TCR = {
 
 def _text(payload) -> dict:
     return {"content": [{"type": "text", "text": json.dumps(payload, indent=2)}]}
+
+
+# --- view-update protocol ------------------------------------------------------
+# State-changing tools return both agent-readable facts AND a view_update the
+# frontend applies. The API extracts view_update from the tool result text (it is
+# embedded under a "__view_update__" key) and forwards it to the browser, so the
+# agent's tool call IS the UI action — the chat is the control surface, not a sidecar.
+
+def _view(agent_facts: dict, view_update: dict) -> dict:
+    payload = {**agent_facts, "__view_update__": view_update}
+    return {"content": [{"type": "text", "text": json.dumps(payload, indent=2)}]}
+
+
+def _row_for(gene: str, thresholds: Thresholds = Thresholds()) -> dict | None:
+    """Compute one gene's full ledger row (verdict + checks) — the shape the UI renders."""
+    record = _BY_GENE.get(gene)
+    if record is None:
+        return None
+    s = next((x for x in _RANKED if x.gene == gene), None)
+    v = verify(record, _EVIDENCE, thresholds)
+    return {
+        "gene": gene,
+        "verdict": v.verdict,
+        "raw_rank": _RAW_RANK.get(gene),
+        "impact": round(s.impact, 3) if s else None,
+        "context_specificity": round(s.context_specificity, 3) if s else None,
+        "best_condition": s.best_condition if s else None,
+        "is_obvious_tcr": gene in OBVIOUS_TCR,
+        "checks": [
+            {"check": c.name, "kind": c.kind, "pass": c.passed,
+             "value": c.value, "detail": c.detail}
+            for c in v.checks
+        ],
+    }
 
 
 @tool(
@@ -121,12 +155,87 @@ async def check_clinical_trials(args):
     })
 
 
+# --- STATEFUL tools: the agent drives the scientist's view ---------------------
+
+@tool(
+    "set_view",
+    "Update the shortlist the scientist is looking at: filter by condition "
+    "(Rest/Stim8hr/Stim48hr), minimum druggability (0..1), or promoted-only. Use this "
+    "when the scientist asks to narrow or change what's shown (e.g. 'only resting-state "
+    "regulators', 'druggable ones'). This RE-RENDERS their table.",
+    {"condition": str, "min_druggable": float, "promoted_only": bool},
+)
+async def set_view(args):
+    from .shortlist import compute_shortlist
+    condition = (args.get("condition") or "").strip() or None
+    min_drug = float(args.get("min_druggable") or 0.0)
+    promoted = bool(args.get("promoted_only"))
+
+    rows = compute_shortlist()
+    if condition:
+        rows = [r for r in rows if r["best_condition"] == condition]
+    if min_drug > 0:
+        rows = [r for r in rows if r["druggable_score"] >= min_drug]
+    if promoted:
+        rows = [r for r in rows if r["verdict"].startswith("PROMOTE")]
+
+    summary = {"shown": len(rows), "top": [r["gene"] for r in rows[:8]],
+               "filters": {"condition": condition, "min_druggable": min_drug,
+                           "promoted_only": promoted}}
+    return _view(summary, {"action": "set_rows", "rows": rows[:50],
+                           "filters": summary["filters"]})
+
+
+@tool(
+    "focus_gene",
+    "Bring one gene into focus in the scientist's view and open its evidence — even if "
+    "it ranks far down the list. Use when the scientist names a gene ('pull PTPN2', "
+    "'show me CBLB'). Returns its verdict + every check, and opens its drawer.",
+    {"gene": str},
+)
+async def focus_gene(args):
+    gene = (args.get("gene") or "").strip().upper()
+    row = _row_for(gene)
+    if row is None:
+        return _text({"gene": gene, "error": "not in screen"})
+    return _view(row, {"action": "focus", "gene": gene, "row": row})
+
+
+@tool(
+    "reverify",
+    "Re-run adversarial verification on a gene with CUSTOM thresholds, then update its "
+    "evidence in the view. Use when the scientist wants to stress-test a pick ('re-verify "
+    "NRAS with a stricter donor cutoff'). Any omitted threshold keeps its default. "
+    "Returns the new verdict + checks so they can see whether it still survives.",
+    {"gene": str, "min_donor_corr": float, "min_guide_corr": float,
+     "min_effect": float, "min_cells": float, "min_downstream": int},
+)
+async def reverify(args):
+    gene = (args.get("gene") or "").strip().upper()
+    if gene not in _BY_GENE:
+        return _text({"gene": gene, "error": "not in screen"})
+    d = Thresholds()
+    t = Thresholds(
+        min_cells=float(args.get("min_cells") or d.min_cells),
+        min_effect=float(args.get("min_effect") or d.min_effect),
+        min_downstream=int(args.get("min_downstream") or d.min_downstream),
+        min_donor_corr=float(args.get("min_donor_corr") or d.min_donor_corr),
+        min_guide_corr=float(args.get("min_guide_corr") or d.min_guide_corr),
+    )
+    row = _row_for(gene, t)
+    row["thresholds"] = {"min_donor_corr": t.min_donor_corr, "min_guide_corr": t.min_guide_corr,
+                         "min_effect": t.min_effect, "min_cells": t.min_cells,
+                         "min_downstream": t.min_downstream}
+    return _view(row, {"action": "focus", "gene": gene, "row": row})
+
+
 def build_server():
     """Create the in-process MCP server hosting all Target Triage tools."""
     return create_sdk_mcp_server(
         name="target_triage",
         version="0.1.0",
-        tools=[rank_candidates, verify_candidate, check_open_targets, check_clinical_trials],
+        tools=[rank_candidates, verify_candidate, check_open_targets, check_clinical_trials,
+               set_view, focus_gene, reverify],
     )
 
 
@@ -135,4 +244,7 @@ ALLOWED_TOOLS = [
     "mcp__target_triage__verify_candidate",
     "mcp__target_triage__check_open_targets",
     "mcp__target_triage__check_clinical_trials",
+    "mcp__target_triage__set_view",
+    "mcp__target_triage__focus_gene",
+    "mcp__target_triage__reverify",
 ]

@@ -141,8 +141,16 @@ def _has_credentials() -> bool:
 
 
 def _message_to_events(message) -> list[dict]:
-    """Translate SDK messages into small JSON events the frontend renders."""
-    from claude_agent_sdk import AssistantMessage, TextBlock, ToolUseBlock
+    """Translate SDK messages into small JSON events the frontend renders.
+
+    Two directions matter:
+      - AssistantMessage: the agent's tool CALLS (shown live) and prose.
+      - UserMessage w/ ToolResultBlock: tool RESULTS — we sniff each for a
+        __view_update__ block and forward it as a view_update event so the
+        agent's action actually changes the scientist's table/drawer."""
+    from claude_agent_sdk import (
+        AssistantMessage, TextBlock, ToolResultBlock, ToolUseBlock, UserMessage,
+    )
 
     events: list[dict] = []
     if isinstance(message, AssistantMessage):
@@ -153,7 +161,31 @@ def _message_to_events(message) -> list[dict]:
                                "input": block.input or {}})
             elif isinstance(block, TextBlock):
                 events.append({"type": "text", "text": block.text})
+    elif isinstance(message, UserMessage):
+        for block in getattr(message, "content", []) or []:
+            if isinstance(block, ToolResultBlock):
+                vu = _extract_view_update(block.content)
+                if vu is not None:
+                    events.append({"type": "view_update", "update": vu})
     return events
+
+
+def _extract_view_update(content) -> dict | None:
+    """A tool result's text may embed {'__view_update__': {...}}. Pull it out."""
+    text = None
+    if isinstance(content, str):
+        text = content
+    elif isinstance(content, list):
+        for part in content:
+            if isinstance(part, dict) and part.get("type") == "text":
+                text = part.get("text")
+                break
+    if not text:
+        return None
+    try:
+        return json.loads(text).get("__view_update__")
+    except (json.JSONDecodeError, AttributeError):
+        return None
 
 
 # Static frontend last, so /api/* wins routing.

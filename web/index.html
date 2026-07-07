@@ -217,13 +217,15 @@ function render(){
     const el = document.createElement("div");
     el.className = "row" + (state.open===row.gene ? " open":"");
     const spot = state.spotlight.includes(row.gene) ? '<span class="spot">◆ spotlight</span>' : "";
+    const num = v => (typeof v==="number") ? v.toFixed(2) : "—";
+    const rankLabel = row.rank ?? (row.raw_rank ? "·" : "?");
     el.innerHTML = `
-      <div class="rank">${row.rank}</div>
+      <div class="rank">${rankLabel}</div>
       <div class="gene">${row.gene}${spot}
         <span class="disease">${row.top_disease || "—"}</span></div>
       <div class="metrics">
-        <div class="m"><b>${row.druggable_score.toFixed(2)}</b><span>drug</span></div>
-        <div class="m"><b>${row.disease_score.toFixed(2)}</b><span>disease</span></div>
+        <div class="m"><b>${num(row.druggable_score)}</b><span>drug</span></div>
+        <div class="m"><b>${num(row.disease_score)}</b><span>disease</span></div>
         <div class="verdict ${vClass(row.verdict)}">${vShort(row.verdict)}</div>
       </div>`;
     el.onclick = () => { state.open = state.open===row.gene ? null : row.gene; render(); };
@@ -243,22 +245,56 @@ function drawer(row){
       <div class="ck-val">${c.value}</div>
       <div class="ck-detail">${c.detail}</div>
     </div>`).join("");
+  const num = v => (typeof v==="number") ? v.toFixed(2) : "—";
+  const thr = row.thresholds
+    ? ` <span style="color:var(--amber)">· re-verified at donor≥${row.thresholds.min_donor_corr}, guide≥${row.thresholds.min_guide_corr}</span>` : "";
   const lede = row.verdict==="REJECT"
-    ? `Ranked #${row.raw_rank} by raw impact, but <b style="color:var(--coral)">rejected</b> — a gate check failed. The tool drops it rather than hand you an artifact.`
-    : `Rose from raw-impact rank #${row.raw_rank} to actionable #${row.rank}. Each check below is computed, not asserted.`;
+    ? `Ranked #${row.raw_rank} by raw impact, but <b style="color:var(--coral)">rejected</b> — a gate check failed. The tool drops it rather than hand you an artifact.${thr}`
+    : `Raw-impact rank #${row.raw_rank}${row.rank?`, actionable #${row.rank}`:""}. Each check below is computed, not asserted.${thr}`;
   d.innerHTML = `
     <div class="lede">${lede}</div>
     <div class="checks">${checks}</div>
     <div class="ext">
-      <div class="e"><b>${row.druggable_score.toFixed(2)}</b><span>druggable (OT)</span></div>
-      <div class="e"><b>${row.disease_score.toFixed(2)}</b><span>immune-disease (OT)</span></div>
-      <div class="e"><b>${row.context_specificity.toFixed(2)}</b><span>context specificity</span></div>
+      <div class="e"><b>${num(row.druggable_score)}</b><span>druggable (OT)</span></div>
+      <div class="e"><b>${num(row.disease_score)}</b><span>immune-disease (OT)</span></div>
+      <div class="e"><b>${num(row.context_specificity)}</b><span>context specificity</span></div>
       <div class="e"><b>${row.clinical_stage || "—"}</b><span>clinical stage</span></div>
     </div>
     <button class="ask" data-q="Walk me through the evidence for ${row.gene} — should I validate it?">
       Ask the agent about ${row.gene} →</button>`;
   d.querySelector(".ask").onclick = e => { e.stopPropagation(); ask(d.querySelector(".ask").dataset.q); };
   return d;
+}
+
+/* ---- agent drives the view ---- */
+function applyViewUpdate(u){
+  if(!u) return;
+  if(u.action==="set_rows"){
+    // the agent re-ranked / filtered — replace the ledger with what it produced
+    state.rows = u.rows; state.open = null;
+    if(u.filters){
+      $("#f-cond").value = u.filters.condition || "";
+      $("#f-drug").dataset.on = String(u.filters.min_druggable>0);
+      $("#f-drug").classList.toggle("on", u.filters.min_druggable>0);
+      $("#f-prom").dataset.on = String(!!u.filters.promoted_only);
+      $("#f-prom").classList.toggle("on", !!u.filters.promoted_only);
+    }
+    $("#meta").textContent = `agent view · ${u.rows.length} shown`;
+    render();
+    document.querySelector(".panel.ledger .scroll").scrollTop = 0;
+  } else if(u.action==="focus"){
+    // the agent pulled one gene into view — inject it at the top if absent, open it
+    if(!state.rows.some(r=>r.gene===u.gene)){
+      state.rows = [u.row, ...state.rows];
+    } else {
+      // refresh the row in place (e.g. a re-verification changed its verdict/checks)
+      state.rows = state.rows.map(r=> r.gene===u.gene ? {...r, ...u.row} : r);
+    }
+    state.open = u.gene;
+    render();
+    const openRow = document.querySelector(".row.open");
+    if(openRow) openRow.scrollIntoView({block:"center", behavior:"smooth"});
+  }
 }
 
 /* ---- filters ---- */
@@ -304,6 +340,7 @@ async function ask(q){
         if(!line.startsWith("data:")) continue;
         const ev = JSON.parse(line.slice(5).trim());
         if(ev.type==="tool_call") addTool(ev.tool, ev.input||{});
+        else if(ev.type==="view_update") applyViewUpdate(ev.update);
         else if(ev.type==="text"){ if(!agentEl) agentEl=addMsg("agent",""); agentEl.textContent+=ev.text; $("#stream").scrollTop=1e9; }
         else if(ev.type==="error") addMsg("agent","⚠ "+ev.detail);
       }

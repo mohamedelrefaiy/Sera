@@ -15,14 +15,24 @@ from dataclasses import dataclass
 from .data import GeneRecord
 from .evidence import Evidence, ScreenHit
 
-# --- thresholds (every one is inspectable and arguable) ---
-MIN_CELLS = 100         # below this the on-target effect is low-powered
-MIN_EFFECT = 2.0        # |ontarget_effect_size| floor for a "real" knockdown
-MIN_DOWNSTREAM = 5      # a condition "reproduces" only with real breadth
-MIN_DONOR_CORR = 0.10   # below (or negative) = donor-driven artifact
-MIN_GUIDE_CORR = 0.10   # below = the two guides disagree
-
 GATE, SCORE, BONUS = "gate", "score", "bonus"
+
+
+@dataclass(frozen=True)
+class Thresholds:
+    """Every gate's cutoff, as data. Defaults are the calibrated values; the agent
+    can hand the scientist a stricter/looser set to re-verify a candidate on demand
+    ('re-verify NRAS with donor_corr >= 0.3'). Immutable — a re-verify makes a NEW
+    Thresholds, it never mutates the shared default."""
+
+    min_cells: float = 100.0      # below this the on-target effect is low-powered
+    min_effect: float = 2.0       # |ontarget_effect_size| floor for a "real" knockdown
+    min_downstream: int = 5       # a condition "reproduces" only with real breadth
+    min_donor_corr: float = 0.10  # below (or negative) = donor-driven artifact
+    min_guide_corr: float = 0.10  # below = the two guides disagree
+
+
+DEFAULT = Thresholds()
 
 
 @dataclass(frozen=True)
@@ -49,40 +59,40 @@ def _sig_clean(record: GeneRecord):
     ]
 
 
-def check_real_knockdown(record: GeneRecord) -> Check:
-    sig = [p for p in _sig_clean(record) if abs(p.effect_size) >= MIN_EFFECT]
+def check_real_knockdown(record: GeneRecord, t: Thresholds) -> Check:
+    sig = [p for p in _sig_clean(record) if abs(p.effect_size) >= t.min_effect]
     best = max((abs(p.effect_size) for p in sig), default=0.0)
     return Check("real_knockdown", GATE, len(sig) > 0, round(best, 1),
-                 f"{len(sig)} condition(s) with a significant clean KD (|eff|>={MIN_EFFECT})")
+                 f"{len(sig)} condition(s) with a significant clean KD (|eff|>={t.min_effect})")
 
 
-def check_enough_cells(record: GeneRecord) -> Check:
+def check_enough_cells(record: GeneRecord, t: Thresholds) -> Check:
     peak = max((p.n_cells for p in _sig_clean(record)), default=0.0)
-    return Check("enough_cells", GATE, peak >= MIN_CELLS, int(peak),
-                 f"peak n_cells among significant conditions = {int(peak)} (floor {MIN_CELLS})")
+    return Check("enough_cells", GATE, peak >= t.min_cells, int(peak),
+                 f"peak n_cells among significant conditions = {int(peak)} (floor {int(t.min_cells)})")
 
 
-def check_donor_robustness(record: GeneRecord, ev: Evidence) -> Check:
+def check_donor_robustness(record: GeneRecord, ev: Evidence, t: Thresholds) -> Check:
     corr = ev.donor_corr.get(record.gene)
     if corr is None:
         return Check("donor_robustness", GATE, True, "NA",
                      "no cross-donor data for this gene (not gated)")
-    return Check("donor_robustness", GATE, corr >= MIN_DONOR_CORR, round(corr, 2),
-                 f"best cross-donor corr = {corr:.2f} (floor {MIN_DONOR_CORR}); low/neg = donor artifact")
+    return Check("donor_robustness", GATE, corr >= t.min_donor_corr, round(corr, 2),
+                 f"best cross-donor corr = {corr:.2f} (floor {t.min_donor_corr}); low/neg = donor artifact")
 
 
-def check_cross_guide(record: GeneRecord, ev: Evidence) -> Check:
+def check_cross_guide(record: GeneRecord, ev: Evidence, t: Thresholds) -> Check:
     corr = ev.guide_corr.get(record.gene)
     if corr is None:
         return Check("cross_guide", GATE, True, "NA",
                      "no cross-guide data for this gene (not gated)")
-    return Check("cross_guide", GATE, corr >= MIN_GUIDE_CORR, round(corr, 2),
-                 f"best cross-guide corr = {corr:.2f} (floor {MIN_GUIDE_CORR}); low = guides disagree")
+    return Check("cross_guide", GATE, corr >= t.min_guide_corr, round(corr, 2),
+                 f"best cross-guide corr = {corr:.2f} (floor {t.min_guide_corr}); low = guides disagree")
 
 
-def check_cross_condition(record: GeneRecord) -> Check:
+def check_cross_condition(record: GeneRecord, t: Thresholds) -> Check:
     reproduced = [
-        p.condition for p in _sig_clean(record) if p.n_downstream >= MIN_DOWNSTREAM
+        p.condition for p in _sig_clean(record) if p.n_downstream >= t.min_downstream
     ]
     frac = len(reproduced) / max(len(record.by_condition), 1)
     return Check("cross_condition", SCORE, frac >= 1 / 3, round(frac, 2),
@@ -102,13 +112,15 @@ def check_held_out(record: GeneRecord, ev: Evidence) -> Check:
                  "not a significant hit in Schmidt2022 or Freimer2022 (not disqualifying)")
 
 
-def verify(record: GeneRecord, ev: Evidence) -> Verdict:
+def verify(record: GeneRecord, ev: Evidence, thresholds: Thresholds = DEFAULT) -> Verdict:
+    """Verify a candidate against thresholds (defaults are the calibrated set).
+    Pass a custom Thresholds to re-verify on demand — e.g. a stricter donor floor."""
     checks = (
-        check_real_knockdown(record),
-        check_enough_cells(record),
-        check_donor_robustness(record, ev),
-        check_cross_guide(record, ev),
-        check_cross_condition(record),
+        check_real_knockdown(record, thresholds),
+        check_enough_cells(record, thresholds),
+        check_donor_robustness(record, ev, thresholds),
+        check_cross_guide(record, ev, thresholds),
+        check_cross_condition(record, thresholds),
         check_held_out(record, ev),
     )
     failed_gates = [c for c in checks if c.kind == GATE and not c.passed]
