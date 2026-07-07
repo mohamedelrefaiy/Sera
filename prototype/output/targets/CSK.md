@@ -1,6 +1,6 @@
 # CSK — candidate T-cell regulator
 
-**Verdict: ✅ PROMOTE**  ·  actionable rank **#4** of the shortlist  ·  raw-impact rank #15
+**Verdict: ✅ PROMOTE**  ·  actionable rank **#4**  ·  raw-impact rank #15
 
 ## Why it's on the shortlist
 

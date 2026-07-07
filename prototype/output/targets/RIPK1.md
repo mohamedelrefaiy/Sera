@@ -1,6 +1,6 @@
 # RIPK1 — candidate T-cell regulator
 
-**Verdict: ✅ PROMOTE**  ·  actionable rank **#9** of the shortlist  ·  raw-impact rank #505
+**Verdict: ✅ PROMOTE**  ·  actionable rank **#9**  ·  raw-impact rank #505
 
 ## Why it's on the shortlist
 

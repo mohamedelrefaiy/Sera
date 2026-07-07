@@ -1,6 +1,6 @@
 # PSMB8 — candidate T-cell regulator
 
-**Verdict: ✅ PROMOTE**  ·  actionable rank **#13** of the shortlist  ·  raw-impact rank #565
+**Verdict: ✅ PROMOTE**  ·  actionable rank **#13**  ·  raw-impact rank #565
 
 ## Why it's on the shortlist
 

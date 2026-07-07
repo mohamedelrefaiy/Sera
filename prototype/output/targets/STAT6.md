@@ -1,6 +1,6 @@
 # STAT6 — candidate T-cell regulator
 
-**Verdict: ✅ PROMOTE**  ·  actionable rank **#12** of the shortlist  ·  raw-impact rank #248
+**Verdict: ✅ PROMOTE**  ·  actionable rank **#12**  ·  raw-impact rank #248
 
 ## Why it's on the shortlist
 

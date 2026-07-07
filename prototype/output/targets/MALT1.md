@@ -1,6 +1,6 @@
 # MALT1 — candidate T-cell regulator
 
-**Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#6** of the shortlist  ·  raw-impact rank #223
+**Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#6**  ·  raw-impact rank #223
 
 ## Why it's on the shortlist
 

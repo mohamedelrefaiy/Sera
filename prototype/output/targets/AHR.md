@@ -1,6 +1,6 @@
 # AHR — candidate T-cell regulator
 
-**Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#8** of the shortlist  ·  raw-impact rank #99
+**Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#8**  ·  raw-impact rank #99
 
 ## Why it's on the shortlist
 

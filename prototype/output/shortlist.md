@@ -2,6 +2,17 @@
 
 Ranked druggable, immune-disease-linked regulators of CD4+ T-cell activation from the Marson Perturb-seq screen, each stress-tested by an adversarial verifier. **12 promoted, 3 rejected** out of the top 15 by actionable score — the shortlist is filtered by scrutiny, not merely sorted.
 
+## 🔦 Demo spotlight — predicted blind, already in the clinic
+
+These did not make the top 15 by raw actionable score, and the tool says so — but each is a druggable brake on T-cell activation whose inhibitor is *already in Phase 1 trials*. The tool surfaced them with no knowledge of the clinic.
+
+| Gene | Verdict | Actionable rank | Druggable | Immune-disease | The beat |
+|---|---|---|---|---|---|
+| [PTPN2](targets/PTPN2.md) | ✅ PROMOTE | #42 of 7195 | 0.50 | 0.76 | Flagged with no knowledge of the clinic — PTPN2 is a druggable phosphatase brake on T-cell activation, and its inhibitor ABBV-CLS-484 is already in Phase 1. We surfaced it blind; the clinic agrees. |
+| [CBLB](targets/CBLB.md) | ✅ PROMOTE — independently corroborated | #24 of 7195 | 0.33 | 0.65 | A strongly context-dependent brake on T-cell activation (huge effect on stimulation, almost none at rest) — druggable, multiple-sclerosis-linked, and its inhibitor NX-1607 is already in Phase 1a/1b. |
+
+## Top 15 by actionable score
+
 | # | Gene | Verdict | Druggable | Immune-disease | Top disease | Report |
 |---|---|---|---|---|---|---|
 | 1 | NRAS | ❌ REJECT | 0.50 | 0.81 | RAS-associated autoimmune leukoproliferative disease | NRAS |

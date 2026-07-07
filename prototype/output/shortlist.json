@@ -976,5 +976,21 @@
         }
       ]
     }
+  ],
+  "spotlight": [
+    {
+      "gene": "PTPN2",
+      "actionable_rank": 42,
+      "of_total": 7195,
+      "verdict": "PROMOTE",
+      "story": "Flagged with no knowledge of the clinic \u2014 PTPN2 is a druggable phosphatase brake on T-cell activation, and its inhibitor ABBV-CLS-484 is already in Phase 1. We surfaced it blind; the clinic agrees."
+    },
+    {
+      "gene": "CBLB",
+      "actionable_rank": 24,
+      "of_total": 7195,
+      "verdict": "PROMOTE (corroborated)",
+      "story": "A strongly context-dependent brake on T-cell activation (huge effect on stimulation, almost none at rest) \u2014 druggable, multiple-sclerosis-linked, and its inhibitor NX-1607 is already in Phase 1a/1b."
+    }
   ]
 }

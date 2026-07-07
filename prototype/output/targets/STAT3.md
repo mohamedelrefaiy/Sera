@@ -1,6 +1,6 @@
 # STAT3 — candidate T-cell regulator
 
-**Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#3** of the shortlist  ·  raw-impact rank #131
+**Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#3**  ·  raw-impact rank #131
 
 ## Why it's on the shortlist
 

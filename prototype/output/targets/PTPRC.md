@@ -1,6 +1,6 @@
 # PTPRC — candidate T-cell regulator
 
-**Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#5** of the shortlist  ·  raw-impact rank #89
+**Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#5**  ·  raw-impact rank #89
 
 ## Why it's on the shortlist
 

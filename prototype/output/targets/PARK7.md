@@ -1,6 +1,6 @@
 # PARK7 — candidate T-cell regulator
 
-**Verdict: ✅ PROMOTE**  ·  actionable rank **#10** of the shortlist  ·  raw-impact rank #73
+**Verdict: ✅ PROMOTE**  ·  actionable rank **#10**  ·  raw-impact rank #73
 
 ## Why it's on the shortlist
 

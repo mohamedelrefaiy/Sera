@@ -1,6 +1,6 @@
 # NCKAP1L — candidate T-cell regulator
 
-**Verdict: ✅ PROMOTE**  ·  actionable rank **#15** of the shortlist  ·  raw-impact rank #12
+**Verdict: ✅ PROMOTE**  ·  actionable rank **#15**  ·  raw-impact rank #12
 
 ## Why it's on the shortlist
 

@@ -1,6 +1,6 @@
 # RAC2 — candidate T-cell regulator
 
-**Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#14** of the shortlist  ·  raw-impact rank #48
+**Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#14**  ·  raw-impact rank #48
 
 ## Why it's on the shortlist
 

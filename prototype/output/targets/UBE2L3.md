@@ -1,6 +1,6 @@
 # UBE2L3 — candidate T-cell regulator
 
-**Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#11** of the shortlist  ·  raw-impact rank #5
+**Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#11**  ·  raw-impact rank #5
 
 ## Why it's on the shortlist
 
