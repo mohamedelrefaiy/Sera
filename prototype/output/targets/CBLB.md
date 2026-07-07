@@ -1,6 +1,6 @@
 # CBLB — candidate T-cell regulator
 
-> 🔦 **Demo spotlight.** A strongly context-dependent brake on T-cell activation (huge effect on stimulation, almost none at rest) — druggable, multiple-sclerosis-linked, and its inhibitor NX-1607 is already in Phase 1a/1b.
+> 🔦 **Demo spotlight.** Flagged with no knowledge of the clinic — CBLB is a context-dependent brake on T-cell activation (large effect on stimulation, little at rest), multiple-sclerosis-linked. Its inhibitor **NX-1607** is in **Phase 1** ([NCT05107674](https://clinicaltrials.gov/study/NCT05107674), recruiting). We surfaced the target blind; the clinic agrees.
 
 **Verdict: ✅ PROMOTE — independently corroborated**  ·  actionable rank **#24**  ·  raw-impact rank #186
 

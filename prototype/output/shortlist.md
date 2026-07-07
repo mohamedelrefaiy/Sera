@@ -4,12 +4,12 @@ Ranked druggable, immune-disease-linked regulators of CD4+ T-cell activation fro
 
 ## 🔦 Demo spotlight — predicted blind, already in the clinic
 
-These did not make the top 15 by raw actionable score, and the tool says so — but each is a druggable brake on T-cell activation whose inhibitor is *already in Phase 1 trials*. The tool surfaced them with no knowledge of the clinic.
+These did not make the top 15 by raw actionable score, and the tool says so — but each is a druggable brake on T-cell activation. The trial status below is pulled **live from ClinicalTrials.gov** for the named inhibitor (Open Targets has no curated drug for these targets yet), so the "already in the clinic" beat is machine-verified, not asserted.
 
-| Gene | Verdict | Actionable rank | Druggable | Immune-disease | The beat |
-|---|---|---|---|---|---|
-| [PTPN2](targets/PTPN2.md) | ✅ PROMOTE | #42 of 7195 | 0.50 | 0.76 | Flagged with no knowledge of the clinic — PTPN2 is a druggable phosphatase brake on T-cell activation, and its inhibitor ABBV-CLS-484 is already in Phase 1. We surfaced it blind; the clinic agrees. |
-| [CBLB](targets/CBLB.md) | ✅ PROMOTE — independently corroborated | #24 of 7195 | 0.33 | 0.65 | A strongly context-dependent brake on T-cell activation (huge effect on stimulation, almost none at rest) — druggable, multiple-sclerosis-linked, and its inhibitor NX-1607 is already in Phase 1a/1b. |
+| Gene | Verdict | Actionable rank | Druggable | Live trial status (ClinicalTrials.gov) |
+|---|---|---|---|---|
+| [PTPN2](targets/PTPN2.md) | ✅ PROMOTE | #42 of 7195 | 0.50 | **Phase 1** · ABBV-CLS-484 · [NCT04777994](https://clinicaltrials.gov/study/NCT04777994) · recruiting |
+| [CBLB](targets/CBLB.md) | ✅ PROMOTE — independently corroborated | #24 of 7195 | 0.33 | **Phase 1** · NX-1607 · [NCT05107674](https://clinicaltrials.gov/study/NCT05107674) · recruiting |
 
 ## Top 15 by actionable score
 

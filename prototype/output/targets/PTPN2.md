@@ -1,6 +1,6 @@
 # PTPN2 — candidate T-cell regulator
 
-> 🔦 **Demo spotlight.** Flagged with no knowledge of the clinic — PTPN2 is a druggable phosphatase brake on T-cell activation, and its inhibitor ABBV-CLS-484 is already in Phase 1. We surfaced it blind; the clinic agrees.
+> 🔦 **Demo spotlight.** Flagged with no knowledge of the clinic — PTPN2 is a druggable phosphatase brake on T-cell activation. Its inhibitor **ABBV-CLS-484** is in **Phase 1** ([NCT04777994](https://clinicaltrials.gov/study/NCT04777994), recruiting). We surfaced the target blind; the clinic agrees.
 
 **Verdict: ✅ PROMOTE**  ·  actionable rank **#42**  ·  raw-impact rank #812
 

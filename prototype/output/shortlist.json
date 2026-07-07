@@ -983,14 +983,28 @@
       "actionable_rank": 42,
       "of_total": 7195,
       "verdict": "PROMOTE",
-      "story": "Flagged with no knowledge of the clinic \u2014 PTPN2 is a druggable phosphatase brake on T-cell activation, and its inhibitor ABBV-CLS-484 is already in Phase 1. We surfaced it blind; the clinic agrees."
+      "compound": "ABBV-CLS-484",
+      "trial": {
+        "found": true,
+        "phase_label": "Phase 1",
+        "nct_id": "NCT04777994",
+        "status": "RECRUITING"
+      },
+      "story": "Flagged with no knowledge of the clinic \u2014 PTPN2 is a druggable phosphatase brake on T-cell activation. Its inhibitor **ABBV-CLS-484** is in **Phase 1** ([NCT04777994](https://clinicaltrials.gov/study/NCT04777994), recruiting). We surfaced the target blind; the clinic agrees."
     },
     {
       "gene": "CBLB",
       "actionable_rank": 24,
       "of_total": 7195,
       "verdict": "PROMOTE (corroborated)",
-      "story": "A strongly context-dependent brake on T-cell activation (huge effect on stimulation, almost none at rest) \u2014 druggable, multiple-sclerosis-linked, and its inhibitor NX-1607 is already in Phase 1a/1b."
+      "compound": "NX-1607",
+      "trial": {
+        "found": true,
+        "phase_label": "Phase 1",
+        "nct_id": "NCT05107674",
+        "status": "RECRUITING"
+      },
+      "story": "Flagged with no knowledge of the clinic \u2014 CBLB is a context-dependent brake on T-cell activation (large effect on stimulation, little at rest), multiple-sclerosis-linked. Its inhibitor **NX-1607** is in **Phase 1** ([NCT05107674](https://clinicaltrials.gov/study/NCT05107674), recruiting). We surfaced the target blind; the clinic agrees."
     }
   ]
 }

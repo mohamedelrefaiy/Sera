@@ -21,7 +21,8 @@ each candidate with **real computed evidence** — no 16.8 GB download, no GPU.
 | `opentargets.py`  | Live Open Targets GraphQL client (batched, cached to `ot_cache.json`) |
 | `verifier.py`     | Adversarial verifier — Tier A (DE summary) + Tier B (donor/guide robustness) + Tier C3 (held-out screens) |
 | `held_out.py`     | Tier C3: is a pick corroborated by an independent screen (Schmidt2022 / Freimer2022)? |
-| `report.py`       | Emits the bench artifact: `shortlist.json` + `shortlist.md` index + one per-target report per promoted candidate |
+| `clinicaltrials.py` | Live ClinicalTrials.gov client — verifies a spotlight anchor's inhibitor is really in trials (NCT id + phase + status), cached to `ct_cache.json` |
+| `report.py`       | Emits the bench artifact: `shortlist.json` + `shortlist.md` index + one per-target report per promoted candidate; spotlight beat is verified live |
 | `ot_cache.json`   | Cached Open Targets results (7,195 genes) so re-runs are instant |
 | `output/`         | Generated artifacts (committed so the tool's output is browsable): the shortlist a scientist takes to the bench |
 
