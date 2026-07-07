@@ -24,6 +24,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
+from collections import Counter
+
+from .data import load_perturbations
+from .ranking import significant_records
 from .shortlist import SPOTLIGHT, compute_shortlist
 
 _WEB_DIR = os.path.join(
@@ -72,6 +76,32 @@ def target(gene: str) -> dict:
     return row
 
 
+@app.get("/api/funnel")
+def funnel() -> dict:
+    """Deterministic funnel counts (no key). Every number is SOURCED from the loader
+    or the verified shortlist — none is typed by hand. The frontend draws the narrowing
+    from these, so 'perturbations -> shortlist' can never show a fabricated tally.
+
+    Note the distinction the funnel must respect: the screen has 33,983 perturbation x
+    condition ROWS, but 11,526 unique GENES — the first funnel gene-bar is loaded_genes,
+    never the row count."""
+    recs = load_perturbations()
+    sig = significant_records(recs)
+    tally = Counter(r["verdict"] for r in _SHORTLIST)
+    return {
+        "loaded_genes": len(recs),
+        "significant": len(sig),
+        "verdicts": {
+            "REJECT": tally.get("REJECT", 0),
+            "PROMOTE (weak)": tally.get("PROMOTE (weak)", 0),
+            "PROMOTE": tally.get("PROMOTE", 0),
+            "PROMOTE (corroborated)": tally.get("PROMOTE (corroborated)", 0),
+        },
+        "survived": sum(v for k, v in tally.items() if k.startswith("PROMOTE")),
+        "obvious_tcr_in_ranked": sum(1 for r in _SHORTLIST if r["is_obvious_tcr"]),
+    }
+
+
 CHAT_TIMEOUT_S = 90  # a full triage run streams within this; else we fail cleanly
 
 
@@ -99,8 +129,13 @@ async def chat(body: dict) -> StreamingResponse:
 
     queue: asyncio.Queue = asyncio.Queue()
 
+    # Persist the tool_use_id -> short-name map ACROSS messages: a ToolResultBlock
+    # carries only the id of the ToolUseBlock that produced it (no name), so labelling
+    # a tool_result event requires remembering the name we saw on the earlier call.
+    tool_names: dict[str, str] = {}
+
     def on_message(msg):
-        for ev in _message_to_events(msg):
+        for ev in _message_to_events(msg, tool_names):
             queue.put_nowait(ev)
 
     async def drive():
@@ -145,14 +180,18 @@ def _has_credentials() -> bool:
     return shutil.which("claude") is not None
 
 
-def _message_to_events(message) -> list[dict]:
+def _message_to_events(message, tool_names: dict[str, str] | None = None) -> list[dict]:
     """Translate SDK messages into small JSON events the frontend renders.
 
     Two directions matter:
-      - AssistantMessage: the agent's tool CALLS (shown live) and prose.
-      - UserMessage w/ ToolResultBlock: tool RESULTS — we sniff each for a
-        __view_update__ block and forward it as a view_update event so the
-        agent's action actually changes the scientist's table/drawer."""
+      - AssistantMessage: the agent's tool CALLS (shown live) and prose. We also
+        remember each call's id -> short name in `tool_names` so a later result
+        can be labelled (a ToolResultBlock carries only the id, never the name).
+      - UserMessage w/ ToolResultBlock: tool RESULTS. A stateful tool's result
+        embeds __view_update__ -> forward as a view_update event (re-renders the
+        table). An ANALYSIS tool's result (rank_candidates / verify_candidate) is
+        plain JSON -> forward as a tool_result event so figures can read the real
+        numbers. The two are mutually exclusive (else-branch), so no double-emit."""
     from claude_agent_sdk import (
         AssistantMessage, TextBlock, ToolResultBlock, ToolUseBlock, UserMessage,
     )
@@ -161,8 +200,10 @@ def _message_to_events(message) -> list[dict]:
     if isinstance(message, AssistantMessage):
         for block in message.content:
             if isinstance(block, ToolUseBlock):
-                events.append({"type": "tool_call",
-                               "tool": block.name.split("__")[-1],
+                short = block.name.split("__")[-1]
+                if tool_names is not None:
+                    tool_names[block.id] = short
+                events.append({"type": "tool_call", "tool": short,
                                "input": block.input or {}})
             elif isinstance(block, TextBlock):
                 events.append({"type": "text", "text": block.text})
@@ -172,7 +213,34 @@ def _message_to_events(message) -> list[dict]:
                 vu = _extract_view_update(block.content)
                 if vu is not None:
                     events.append({"type": "view_update", "update": vu})
+                else:
+                    out = _parse_tool_result(block.content)
+                    if out is not None:
+                        name = (tool_names or {}).get(block.tool_use_id, "")
+                        events.append({"type": "tool_result", "tool": name, "output": out})
     return events
+
+
+def _parse_tool_result(content) -> dict | None:
+    """Parse a plain (_text) analysis-tool result's JSON payload. Returns the dict
+    only if it is JSON AND is not a view-update wrapper (those go the other branch);
+    returns None for a non-JSON SDK error string, so a malformed result is dropped
+    rather than streamed as garbage."""
+    text = None
+    if isinstance(content, str):
+        text = content
+    elif isinstance(content, list):
+        for part in content:
+            if isinstance(part, dict) and part.get("type") == "text":
+                text = part.get("text")
+                break
+    if not text:
+        return None
+    try:
+        obj = json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        return None
+    return obj if isinstance(obj, dict) and "__view_update__" not in obj else None
 
 
 def _extract_view_update(content) -> dict | None:

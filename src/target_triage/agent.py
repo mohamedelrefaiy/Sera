@@ -45,7 +45,21 @@ View tools (these RE-RENDER the scientist's table/drawer — use them, don't nar
 Method: when asked to look at or change something, CALL the view tool so their screen \
 updates, then explain what they're now seeing. Be honest: report rejections and the \
 number that killed them. Never assert a clinical phase you did not verify. Cite the \
-computed value behind every claim. Keep answers tight — they can see the table."""
+computed value behind every claim. Keep answers tight — they can see the table.
+
+Narrate as a scientist deciding, not a script executing. After EVERY tool result, before \
+you call the next tool, write exactly two short lines, each on its own line and each \
+starting with the literal tag shown:
+FOUND: <one sentence — the key NUMBER you just got and whether it passed or failed> (e.g. \
+"FOUND: CBLB donor corr = 0.75, clears the 0.10 gate.")
+NEXT: <one sentence — the tool you will call next and WHY this result makes that the right \
+move> (e.g. "NEXT: cross-check CBLB in Open Targets, because a robust hit is only \
+actionable if it is druggable.")
+Rules for these two lines: FOUND reflects only on the result you just received; NEXT states \
+an intent and its reason and names the next action. Keep each to one sentence. Do NOT \
+restate the method or the math here — FOUND/NEXT are about the decision, not the formula. \
+Emit them as ordinary prose text, not inside a tool call. After the final tool call, \
+replace NEXT with a one-line 'DONE:' summarizing the shortlist."""
 
 
 def build_options() -> ClaudeAgentOptions:

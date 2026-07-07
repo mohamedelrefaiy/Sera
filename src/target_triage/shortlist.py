@@ -16,7 +16,7 @@ from .evidence import load_evidence
 from .ranking import rank_by_impact, significant_records
 from .verify import verify
 from .clients import opentargets
-from .tools import OBVIOUS_TCR
+from .tools import OBVIOUS_TCR, _condition_rows
 
 # Demo spotlight anchors: their clinical-stage inhibitor (a checkable molecule).
 SPOTLIGHT = {
@@ -71,6 +71,7 @@ def compute_shortlist(annotate: bool = True, progress=None) -> list[dict]:
             "top_disease": a.top_disease if a else None,
             "clinical_stage": a.clinical_stage if a else None,
             "is_obvious_tcr": obvious,
+            "by_condition": _condition_rows(by_gene[s.gene]),  # per-condition bars (offline figure)
             "checks": [
                 {"check": c.name, "kind": c.kind, "pass": c.passed,
                  "value": c.value, "detail": c.detail}

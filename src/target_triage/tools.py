@@ -14,7 +14,7 @@ import json
 
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
-from .data import load_perturbations
+from .data import CONDITIONS, load_perturbations
 from .evidence import load_evidence
 from .ranking import rank_by_impact, significant_records
 from .verify import Thresholds, verify
@@ -34,6 +34,46 @@ OBVIOUS_TCR = {
     "CD3E", "CD3D", "CD3G", "CD247", "LAT", "ZAP70", "PLCG1", "LCP2",
     "VAV1", "CD28", "LCK", "FYN", "ITK", "CD2", "CD5",
 }
+
+# Canonical condition order so the live condition-context figure always draws
+# Rest -> Stim8hr -> Stim48hr regardless of dict insertion order.
+_COND_ORDER = {c: i for i, c in enumerate(CONDITIONS)}
+
+# The overlay (actionable) rank per gene — the RIGHT axis of the rank-shift figure.
+# Computed once from the deterministic shortlist and memoized; the lazy import
+# inside breaks the tools<->shortlist import cycle (shortlist imports OBVIOUS_TCR
+# from this module). First call costs ~0.5s against the warm OT cache (no network);
+# every later call is a dict lookup, so the value cannot drift within a process.
+_ACTIONABLE_RANK: dict[str, int] | None = None
+
+
+def _actionable_rank() -> dict[str, int]:
+    """Gene -> actionable (overlay) rank, memoized. Returns {} if the shortlist
+    can't be computed, so figures degrade to raw-rank-only rather than fabricate."""
+    global _ACTIONABLE_RANK
+    if _ACTIONABLE_RANK is None:
+        try:
+            from .shortlist import compute_shortlist  # lazy: breaks the import cycle
+            _ACTIONABLE_RANK = {r["gene"]: r["rank"] for r in compute_shortlist()}
+        except Exception:  # noqa: BLE001 — never let a figure detail crash a tool call
+            _ACTIONABLE_RANK = {}
+    return _ACTIONABLE_RANK
+
+
+def _condition_rows(record) -> list[dict]:
+    """Per-condition figure data for a gene, in canonical order. n_downstream stays
+    int OR None (None = this screen has no breadth signal) — never coerced to 0, so
+    the figure can draw an honest 'N/A' bar instead of implying a measured zero."""
+    return [
+        {"condition": c,
+         "n_downstream": p.n_downstream,
+         "effect_size": round(p.effect_size, 2),
+         "n_cells": p.n_cells,
+         "significant": p.significant,
+         "offtarget": p.offtarget}
+        for c, p in sorted(record.by_condition.items(),
+                           key=lambda kv: _COND_ORDER.get(kv[0], 99))
+    ]
 
 
 def _text(payload) -> dict:
@@ -62,10 +102,12 @@ def _row_for(gene: str, thresholds: Thresholds = Thresholds()) -> dict | None:
         "gene": gene,
         "verdict": v.verdict,
         "raw_rank": _RAW_RANK.get(gene),
+        "actionable_rank": _actionable_rank().get(gene),  # right axis of the rank-shift figure
         "impact": round(s.impact, 3) if s else None,
         "context_specificity": round(s.context_specificity, 3) if s else None,
         "best_condition": s.best_condition if s else None,
         "is_obvious_tcr": gene in OBVIOUS_TCR,
+        "by_condition": _condition_rows(record),          # per-condition bars (context figure)
         "checks": [
             {"check": c.name, "kind": c.kind, "pass": c.passed,
              "value": c.value, "detail": c.detail}
