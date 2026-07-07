@@ -1,0 +1,22 @@
+{
+"ABBV-CLS-484": {
+"compound": "ABBV-CLS-484",
+"found": true,
+"phase": "PHASE1",
+"phase_label": "Phase 1",
+"nct_id": "NCT04777994",
+"status": "RECRUITING",
+"title": "Study With ABBV-CLS-484 in Participants With Locally Advanced or Metastatic Tumors",
+"n_studies": 2
+},
+"NX-1607": {
+"compound": "NX-1607",
+"found": true,
+"phase": "PHASE1",
+"phase_label": "Phase 1",
+"nct_id": "NCT05107674",
+"status": "RECRUITING",
+"title": "A Study of NX-1607 in Adults With Advanced Malignancies",
+"n_studies": 1
+}
+}

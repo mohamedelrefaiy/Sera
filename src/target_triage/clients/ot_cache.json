@@ -1,0 +1,23 @@
+{
+"ENSG00000175354": {
+"symbol": "PTPN2",
+"druggable_score": 0.5,
+"disease_score": 0.762,
+"top_disease": "type 1 diabetes mellitus",
+"clinical_stage": null
+},
+"ENSG00000114423": {
+"symbol": "CBLB",
+"druggable_score": 0.333,
+"disease_score": 0.649,
+"top_disease": "multiple sclerosis",
+"clinical_stage": null
+},
+"ENSG00000155903": {
+"symbol": "RASA2",
+"druggable_score": 0.0,
+"disease_score": 0.556,
+"top_disease": "osteoarthritis, knee",
+"clinical_stage": null
+}
+}
