@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Target Triage</title>
+<style>
+  :root{
+    --ink:#0B1220; --slate:#1A2436; --slate-2:#141d2e; --line:#26324a;
+    --bone:#E8ECF4; --dim:#8FA0BF; --dimmer:#5c6b86;
+    --viridian:#5FE3B3; --coral:#FF6B6B; --peri:#7DA2FF; --amber:#F5C36B;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --disp:"Space Grotesk","Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--ink);color:var(--bone);font-family:var(--sans);
+    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;height:100vh;overflow:hidden;
+  }
+  /* ---- header ---- */
+  header{
+    display:flex;align-items:baseline;gap:18px;padding:14px 22px;
+    border-bottom:1px solid var(--line);flex:0 0 auto;
+  }
+  header h1{
+    font-family:var(--disp);font-size:19px;font-weight:600;margin:0;
+    letter-spacing:-0.01em;
+  }
+  header h1 .mark{color:var(--viridian)}
+  header .sub{color:var(--dim);font-size:12.5px}
+  header .meta{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dimmer)}
+  /* ---- layout ---- */
+  main{display:grid;grid-template-columns:1.62fr 1fr;flex:1 1 auto;min-height:0}
+  .panel{min-height:0;display:flex;flex-direction:column;overflow:hidden}
+  .panel.ledger{border-right:1px solid var(--line)}
+  .panel-head{
+    padding:12px 22px;border-bottom:1px solid var(--line);flex:0 0 auto;
+    display:flex;align-items:center;gap:14px;
+  }
+  .panel-head h2{
+    font-family:var(--disp);font-size:12px;font-weight:600;margin:0;
+    text-transform:uppercase;letter-spacing:0.08em;color:var(--dim);
+  }
+  /* ---- filters ---- */
+  .filters{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .filters select,.filters button{
+    font-family:var(--sans);font-size:12px;color:var(--bone);
+    background:var(--slate);border:1px solid var(--line);border-radius:6px;
+    padding:5px 9px;cursor:pointer;
+  }
+  .filters button.on{border-color:var(--viridian);color:var(--viridian)}
+  .filters label{font-size:11.5px;color:var(--dimmer)}
+  /* ---- ledger rows ---- */
+  .scroll{overflow-y:auto;flex:1 1 auto;padding:6px 0}
+  .row{
+    display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:14px;
+    padding:9px 22px;border-bottom:1px solid var(--slate-2);cursor:pointer;
+    transition:background .12s;
+  }
+  .row:hover{background:var(--slate-2)}
+  .row.open{background:var(--slate)}
+  .row .rank{font-family:var(--mono);font-size:12px;color:var(--dimmer);text-align:right}
+  .row .gene{font-family:var(--disp);font-weight:600;font-size:15px;letter-spacing:-0.01em}
+  .row .gene .disease{
+    display:block;font-family:var(--sans);font-weight:400;font-size:11.5px;
+    color:var(--dim);letter-spacing:0;margin-top:1px;
+  }
+  .row .spot{color:var(--amber);font-size:11px;margin-left:6px}
+  .metrics{display:flex;gap:16px;align-items:center;font-family:var(--mono);font-size:11.5px}
+  .metrics .m{text-align:right;min-width:38px}
+  .metrics .m b{display:block;color:var(--bone);font-weight:500;font-size:13px}
+  .metrics .m span{color:var(--dimmer);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em}
+  .verdict{
+    font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 8px;
+    border-radius:5px;white-space:nowrap;letter-spacing:.02em;
+  }
+  .v-prom{color:var(--viridian);background:rgba(95,227,179,.1);border:1px solid rgba(95,227,179,.25)}
+  .v-corr{color:var(--viridian);background:rgba(95,227,179,.16);border:1px solid rgba(95,227,179,.4)}
+  .v-weak{color:var(--amber);background:rgba(245,195,107,.1);border:1px solid rgba(245,195,107,.25)}
+  .v-rej{color:var(--coral);background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.28)}
+  /* ---- evidence drawer ---- */
+  .drawer{padding:2px 22px 18px 74px;border-bottom:1px solid var(--slate-2);background:var(--slate-2)}
+  .drawer .lede{color:var(--dim);font-size:12.5px;margin:8px 0 14px;max-width:62ch}
+  .checks{display:flex;flex-direction:column;gap:2px}
+  .check{
+    display:grid;grid-template-columns:14px 128px 60px 1fr;gap:12px;align-items:baseline;
+    font-size:12px;padding:4px 0;border-bottom:1px dotted var(--line);
+  }
+  .check .ck-mark{font-family:var(--mono);font-weight:700}
+  .check.pass .ck-mark{color:var(--viridian)}
+  .check.fail .ck-mark{color:var(--coral)}
+  .check .ck-name{font-family:var(--mono);font-size:11px;color:var(--bone)}
+  .check .ck-kind{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--dimmer)}
+  .check .ck-val{font-family:var(--mono);font-size:12px;color:var(--peri);text-align:right}
+  .check .ck-detail{color:var(--dim);font-size:11.5px;grid-column:2 / -1}
+  .ext{display:flex;gap:26px;margin-top:14px;flex-wrap:wrap}
+  .ext .e b{font-family:var(--mono);color:var(--peri);font-size:13px}
+  .ext .e span{display:block;font-size:10px;color:var(--dimmer);text-transform:uppercase;letter-spacing:.05em}
+  .drawer .ask{
+    margin-top:14px;font-size:12px;color:var(--peri);background:none;border:none;
+    cursor:pointer;padding:0;font-family:var(--sans);
+  }
+  .drawer .ask:hover{text-decoration:underline}
+  /* ---- agent console ---- */
+  .console{display:flex;flex-direction:column;min-height:0}
+  .stream{overflow-y:auto;flex:1 1 auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+  .msg{font-size:13px;line-height:1.55}
+  .msg.user{color:var(--bone);align-self:flex-end;max-width:85%;
+    background:var(--slate);border:1px solid var(--line);border-radius:10px 10px 2px 10px;padding:8px 12px}
+  .msg.agent{color:var(--bone);white-space:pre-wrap;max-width:92%}
+  .toolcall{
+    font-family:var(--mono);font-size:11.5px;color:var(--peri);
+    background:rgba(125,162,255,.07);border:1px solid rgba(125,162,255,.2);
+    border-radius:6px;padding:6px 10px;display:flex;gap:8px;align-items:center;
+  }
+  .toolcall .dot{width:6px;height:6px;border-radius:50%;background:var(--peri);flex:0 0 auto;
+    animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  .composer{border-top:1px solid var(--line);padding:12px 16px;flex:0 0 auto;display:flex;gap:8px}
+  .composer input{
+    flex:1;background:var(--slate);border:1px solid var(--line);border-radius:8px;
+    color:var(--bone);font-family:var(--sans);font-size:13px;padding:9px 12px;
+  }
+  .composer input:focus{outline:2px solid rgba(125,162,255,.4);outline-offset:-1px}
+  .composer button{
+    background:var(--viridian);color:#04140d;border:none;border-radius:8px;
+    font-family:var(--disp);font-weight:600;font-size:13px;padding:0 16px;cursor:pointer;
+  }
+  .composer button:disabled{opacity:.4;cursor:default}
+  .hint{color:var(--dimmer);font-size:11px;padding:2px 20px 0}
+  .empty{color:var(--dimmer);font-size:12.5px;text-align:center;margin:auto;max-width:34ch;line-height:1.6}
+  .empty .chip{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--peri);
+    border:1px solid var(--line);border-radius:20px;padding:3px 10px;margin:4px 3px;cursor:pointer}
+  .empty .chip:hover{border-color:var(--peri)}
+  /* scrollbars */
+  .scroll::-webkit-scrollbar,.stream::-webkit-scrollbar{width:9px}
+  .scroll::-webkit-scrollbar-thumb,.stream::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
+  @media (max-width:880px){
+    main{grid-template-columns:1fr;grid-template-rows:1fr 1fr}
+    .panel.ledger{border-right:none;border-bottom:1px solid var(--line)}
+    .metrics .m:nth-child(-n+1){display:none}
+  }
+  @media (prefers-reduced-motion:reduce){.toolcall .dot{animation:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Target <span class="mark">Triage</span></h1>
+  <span class="sub">druggable regulators of CD4+ T-cell activation, ranked &amp; scrutinized</span>
+  <span class="meta" id="meta">loading…</span>
+</header>
+<main>
+  <section class="panel ledger">
+    <div class="panel-head">
+      <h2>Shortlist</h2>
+      <div class="filters">
+        <label>condition</label>
+        <select id="f-cond">
+          <option value="">all</option>
+          <option value="Rest">resting</option>
+          <option value="Stim8hr">stim 8hr</option>
+          <option value="Stim48hr">stim 48hr</option>
+        </select>
+        <button id="f-drug" data-on="false">druggable ≥ 0.3</button>
+        <button id="f-prom" data-on="false">promoted only</button>
+      </div>
+    </div>
+    <div class="scroll" id="ledger"></div>
+  </section>
+
+  <section class="panel console">
+    <div class="panel-head"><h2>Ask the agent</h2></div>
+    <div class="stream" id="stream">
+      <div class="empty" id="empty">
+        Interrogate the shortlist. The agent ranks, verifies, and cross-checks live —
+        showing its work.
+        <div>
+          <span class="chip" data-q="Why is CBLB ranked above PTPN2?">Why CBLB over PTPN2?</span>
+          <span class="chip" data-q="Re-verify NRAS and explain why it was rejected.">Why reject NRAS?</span>
+          <span class="chip" data-q="Which promoted targets already have an inhibitor in clinical trials?">Which are in the clinic?</span>
+        </div>
+      </div>
+    </div>
+    <div class="composer">
+      <input id="q" placeholder="e.g. Only show resting-state regulators…" autocomplete="off">
+      <button id="send">Ask</button>
+    </div>
+    <div class="hint" id="hint"></div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const state = { rows:[], spotlight:[], open:null, filters:{condition:"",min_druggable:0,promoted_only:false} };
+
+const vClass = v => v==="REJECT" ? "v-rej"
+  : v.includes("corroborated") ? "v-corr"
+  : v.includes("weak") ? "v-weak" : "v-prom";
+const vShort = v => v==="REJECT" ? "REJECT"
+  : v.includes("corroborated") ? "PROMOTE ✓" : v.includes("weak") ? "PROMOTE ~" : "PROMOTE";
+
+async function loadShortlist(){
+  const p = new URLSearchParams({ limit:50, ...state.filters });
+  const r = await fetch("/api/shortlist?"+p);
+  const d = await r.json();
+  state.rows = d.rows; state.spotlight = d.spotlight;
+  $("#meta").textContent = `${d.total.toLocaleString()} perturbations · ${d.shown} shown`;
+  render();
+}
+
+function render(){
+  const L = $("#ledger"); L.innerHTML = "";
+  for(const row of state.rows){
+    const el = document.createElement("div");
+    el.className = "row" + (state.open===row.gene ? " open":"");
+    const spot = state.spotlight.includes(row.gene) ? '<span class="spot">◆ spotlight</span>' : "";
+    el.innerHTML = `
+      <div class="rank">${row.rank}</div>
+      <div class="gene">${row.gene}${spot}
+        <span class="disease">${row.top_disease || "—"}</span></div>
+      <div class="metrics">
+        <div class="m"><b>${row.druggable_score.toFixed(2)}</b><span>drug</span></div>
+        <div class="m"><b>${row.disease_score.toFixed(2)}</b><span>disease</span></div>
+        <div class="verdict ${vClass(row.verdict)}">${vShort(row.verdict)}</div>
+      </div>`;
+    el.onclick = () => { state.open = state.open===row.gene ? null : row.gene; render(); };
+    L.appendChild(el);
+    if(state.open===row.gene) L.appendChild(drawer(row));
+  }
+}
+
+function drawer(row){
+  const d = document.createElement("div");
+  d.className = "drawer";
+  const checks = row.checks.map(c=>`
+    <div class="check ${c.pass?'pass':'fail'}">
+      <div class="ck-mark">${c.pass?'✓':'✕'}</div>
+      <div class="ck-name">${c.check}</div>
+      <div class="ck-kind">${c.kind}</div>
+      <div class="ck-val">${c.value}</div>
+      <div class="ck-detail">${c.detail}</div>
+    </div>`).join("");
+  const lede = row.verdict==="REJECT"
+    ? `Ranked #${row.raw_rank} by raw impact, but <b style="color:var(--coral)">rejected</b> — a gate check failed. The tool drops it rather than hand you an artifact.`
+    : `Rose from raw-impact rank #${row.raw_rank} to actionable #${row.rank}. Each check below is computed, not asserted.`;
+  d.innerHTML = `
+    <div class="lede">${lede}</div>
+    <div class="checks">${checks}</div>
+    <div class="ext">
+      <div class="e"><b>${row.druggable_score.toFixed(2)}</b><span>druggable (OT)</span></div>
+      <div class="e"><b>${row.disease_score.toFixed(2)}</b><span>immune-disease (OT)</span></div>
+      <div class="e"><b>${row.context_specificity.toFixed(2)}</b><span>context specificity</span></div>
+      <div class="e"><b>${row.clinical_stage || "—"}</b><span>clinical stage</span></div>
+    </div>
+    <button class="ask" data-q="Walk me through the evidence for ${row.gene} — should I validate it?">
+      Ask the agent about ${row.gene} →</button>`;
+  d.querySelector(".ask").onclick = e => { e.stopPropagation(); ask(d.querySelector(".ask").dataset.q); };
+  return d;
+}
+
+/* ---- filters ---- */
+$("#f-cond").onchange = e => { state.filters.condition = e.target.value; loadShortlist(); };
+$("#f-drug").onclick = e => {
+  const on = e.target.dataset.on!=="true"; e.target.dataset.on=on;
+  e.target.classList.toggle("on",on); state.filters.min_druggable = on?0.3:0; loadShortlist();
+};
+$("#f-prom").onclick = e => {
+  const on = e.target.dataset.on!=="true"; e.target.dataset.on=on;
+  e.target.classList.toggle("on",on); state.filters.promoted_only = on; loadShortlist();
+};
+
+/* ---- agent chat ---- */
+function addMsg(cls, text){
+  $("#empty")?.remove();
+  const el = document.createElement("div"); el.className="msg "+cls; el.textContent=text;
+  $("#stream").appendChild(el); $("#stream").scrollTop = 1e9; return el;
+}
+function addTool(tool,input){
+  $("#empty")?.remove();
+  const el = document.createElement("div"); el.className="toolcall";
+  const args = Object.entries(input).map(([k,v])=>`${k}=${v}`).join(", ");
+  el.innerHTML = `<span class="dot"></span> ${tool}(${args})`;
+  $("#stream").appendChild(el); $("#stream").scrollTop = 1e9;
+}
+
+async function ask(q){
+  if(!q?.trim()) return;
+  addMsg("user", q);
+  $("#q").value=""; $("#send").disabled=true; $("#hint").textContent="agent is working…";
+  let agentEl=null;
+  try{
+    const r = await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({message:q})});
+    if(!r.ok || !r.body) throw new Error("chat unavailable ("+r.status+")");
+    const reader = r.body.getReader(); const dec = new TextDecoder(); let buf="";
+    for(;;){
+      const {value,done} = await reader.read(); if(done) break;
+      buf += dec.decode(value,{stream:true});
+      let i; while((i=buf.indexOf("\n\n"))>=0){
+        const line = buf.slice(0,i).trim(); buf = buf.slice(i+2);
+        if(!line.startsWith("data:")) continue;
+        const ev = JSON.parse(line.slice(5).trim());
+        if(ev.type==="tool_call") addTool(ev.tool, ev.input||{});
+        else if(ev.type==="text"){ if(!agentEl) agentEl=addMsg("agent",""); agentEl.textContent+=ev.text; $("#stream").scrollTop=1e9; }
+        else if(ev.type==="error") addMsg("agent","⚠ "+ev.detail);
+      }
+    }
+  }catch(err){
+    addMsg("agent","⚠ "+err.message+" — the shortlist on the left works without the agent; the chat needs a running API key.");
+  }finally{
+    $("#send").disabled=false; $("#hint").textContent=""; $("#q").focus();
+  }
+}
+$("#send").onclick = () => ask($("#q").value);
+$("#q").onkeydown = e => { if(e.key==="Enter") ask($("#q").value); };
+document.addEventListener("click", e => { if(e.target.classList?.contains("chip")) ask(e.target.dataset.q); });
+
+loadShortlist();
+</script>
+</body>
+</html>

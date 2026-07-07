@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "target-triage"
+version = "0.1.0"
+description = "Rank + adversarially verify druggable T-cell regulators from Perturb-seq"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "claude-agent-sdk>=0.2.111",
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+target-triage = "target_triage.__main__:main"
+target-triage-serve = "target_triage.serve:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

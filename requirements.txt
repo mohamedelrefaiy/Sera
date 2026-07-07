@@ -1,5 +1,7 @@
 # Target Triage — runtime + dev dependencies (Python 3.11+)
 # Install:  python -m venv .venv && .venv/bin/pip install -r requirements.txt
 claude-agent-sdk>=0.2.111   # the agent loop — Claude orchestrates the tools
-pytest>=8.0                 # controls-first gate + unit tests
+fastapi>=0.115             # web app backend (deterministic API + SSE chat)
+uvicorn>=0.30              # ASGI server for the web app
+pytest>=8.0                # controls-first gate + unit tests
 # stdlib only for data/ranking/verify/clients (csv, urllib) — no heavy deps by design
