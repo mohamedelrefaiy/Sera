@@ -40,15 +40,30 @@ IMMUNE_AREAS = {
 IMMUNE_TERMS = (
     "autoimmun", "arthritis", "lupus", "psoriasis", "colitis", "crohn",
     "inflammatory bowel", "diabetes mellitus, type 1", "type 1 diabetes",
-    "multiple sclerosis", "vitiligo", "celiac", "asthma", "allerg",
-    "immunodeficiency", "inflammat", "eczema", "atopic", "ankylosing",
-    "sclerosis", "graves", "thyroiditis", "vasculitis", "immune",
+    "multiple sclerosis", "systemic sclerosis", "vitiligo", "celiac", "asthma",
+    "allerg", "immunodeficiency", "immunodeficien", "autoinflammat", "inflammat",
+    "eczema", "atopic", "ankylosing", "graves", "thyroiditis", "vasculitis",
+    "sjogren", "scleroderma", "uveitis", "spondyl", "myasthenia gravis",
+)
+
+# Substring matching is treacherous on medical names: "immun" matches "non-immune",
+# "sclerosis" matches ALS / tuberous sclerosis. Any disease whose name hits one of
+# these is NOT an immune drug rationale — exclude it even if a term accidentally matched.
+# (Checked BEFORE the include terms, so negation always wins.)
+NON_IMMUNE_EXCLUDE = (
+    "non-immune", "nonimmune", "hydrops fetalis",
+    "amyotrophic lateral sclerosis", "tuberous sclerosis",
+    "hippocampal sclerosis",
+    "noonan", "leopard syndrome", "sotos", "cardiofaciocutaneous",
 )
 
 
 def _is_immune(disease):
     name = (disease.get("name") or "").lower()
     areas = {a["name"].lower() for a in (disease.get("therapeuticAreas") or [])}
+    # Negation guard first: a name flagged non-immune is never counted, regardless of area.
+    if any(x in name for x in NON_IMMUNE_EXCLUDE):
+        return False
     if areas & IMMUNE_AREAS:
         return True
     return any(t in name for t in IMMUNE_TERMS)

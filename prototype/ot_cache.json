@@ -104,13 +104,6 @@
 "top_disease": "systemic lupus erythematosus",
 "clinical": null
 },
-"ENSG00000165671": {
-"symbol": "NSD1",
-"druggable_score": 0.333,
-"disease_score": 0.559,
-"top_disease": "Non-immune hydrops fetalis",
-"clinical": null
-},
 "ENSG00000067225": {
 "symbol": "PKM",
 "druggable_score": 0.5,
@@ -2337,13 +2330,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000165699": {
-"symbol": "TSC1",
-"druggable_score": 0.0,
-"disease_score": 0.949,
-"top_disease": "tuberous sclerosis 1",
-"clinical": null
-},
 "ENSG00000148516": {
 "symbol": "ZEB1",
 "druggable_score": 0.0,
@@ -2468,13 +2454,6 @@
 "druggable_score": 0.5,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000162063": {
-"symbol": "CCNF",
-"druggable_score": 0.0,
-"disease_score": 0.916,
-"top_disease": "frontotemporal dementia and/or amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000120254": {
@@ -2736,13 +2715,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000107959": {
-"symbol": "PITRM1",
-"druggable_score": 0.167,
-"disease_score": 0.082,
-"top_disease": "sporadic amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000073861": {
 "symbol": "TBX21",
 "druggable_score": 0.0,
@@ -2916,13 +2888,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.085,
 "top_disease": "viral pneumonia",
-"clinical": null
-},
-"ENSG00000116001": {
-"symbol": "TIA1",
-"druggable_score": 0.0,
-"disease_score": 0.781,
-"top_disease": "amyotrophic lateral sclerosis 26 with or without frontotemporal dementia",
 "clinical": null
 },
 "ENSG00000163541": {
@@ -3176,13 +3141,6 @@
 "disease_score": 0.059,
 "top_disease": "osteoarthritis, hip",
 "clinical": null
-},
-"ENSG00000179295": {
-"symbol": "PTPN11",
-"druggable_score": 0.667,
-"disease_score": 0.761,
-"top_disease": "Non-immune hydrops fetalis",
-"clinical": "Advanced"
 },
 "ENSG00000003756": {
 "symbol": "RBM5",
@@ -4591,13 +4549,6 @@
 "top_disease": "inflammatory bowel disease",
 "clinical": null
 },
-"ENSG00000025293": {
-"symbol": "PHF20",
-"druggable_score": 0.0,
-"disease_score": 0.119,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000113845": {
 "symbol": "TIMMDC1",
 "druggable_score": 0.0,
@@ -5088,13 +5039,6 @@
 "top_disease": "type 1 diabetes mellitus",
 "clinical": null
 },
-"ENSG00000174718": {
-"symbol": "RESF1",
-"druggable_score": 0.0,
-"disease_score": 0.072,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000101019": {
 "symbol": "UQCC1",
 "druggable_score": 0.0,
@@ -5529,13 +5473,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000164930": {
-"symbol": "FZD6",
-"druggable_score": 0.0,
-"disease_score": 0.438,
-"top_disease": "Non-immune hydrops fetalis",
-"clinical": null
-},
 "ENSG00000116761": {
 "symbol": "CTH",
 "druggable_score": 0.333,
@@ -5906,13 +5843,6 @@
 "disease_score": 0.0,
 "top_disease": null,
 "clinical": "Advanced"
-},
-"ENSG00000166896": {
-"symbol": "ATP23",
-"druggable_score": 0.0,
-"disease_score": 0.257,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
 },
 "ENSG00000070770": {
 "symbol": "CSNK2A2",
@@ -6766,13 +6696,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000196937": {
-"symbol": "FAM3C",
-"druggable_score": 0.0,
-"disease_score": 0.341,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000173281": {
@@ -7678,13 +7601,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000174775": {
-"symbol": "HRAS",
-"druggable_score": 0.667,
-"disease_score": 0.761,
-"top_disease": "Non-immune hydrops fetalis",
-"clinical": "Advanced"
-},
 "ENSG00000172270": {
 "symbol": "BSG",
 "druggable_score": 0.167,
@@ -8306,13 +8222,6 @@
 "druggable_score": 0.167,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000083799": {
-"symbol": "CYLD",
-"druggable_score": 0.0,
-"disease_score": 0.843,
-"top_disease": "frontotemporal dementia and/or amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000100711": {
@@ -9981,13 +9890,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000175215": {
-"symbol": "CTDSP2",
-"druggable_score": 0.0,
-"disease_score": 0.078,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000109911": {
 "symbol": "ELP4",
 "druggable_score": 0.0,
@@ -10793,13 +10695,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000139826": {
-"symbol": "ABHD13",
-"druggable_score": 0.0,
-"disease_score": 0.077,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000124201": {
 "symbol": "ZNFX1",
 "druggable_score": 0.0,
@@ -11015,13 +10910,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000100722": {
-"symbol": "ZC3H14",
-"druggable_score": 0.0,
-"disease_score": 0.421,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000102034": {
@@ -11302,13 +11190,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000003393": {
-"symbol": "ALS2",
-"druggable_score": 0.0,
-"disease_score": 0.925,
-"top_disease": "amyotrophic lateral sclerosis type 2, juvenile",
 "clinical": null
 },
 "ENSG00000102265": {
@@ -13810,13 +13691,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000183091": {
-"symbol": "NEB",
-"druggable_score": 0.0,
-"disease_score": 0.438,
-"top_disease": "Non-immune hydrops fetalis",
-"clinical": null
-},
 "ENSG00000075218": {
 "symbol": "GTSE1",
 "druggable_score": 0.0,
@@ -14559,13 +14433,6 @@
 "top_disease": "protozoa infectious disease",
 "clinical": null
 },
-"ENSG00000154134": {
-"symbol": "ROBO3",
-"druggable_score": 0.0,
-"disease_score": 0.265,
-"top_disease": "tuberous sclerosis",
-"clinical": null
-},
 "ENSG00000182362": {
 "symbol": "YBEY",
 "druggable_score": 0.0,
@@ -15082,13 +14949,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.592,
 "top_disease": "asthma",
-"clinical": null
-},
-"ENSG00000236287": {
-"symbol": "ZBED5",
-"druggable_score": 0.0,
-"disease_score": 0.339,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000125844": {
@@ -16092,13 +15952,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000160803": {
-"symbol": "UBQLN4",
-"druggable_score": 0.0,
-"disease_score": 0.608,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000071994": {
 "symbol": "PDCD2",
 "druggable_score": 0.0,
@@ -16125,13 +15978,6 @@
 "druggable_score": 0.333,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000101400": {
-"symbol": "SNTA1",
-"druggable_score": 0.0,
-"disease_score": 0.389,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000138821": {
@@ -16421,13 +16267,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000170871": {
-"symbol": "KIAA0232",
-"druggable_score": 0.0,
-"disease_score": 0.267,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000151552": {
 "symbol": "QDPR",
 "druggable_score": 0.333,
@@ -16510,13 +16349,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.049,
 "top_disease": "non-autoimmune hemolytic anemia",
-"clinical": null
-},
-"ENSG00000092140": {
-"symbol": "G2E3",
-"druggable_score": 0.0,
-"disease_score": 0.415,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000109618": {
@@ -17569,13 +17401,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000197142": {
-"symbol": "ACSL5",
-"druggable_score": 0.167,
-"disease_score": 0.234,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000072401": {
 "symbol": "UBE2D1",
 "druggable_score": 0.167,
@@ -17665,13 +17490,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000173442": {
-"symbol": "EHBP1L1",
-"druggable_score": 0.0,
-"disease_score": 0.504,
-"top_disease": "Non-immune hydrops fetalis",
 "clinical": null
 },
 "ENSG00000198805": {
@@ -17812,13 +17630,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.485,
 "top_disease": "sexually transmitted disease",
-"clinical": null
-},
-"ENSG00000188375": {
-"symbol": "H3-5",
-"druggable_score": 0.167,
-"disease_score": 0.305,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000145743": {
@@ -18752,13 +18563,6 @@
 "top_disease": "rheumatoid arthritis",
 "clinical": null
 },
-"ENSG00000090054": {
-"symbol": "SPTLC1",
-"druggable_score": 0.333,
-"disease_score": 0.85,
-"top_disease": "amyotrophic lateral sclerosis 27, juvenile",
-"clinical": null
-},
 "ENSG00000139613": {
 "symbol": "SMARCC2",
 "druggable_score": 0.167,
@@ -19683,13 +19487,6 @@
 "top_disease": "COVID-19",
 "clinical": null
 },
-"ENSG00000116133": {
-"symbol": "DHCR24",
-"druggable_score": 0.333,
-"disease_score": 0.699,
-"top_disease": "Non-immune hydrops fetalis",
-"clinical": "Approved"
-},
 "ENSG00000163535": {
 "symbol": "SGO2",
 "druggable_score": 0.0,
@@ -20003,13 +19800,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000124164": {
-"symbol": "VAPB",
-"druggable_score": 0.0,
-"disease_score": 0.803,
-"top_disease": "amyotrophic lateral sclerosis type 8",
 "clinical": null
 },
 "ENSG00000116678": {
@@ -20516,13 +20306,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000168096": {
-"symbol": "ANKS3",
-"druggable_score": 0.0,
-"disease_score": 0.182,
-"top_disease": "Non-immune hydrops fetalis",
-"clinical": null
-},
 "ENSG00000102316": {
 "symbol": "MAGED2",
 "druggable_score": 0.0,
@@ -20789,13 +20572,6 @@
 "top_disease": "multiple sclerosis",
 "clinical": null
 },
-"ENSG00000109084": {
-"symbol": "TMEM97",
-"druggable_score": 0.167,
-"disease_score": 0.184,
-"top_disease": "sporadic amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000123106": {
 "symbol": "CCDC91",
 "druggable_score": 0.0,
@@ -20822,13 +20598,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000188021": {
-"symbol": "UBQLN2",
-"druggable_score": 0.0,
-"disease_score": 0.927,
-"top_disease": "amyotrophic lateral sclerosis type 15",
 "clinical": null
 },
 "ENSG00000152332": {
@@ -21552,13 +21321,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000100749": {
-"symbol": "VRK1",
-"druggable_score": 0.5,
-"disease_score": 0.684,
-"top_disease": "amyotrophic lateral sclerosis type 4",
-"clinical": null
-},
 "ENSG00000186908": {
 "symbol": "ZDHHC17",
 "druggable_score": 0.167,
@@ -21585,13 +21347,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000116857": {
-"symbol": "TMEM9",
-"druggable_score": 0.0,
-"disease_score": 0.411,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000038210": {
@@ -21935,13 +21690,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000118263": {
-"symbol": "KLF7",
-"druggable_score": 0.0,
-"disease_score": 0.484,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000100258": {
@@ -22385,13 +22133,6 @@
 "top_disease": "COVID-19",
 "clinical": null
 },
-"ENSG00000183735": {
-"symbol": "TBK1",
-"druggable_score": 0.5,
-"disease_score": 0.941,
-"top_disease": "frontotemporal dementia and/or amyotrophic lateral sclerosis 4",
-"clinical": null
-},
 "ENSG00000004777": {
 "symbol": "ARHGAP33",
 "druggable_score": 0.0,
@@ -22698,13 +22439,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000213930": {
-"symbol": "GALT",
-"druggable_score": 0.167,
-"disease_score": 0.872,
-"top_disease": "juvenile amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000183856": {
@@ -23876,13 +23610,6 @@
 "top_disease": "multiple sclerosis",
 "clinical": null
 },
-"ENSG00000171135": {
-"symbol": "JAGN1",
-"druggable_score": 0.167,
-"disease_score": 0.195,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000169047": {
 "symbol": "IRS1",
 "druggable_score": 0.333,
@@ -24807,13 +24534,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000166228": {
-"symbol": "PCBD1",
-"druggable_score": 0.0,
-"disease_score": 0.36,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000109680": {
 "symbol": "TBC1D19",
 "druggable_score": 0.0,
@@ -25591,13 +25311,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000135845": {
-"symbol": "PIGC",
-"druggable_score": 0.0,
-"disease_score": 0.438,
-"top_disease": "Non-immune hydrops fetalis",
-"clinical": null
-},
 "ENSG00000076662": {
 "symbol": "ICAM3",
 "druggable_score": 0.0,
@@ -26067,13 +25780,6 @@
 "top_disease": "asthma",
 "clinical": null
 },
-"ENSG00000105854": {
-"symbol": "PON2",
-"druggable_score": 0.0,
-"disease_score": 0.608,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000108479": {
 "symbol": "GALK1",
 "druggable_score": 0.5,
@@ -26240,13 +25946,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000030582": {
-"symbol": "GRN",
-"druggable_score": 0.167,
-"disease_score": 0.608,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000166974": {
@@ -27066,13 +26765,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000139832": {
-"symbol": "RAB20",
-"druggable_score": 0.0,
-"disease_score": 0.468,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000095209": {
@@ -28055,13 +27747,6 @@
 "top_disease": "immunodeficiency disease",
 "clinical": "Approved"
 },
-"ENSG00000123240": {
-"symbol": "OPTN",
-"druggable_score": 0.167,
-"disease_score": 0.866,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000185338": {
 "symbol": "SOCS1",
 "druggable_score": 0.0,
@@ -28151,13 +27836,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000147894": {
-"symbol": "C9orf72",
-"druggable_score": 0.167,
-"disease_score": 0.673,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000196154": {
@@ -30190,13 +29868,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000103335": {
-"symbol": "PIEZO1",
-"druggable_score": 0.167,
-"disease_score": 0.752,
-"top_disease": "Non-immune hydrops fetalis",
-"clinical": null
-},
 "ENSG00000108100": {
 "symbol": "CCNY",
 "druggable_score": 0.167,
@@ -31135,13 +30806,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000168259": {
-"symbol": "DNAJC7",
-"druggable_score": 0.0,
-"disease_score": 0.195,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000158106": {
 "symbol": "RHPN1",
 "druggable_score": 0.0,
@@ -32038,13 +31702,6 @@
 "top_disease": "herpes zoster",
 "clinical": null
 },
-"ENSG00000133104": {
-"symbol": "SPART",
-"druggable_score": 0.0,
-"disease_score": 0.038,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000119979": {
 "symbol": "DENND10",
 "druggable_score": 0.0,
@@ -32267,13 +31924,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.355,
 "top_disease": "non-autoimmune hemolytic anemia",
-"clinical": null
-},
-"ENSG00000104133": {
-"symbol": "SPG11",
-"druggable_score": 0.0,
-"disease_score": 0.942,
-"top_disease": "amyotrophic lateral sclerosis type 5",
 "clinical": null
 },
 "ENSG00000161791": {
@@ -32612,13 +32262,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000117419": {
-"symbol": "ERI3",
-"druggable_score": 0.167,
-"disease_score": 0.406,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000047644": {
 "symbol": "WWC3",
 "druggable_score": 0.0,
@@ -32695,13 +32338,6 @@
 "disease_score": 0.0,
 "top_disease": null,
 "clinical": null
-},
-"ENSG00000147955": {
-"symbol": "SIGMAR1",
-"druggable_score": 0.667,
-"disease_score": 0.844,
-"top_disease": "juvenile amyotrophic lateral sclerosis",
-"clinical": "Approved"
 },
 "ENSG00000187713": {
 "symbol": "TMEM203",
@@ -32899,13 +32535,6 @@
 "top_disease": "type 1 diabetes mellitus",
 "clinical": null
 },
-"ENSG00000119912": {
-"symbol": "IDE",
-"druggable_score": 0.5,
-"disease_score": 0.286,
-"top_disease": "sporadic amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000273749": {
 "symbol": "CYFIP1",
 "druggable_score": 0.167,
@@ -33079,13 +32708,6 @@
 "druggable_score": 0.167,
 "disease_score": 0.199,
 "top_disease": "focal segmental glomerulosclerosis",
-"clinical": null
-},
-"ENSG00000157911": {
-"symbol": "PEX10",
-"druggable_score": 0.0,
-"disease_score": 0.195,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000169895": {
@@ -34537,13 +34159,6 @@
 "top_disease": "COVID-19",
 "clinical": null
 },
-"ENSG00000170113": {
-"symbol": "NIPA1",
-"druggable_score": 0.0,
-"disease_score": 0.316,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000130396": {
 "symbol": "AFDN",
 "druggable_score": 0.167,
@@ -34684,13 +34299,6 @@
 "top_disease": "ulcerative colitis",
 "clinical": null
 },
-"ENSG00000107290": {
-"symbol": "SETX",
-"druggable_score": 0.0,
-"disease_score": 0.886,
-"top_disease": "amyotrophic lateral sclerosis type 4",
-"clinical": null
-},
 "ENSG00000072609": {
 "symbol": "CHFR",
 "druggable_score": 0.167,
@@ -34829,13 +34437,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.308,
 "top_disease": "osteoarthritis, hip",
-"clinical": null
-},
-"ENSG00000064601": {
-"symbol": "CTSA",
-"druggable_score": 0.5,
-"disease_score": 0.438,
-"top_disease": "Non-immune hydrops fetalis",
 "clinical": null
 },
 "ENSG00000169239": {
@@ -36630,13 +36231,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000161010": {
-"symbol": "MRNIP",
-"druggable_score": 0.0,
-"disease_score": 0.438,
-"top_disease": "frontotemporal dementia and/or amyotrophic lateral sclerosis 1",
-"clinical": null
-},
 "ENSG00000138606": {
 "symbol": "SHF",
 "druggable_score": 0.0,
@@ -36705,13 +36299,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000104290": {
-"symbol": "FZD3",
-"druggable_score": 0.0,
-"disease_score": 0.416,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000144504": {
@@ -37699,13 +37286,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.346,
 "top_disease": "Hodgkins lymphoma",
-"clinical": null
-},
-"ENSG00000125657": {
-"symbol": "TNFSF9",
-"druggable_score": 0.0,
-"disease_score": 0.287,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000161835": {
@@ -38954,13 +38534,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000134318": {
-"symbol": "ROCK2",
-"druggable_score": 0.667,
-"disease_score": 0.243,
-"top_disease": "Non-immune hydrops fetalis",
-"clinical": "Approved"
-},
 "ENSG00000078140": {
 "symbol": "UBE2K",
 "druggable_score": 0.167,
@@ -39787,13 +39360,6 @@
 "top_disease": "systemic lupus erythematosus",
 "clinical": null
 },
-"ENSG00000083937": {
-"symbol": "CHMP2B",
-"druggable_score": 0.0,
-"disease_score": 0.856,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000154222": {
 "symbol": "CC2D1B",
 "druggable_score": 0.0,
@@ -40415,13 +39981,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000090863": {
-"symbol": "GLG1",
-"druggable_score": 0.0,
-"disease_score": 0.313,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000137502": {
@@ -41796,13 +41355,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000143622": {
-"symbol": "RIT1",
-"druggable_score": 0.167,
-"disease_score": 0.699,
-"top_disease": "Non-immune hydrops fetalis",
-"clinical": null
-},
 "ENSG00000170779": {
 "symbol": "CDCA4",
 "druggable_score": 0.0,
@@ -42090,13 +41642,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000107566": {
-"symbol": "ERLIN1",
-"druggable_score": 0.0,
-"disease_score": 0.559,
-"top_disease": "juvenile amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000148841": {
 "symbol": "ITPRIP",
 "druggable_score": 0.0,
@@ -42214,13 +41759,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000089280": {
-"symbol": "FUS",
-"druggable_score": 0.167,
-"disease_score": 0.969,
-"top_disease": "sporadic amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000144426": {
@@ -42669,13 +42207,6 @@
 "druggable_score": 0.167,
 "disease_score": 0.458,
 "top_disease": "COVID-19",
-"clinical": null
-},
-"ENSG00000064703": {
-"symbol": "DDX20",
-"druggable_score": 0.167,
-"disease_score": 0.195,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000099860": {
@@ -43131,13 +42662,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000154429": {
-"symbol": "CCSAP",
-"druggable_score": 0.0,
-"disease_score": 0.552,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000138061": {
@@ -44267,13 +43791,6 @@
 "top_disease": "osteoarthritis, hand",
 "clinical": null
 },
-"ENSG00000133101": {
-"symbol": "CCNA1",
-"druggable_score": 0.333,
-"disease_score": 0.189,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": null
-},
 "ENSG00000088854": {
 "symbol": "DNAAF9",
 "druggable_score": 0.0,
@@ -44832,13 +44349,6 @@
 "druggable_score": 0.167,
 "disease_score": 0.164,
 "top_disease": "asthma",
-"clinical": null
-},
-"ENSG00000122359": {
-"symbol": "ANXA11",
-"druggable_score": 0.0,
-"disease_score": 0.875,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000138660": {
@@ -45476,13 +44986,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000160226": {
-"symbol": "CFAP410",
-"druggable_score": 0.0,
-"disease_score": 0.708,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000126759": {
@@ -46241,13 +45744,6 @@
 "top_disease": "asthma",
 "clinical": null
 },
-"ENSG00000162676": {
-"symbol": "GFI1",
-"druggable_score": 0.0,
-"disease_score": 0.636,
-"top_disease": "nonimmune chronic idiopathic neutropenia of adults",
-"clinical": null
-},
 "ENSG00000145990": {
 "symbol": "GFOD1",
 "druggable_score": 0.0,
@@ -46400,13 +45896,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.06,
 "top_disease": "Eczematoid dermatitis",
-"clinical": null
-},
-"ENSG00000169919": {
-"symbol": "GUSB",
-"druggable_score": 0.333,
-"disease_score": 0.641,
-"top_disease": "Non-immune hydrops fetalis",
 "clinical": null
 },
 "ENSG00000179240": {
@@ -46625,13 +46114,6 @@
 "disease_score": 0.0,
 "top_disease": null,
 "clinical": null
-},
-"ENSG00000111537": {
-"symbol": "IFNG",
-"druggable_score": 0.167,
-"disease_score": 0.608,
-"top_disease": "tuberous sclerosis",
-"clinical": "Approved"
 },
 "ENSG00000118096": {
 "symbol": "IFT46",
@@ -47095,13 +46577,6 @@
 "top_disease": "rheumatoid arthritis",
 "clinical": null
 },
-"ENSG00000147650": {
-"symbol": "LRP12",
-"druggable_score": 0.0,
-"disease_score": 0.617,
-"top_disease": "amyotrophic lateral sclerosis 28",
-"clinical": null
-},
 "ENSG00000168904": {
 "symbol": "LRRC28",
 "druggable_score": 0.0,
@@ -47501,13 +46976,6 @@
 "top_disease": null,
 "clinical": null
 },
-"ENSG00000204386": {
-"symbol": "NEU1",
-"druggable_score": 0.167,
-"disease_score": 0.684,
-"top_disease": "Non-immune hydrops fetalis",
-"clinical": null
-},
 "ENSG00000162139": {
 "symbol": "NEU3",
 "druggable_score": 0.167,
@@ -47709,13 +47177,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.054,
 "top_disease": "Hashimoto thyroiditis",
-"clinical": null
-},
-"ENSG00000141696": {
-"symbol": "P3H4",
-"druggable_score": 0.0,
-"disease_score": 0.3,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000072682": {
@@ -48178,13 +47639,6 @@
 "druggable_score": 0.0,
 "disease_score": 0.0,
 "top_disease": null,
-"clinical": null
-},
-"ENSG00000186314": {
-"symbol": "PRELID2",
-"druggable_score": 0.0,
-"disease_score": 0.115,
-"top_disease": "amyotrophic lateral sclerosis",
 "clinical": null
 },
 "ENSG00000142875": {
@@ -49734,13 +49188,6 @@
 "top_disease": null,
 "clinical": "Approved"
 },
-"ENSG00000127824": {
-"symbol": "TUBA4A",
-"druggable_score": 0.5,
-"disease_score": 0.881,
-"top_disease": "amyotrophic lateral sclerosis",
-"clinical": "Approved"
-},
 "ENSG00000037042": {
 "symbol": "TUBG2",
 "druggable_score": 0.167,
@@ -50363,5 +49810,558 @@
 "disease_score": 0.161,
 "top_disease": "seasonal allergic rhinitis",
 "clinical": null
+},
+"ENSG00000165671": {
+"symbol": "NSD1",
+"druggable_score": 0.333,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000165699": {
+"symbol": "TSC1",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000162063": {
+"symbol": "CCNF",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000107959": {
+"symbol": "PITRM1",
+"druggable_score": 0.167,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000116001": {
+"symbol": "TIA1",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000179295": {
+"symbol": "PTPN11",
+"druggable_score": 0.667,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": "Advanced"
+},
+"ENSG00000025293": {
+"symbol": "PHF20",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000174718": {
+"symbol": "RESF1",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000164930": {
+"symbol": "FZD6",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000166896": {
+"symbol": "ATP23",
+"druggable_score": 0.0,
+"disease_score": 0.419,
+"top_disease": "Sjogren syndrome",
+"clinical": null
+},
+"ENSG00000196937": {
+"symbol": "FAM3C",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000174775": {
+"symbol": "HRAS",
+"druggable_score": 0.667,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": "Advanced"
+},
+"ENSG00000083799": {
+"symbol": "CYLD",
+"druggable_score": 0.0,
+"disease_score": 0.59,
+"top_disease": "Crohn disease",
+"clinical": null
+},
+"ENSG00000175215": {
+"symbol": "CTDSP2",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000139826": {
+"symbol": "ABHD13",
+"druggable_score": 0.0,
+"disease_score": 0.038,
+"top_disease": "ulcerative colitis",
+"clinical": null
+},
+"ENSG00000100722": {
+"symbol": "ZC3H14",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000003393": {
+"symbol": "ALS2",
+"druggable_score": 0.0,
+"disease_score": 0.463,
+"top_disease": "parasitic infectious disease",
+"clinical": null
+},
+"ENSG00000183091": {
+"symbol": "NEB",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000154134": {
+"symbol": "ROBO3",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000236287": {
+"symbol": "ZBED5",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000160803": {
+"symbol": "UBQLN4",
+"druggable_score": 0.0,
+"disease_score": 0.164,
+"top_disease": "allergic rhinitis",
+"clinical": null
+},
+"ENSG00000101400": {
+"symbol": "SNTA1",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000170871": {
+"symbol": "KIAA0232",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000092140": {
+"symbol": "G2E3",
+"druggable_score": 0.0,
+"disease_score": 0.329,
+"top_disease": "gram-negative bacterial infections",
+"clinical": null
+},
+"ENSG00000197142": {
+"symbol": "ACSL5",
+"druggable_score": 0.167,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000173442": {
+"symbol": "EHBP1L1",
+"druggable_score": 0.0,
+"disease_score": 0.201,
+"top_disease": "osteoarthritis, hip",
+"clinical": null
+},
+"ENSG00000188375": {
+"symbol": "H3-5",
+"druggable_score": 0.167,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000090054": {
+"symbol": "SPTLC1",
+"druggable_score": 0.333,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000116133": {
+"symbol": "DHCR24",
+"druggable_score": 0.333,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": "Approved"
+},
+"ENSG00000124164": {
+"symbol": "VAPB",
+"druggable_score": 0.0,
+"disease_score": 0.362,
+"top_disease": "Crohn disease",
+"clinical": null
+},
+"ENSG00000168096": {
+"symbol": "ANKS3",
+"druggable_score": 0.0,
+"disease_score": 0.081,
+"top_disease": "systemic inflammatory response syndrome",
+"clinical": null
+},
+"ENSG00000109084": {
+"symbol": "TMEM97",
+"druggable_score": 0.167,
+"disease_score": 0.155,
+"top_disease": "COVID-19",
+"clinical": null
+},
+"ENSG00000188021": {
+"symbol": "UBQLN2",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000100749": {
+"symbol": "VRK1",
+"druggable_score": 0.5,
+"disease_score": 0.539,
+"top_disease": "cellulitis",
+"clinical": null
+},
+"ENSG00000116857": {
+"symbol": "TMEM9",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000118263": {
+"symbol": "KLF7",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000183735": {
+"symbol": "TBK1",
+"druggable_score": 0.5,
+"disease_score": 0.758,
+"top_disease": "autoinflammation with arthritis and vasculitis",
+"clinical": null
+},
+"ENSG00000213930": {
+"symbol": "GALT",
+"druggable_score": 0.167,
+"disease_score": 0.136,
+"top_disease": "asthma",
+"clinical": null
+},
+"ENSG00000171135": {
+"symbol": "JAGN1",
+"druggable_score": 0.167,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000166228": {
+"symbol": "PCBD1",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000135845": {
+"symbol": "PIGC",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000105854": {
+"symbol": "PON2",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000030582": {
+"symbol": "GRN",
+"druggable_score": 0.167,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000139832": {
+"symbol": "RAB20",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000123240": {
+"symbol": "OPTN",
+"druggable_score": 0.167,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000147894": {
+"symbol": "C9orf72",
+"druggable_score": 0.167,
+"disease_score": 0.532,
+"top_disease": "viral eye infection",
+"clinical": null
+},
+"ENSG00000103335": {
+"symbol": "PIEZO1",
+"druggable_score": 0.167,
+"disease_score": 0.523,
+"top_disease": "osteoarthritis, knee",
+"clinical": null
+},
+"ENSG00000168259": {
+"symbol": "DNAJC7",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000133104": {
+"symbol": "SPART",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000104133": {
+"symbol": "SPG11",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000117419": {
+"symbol": "ERI3",
+"druggable_score": 0.167,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000147955": {
+"symbol": "SIGMAR1",
+"druggable_score": 0.667,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": "Approved"
+},
+"ENSG00000119912": {
+"symbol": "IDE",
+"druggable_score": 0.5,
+"disease_score": 0.071,
+"top_disease": "asthma",
+"clinical": null
+},
+"ENSG00000157911": {
+"symbol": "PEX10",
+"druggable_score": 0.0,
+"disease_score": 0.195,
+"top_disease": "celiac disease",
+"clinical": null
+},
+"ENSG00000170113": {
+"symbol": "NIPA1",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000107290": {
+"symbol": "SETX",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000064601": {
+"symbol": "CTSA",
+"druggable_score": 0.5,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000161010": {
+"symbol": "MRNIP",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000104290": {
+"symbol": "FZD3",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000125657": {
+"symbol": "TNFSF9",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000134318": {
+"symbol": "ROCK2",
+"druggable_score": 0.667,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": "Approved"
+},
+"ENSG00000083937": {
+"symbol": "CHMP2B",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000090863": {
+"symbol": "GLG1",
+"druggable_score": 0.0,
+"disease_score": 0.313,
+"top_disease": "celiac disease",
+"clinical": null
+},
+"ENSG00000143622": {
+"symbol": "RIT1",
+"druggable_score": 0.167,
+"disease_score": 0.164,
+"top_disease": "Eczematoid dermatitis",
+"clinical": null
+},
+"ENSG00000107566": {
+"symbol": "ERLIN1",
+"druggable_score": 0.0,
+"disease_score": 0.197,
+"top_disease": "psoriasis",
+"clinical": null
+},
+"ENSG00000089280": {
+"symbol": "FUS",
+"druggable_score": 0.167,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000064703": {
+"symbol": "DDX20",
+"druggable_score": 0.167,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000154429": {
+"symbol": "CCSAP",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000133101": {
+"symbol": "CCNA1",
+"druggable_score": 0.333,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000122359": {
+"symbol": "ANXA11",
+"druggable_score": 0.0,
+"disease_score": 0.548,
+"top_disease": "ankylosing spondylitis",
+"clinical": null
+},
+"ENSG00000160226": {
+"symbol": "CFAP410",
+"druggable_score": 0.0,
+"disease_score": 0.896,
+"top_disease": "axial spondylometaphyseal dysplasia",
+"clinical": null
+},
+"ENSG00000162676": {
+"symbol": "GFI1",
+"druggable_score": 0.0,
+"disease_score": 0.58,
+"top_disease": "multiple sclerosis",
+"clinical": null
+},
+"ENSG00000169919": {
+"symbol": "GUSB",
+"druggable_score": 0.333,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000111537": {
+"symbol": "IFNG",
+"druggable_score": 0.167,
+"disease_score": 0.606,
+"top_disease": "immunodeficiency 69",
+"clinical": "Approved"
+},
+"ENSG00000147650": {
+"symbol": "LRP12",
+"druggable_score": 0.0,
+"disease_score": 0.482,
+"top_disease": "respiratory tract infectious disorder",
+"clinical": null
+},
+"ENSG00000204386": {
+"symbol": "NEU1",
+"druggable_score": 0.167,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000141696": {
+"symbol": "P3H4",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": null
+},
+"ENSG00000186314": {
+"symbol": "PRELID2",
+"druggable_score": 0.0,
+"disease_score": 0.115,
+"top_disease": "celiac disease",
+"clinical": null
+},
+"ENSG00000127824": {
+"symbol": "TUBA4A",
+"druggable_score": 0.5,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical": "Approved"
 }
 }
