@@ -18,5 +18,15 @@
 "status": "RECRUITING",
 "title": "A Study of NX-1607 in Adults With Advanced Malignancies",
 "n_studies": 1
+},
+"CBL-B inhibitor": {
+"compound": "CBL-B inhibitor",
+"found": true,
+"phase": "PHASE2",
+"phase_label": "Phase 2",
+"nct_id": "NCT05107674",
+"status": "RECRUITING",
+"title": "A Study of NX-1607 in Adults With Advanced Malignancies",
+"n_studies": 2
 }
 }
