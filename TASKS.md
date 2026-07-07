@@ -6,13 +6,18 @@
 
 ## Active
 
-> PIVOT (Tue): Target Triage is a TOOL a scientist drives, not just an agent that prints.
-> Web app built + verified in preview. Deterministic shortlist always works; chat degrades cleanly.
+> REFRAME (Tue): The TOOL is the product; the Marson dataset is just PROOF it works.
+> Value = a reusable instrument (rank → adversarially verify → interrogate) that runs on
+> ANY screen, reproducibly — not a one-off analysis. So it must WORK ON ANY SCREEN.
+> Locked design: agent infers the column MAPPING (confirmable); the ANALYSIS stays
+> deterministic (same shortlist every run); honest degradation when a signal is absent.
 
-- [ ] Do a real agent run through the web chat (needs API key) + capture transcript for the demo
-- [ ] Record 2-3 canonical chat transcripts as scripted fallback for the demo
-- [ ] Sync panels: agent re-rank/filter should update the table (chat ↔ table two-way)
-- [ ] README with exact reproduction steps + written summary (100-200w)
+- [ ] ScreenSchema (immutable) + generic load_screen(path, schema) → GeneRecord; Marson becomes one registered schema
+- [ ] Handle optional signals: breadth may be absent (Schmidt2022 has none), significance may be FDR+threshold not a bool
+- [ ] Agent tool infer_schema(path): reads header+rows, proposes mapping, scientist confirms
+- [ ] Prove reusability: register Schmidt2022 as a 2nd screen, run the SAME pipeline, its controls gate passes
+- [ ] Screen picker in the UI (Marson / Schmidt2022 / upload-your-own)
+- [ ] Live agent run + record fallback transcripts; README + 100-200w summary
 
 ## Waiting On
 

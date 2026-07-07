@@ -22,14 +22,18 @@ class ScoredGene:
 
 
 def condition_impact(pert: Perturbation) -> float:
-    """Effect breadth, gently weighted by knockdown strength.
+    """Per-condition impact. When the screen has a breadth signal (downstream-gene
+    count), impact = breadth weighted by knockdown strength. When it does NOT
+    (n_downstream is None, e.g. a MAGeCK screen), we degrade honestly and rank on
+    knockdown STRENGTH alone — never fabricating a breadth we don't have.
 
-    log1p tames the huge dynamic range in downstream-gene counts (5 vs 1000+),
-    so a gene with a moderate-but-real effect isn't buried by one outlier.
+    log1p tames the huge dynamic range in downstream counts (5 vs 1000+).
     """
+    strength = abs(pert.effect_size)
+    if pert.n_downstream is None:
+        return strength                      # no breadth signal: rank on effect size
     breadth = math.log1p(max(pert.n_downstream, 0))
-    strength = 1.0 + 0.05 * abs(pert.effect_size)
-    return breadth * strength
+    return breadth * (1.0 + 0.05 * strength)
 
 
 def score_gene(record: GeneRecord) -> ScoredGene:

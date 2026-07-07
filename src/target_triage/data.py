@@ -1,13 +1,15 @@
-"""Data boundary: load the Marson CD4+ T-cell Perturb-seq DE summary.
+"""Data boundary: load ANY screen into our internal records via a ScreenSchema.
 
 This is the single place raw CSV enters the system. Everything downstream works
-on immutable frozen records — no module mutates a perturbation row in place.
+on immutable frozen records — no module mutates a perturbation row in place, and
+NOTHING downstream knows a screen's column names. A ScreenSchema (see schema.py)
+maps a given screen's columns onto Perturbation/GeneRecord; that is what lets the
+same instrument run on Marson, Schmidt2022, or a scientist's own screen.
 
-The DE summary is a per-(gene, condition) table of knockdown effects. Columns we
-rely on (validated against the suppl table): target_contrast_gene_name (symbol),
-culture_condition (Rest/Stim8hr/Stim48hr), target_contrast (Ensembl id),
-n_cells_target, ontarget_effect_size (negative = knockdown), ontarget_significant,
-offtarget_flag, n_downstream (# downstream DE genes = effect breadth).
+Signals a screen may or may not carry are represented honestly:
+  - n_downstream is int OR None (None = this screen has no breadth signal).
+  - offtarget defaults to False when the screen has no off-target flag.
+  - condition defaults to a single "all" bucket when the screen has no condition col.
 """
 from __future__ import annotations
 
@@ -15,13 +17,10 @@ import csv
 import os
 from dataclasses import dataclass
 
-CONDITIONS = ("Rest", "Stim8hr", "Stim48hr")
+from .schema import MARSON, ScreenSchema
 
-# Resolve the committed data path relative to the repo, not the CWD.
-_REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DE_STATS_CSV = os.path.join(
-    _REPO, "data", "marson_perturbseq", "DE_stats.suppl_table.csv"
-)
+CONDITIONS = ("Rest", "Stim8hr", "Stim48hr")  # Marson's; kept for back-compat references
+DE_STATS_CSV = MARSON.path
 
 
 @dataclass(frozen=True)
@@ -31,11 +30,11 @@ class Perturbation:
     gene: str
     condition: str
     ensembl_id: str
-    n_cells: float
-    effect_size: float          # ontarget_effect_size; negative = knockdown
-    significant: bool           # ontarget_significant
-    offtarget: bool             # offtarget_flag
-    n_downstream: int           # effect breadth
+    n_cells: float | None            # None if the screen has no cell-count column
+    effect_size: float               # negative = knockdown reduces the readout
+    significant: bool
+    offtarget: bool
+    n_downstream: int | None         # effect breadth; None if the screen has none
 
 
 @dataclass(frozen=True)
@@ -47,49 +46,69 @@ class GeneRecord:
     by_condition: dict[str, Perturbation]  # condition -> Perturbation (read-only by convention)
 
 
-def _to_float(value: str, default: float = 0.0) -> float:
+def _to_float(value, default: float = 0.0) -> float:
     try:
         return float(value)
     except (TypeError, ValueError):
         return default
 
 
-def _to_bool(value: str) -> bool:
-    return value == "True"
+def _significant(row: dict, schema: ScreenSchema) -> bool:
+    """Significance from an explicit bool column, or derived from FDR < fdr_max."""
+    if schema.sig_col is not None:
+        return row.get(schema.sig_col) == "True"
+    if schema.fdr_col is not None:
+        return _to_float(row.get(schema.fdr_col), 1.0) < schema.fdr_max
+    return False
 
 
-def load_perturbations(path: str = DE_STATS_CSV) -> tuple[GeneRecord, ...]:
-    """Load the DE summary into immutable GeneRecords, one per gene.
+def load_screen(schema: ScreenSchema = MARSON) -> tuple[GeneRecord, ...]:
+    """Load a screen into immutable GeneRecords using its schema. Fails fast if the
+    file is missing — better an actionable error than a silently empty shortlist.
 
-    Raises FileNotFoundError with an actionable message if the committed data is
-    missing — fail fast at the boundary rather than producing an empty shortlist.
-    """
-    if not os.path.exists(path):
+    When a gene appears in multiple rows of one condition (e.g. Schmidt lists the
+    same gene under one phenotype once), the first row wins; keeps loading total."""
+    if not os.path.exists(schema.path):
         raise FileNotFoundError(
-            f"DE summary not found at {path}. Expected the committed Marson suppl "
-            f"table under data/marson_perturbseq/."
+            f"Screen '{schema.name}' data not found at {schema.path}."
         )
 
     by_gene: dict[str, dict[str, Perturbation]] = {}
     ensembl: dict[str, str] = {}
-    with open(path, newline="") as fh:
+    with open(schema.path, newline="") as fh:
         for row in csv.DictReader(fh):
-            gene = row["target_contrast_gene_name"]
-            cond = row["culture_condition"]
+            gene = (row.get(schema.gene_col) or "").strip()
+            if not gene:
+                continue
+            cond = (row.get(schema.condition_col) or "all").strip() if schema.condition_col else "all"
+            eid = (row.get(schema.ensembl_col) or "").strip() if schema.ensembl_col else ""
+            breadth = (
+                int(_to_float(row.get(schema.breadth_col)))
+                if schema.breadth_col else None
+            )
             pert = Perturbation(
                 gene=gene,
                 condition=cond,
-                ensembl_id=row["target_contrast"],
-                n_cells=_to_float(row["n_cells_target"]),
-                effect_size=_to_float(row["ontarget_effect_size"]),
-                significant=_to_bool(row["ontarget_significant"]),
-                offtarget=_to_bool(row["offtarget_flag"]),
-                n_downstream=int(_to_float(row["n_downstream"])),
+                ensembl_id=eid,
+                n_cells=_to_float(row.get(schema.ncells_col)) if schema.ncells_col else None,
+                effect_size=_to_float(row.get(schema.effect_col)),
+                significant=_significant(row, schema),
+                offtarget=(row.get(schema.offtarget_col) == "True") if schema.offtarget_col else False,
+                n_downstream=breadth,
             )
-            by_gene.setdefault(gene, {})[cond] = pert
-            ensembl[gene] = pert.ensembl_id
+            by_gene.setdefault(gene, {}).setdefault(cond, pert)
+            if eid:
+                ensembl[gene] = eid
 
     return tuple(
-        GeneRecord(gene=g, ensembl_id=ensembl[g], by_condition=dict(conds))
+        GeneRecord(gene=g, ensembl_id=ensembl.get(g, ""), by_condition=dict(conds))
         for g, conds in by_gene.items()
     )
+
+
+def load_perturbations(path: str | None = None) -> tuple[GeneRecord, ...]:
+    """Back-compat entry: load the Marson screen (the default proof dataset).
+
+    Existing callers used load_perturbations(); they keep working unchanged. New code
+    that wants a different screen calls load_screen(schema) directly."""
+    return load_screen(MARSON)

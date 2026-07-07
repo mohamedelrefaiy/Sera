@@ -16,6 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+viz = ["plotly>=5.24"]   # interactive figures (plotly skill); not a core-pipeline dep
 
 [project.scripts]
 target-triage = "target_triage.__main__:main"

@@ -67,7 +67,12 @@ def check_real_knockdown(record: GeneRecord, t: Thresholds) -> Check:
 
 
 def check_enough_cells(record: GeneRecord, t: Thresholds) -> Check:
-    peak = max((p.n_cells for p in _sig_clean(record)), default=0.0)
+    counts = [p.n_cells for p in _sig_clean(record) if p.n_cells is not None]
+    if not counts:
+        # the screen has no cell-count column — can't judge power, so don't gate on it
+        return Check("enough_cells", GATE, True, "NA",
+                     "no cell-count column in this screen (not gated)")
+    peak = max(counts)
     return Check("enough_cells", GATE, peak >= t.min_cells, int(peak),
                  f"peak n_cells among significant conditions = {int(peak)} (floor {int(t.min_cells)})")
 
@@ -91,13 +96,20 @@ def check_cross_guide(record: GeneRecord, ev: Evidence, t: Thresholds) -> Check:
 
 
 def check_cross_condition(record: GeneRecord, t: Thresholds) -> Check:
-    reproduced = [
-        p.condition for p in _sig_clean(record) if p.n_downstream >= t.min_downstream
-    ]
+    sig = _sig_clean(record)
+    # A screen with no breadth signal (n_downstream is None) can't judge "real breadth"
+    # per condition — so we count a condition as reproduced if it's significant at all.
+    has_breadth = any(p.n_downstream is not None for p in record.by_condition.values())
+    if has_breadth:
+        reproduced = [p.condition for p in sig
+                      if p.n_downstream is not None and p.n_downstream >= t.min_downstream]
+    else:
+        reproduced = [p.condition for p in sig]
     frac = len(reproduced) / max(len(record.by_condition), 1)
+    note = "" if has_breadth else " (breadth signal N/A for this screen — counting significance)"
     return Check("cross_condition", SCORE, frac >= 1 / 3, round(frac, 2),
                  f"reproduces in {len(reproduced)}/{len(record.by_condition)} conditions "
-                 f"({', '.join(reproduced) or 'none'})")
+                 f"({', '.join(reproduced) or 'none'}){note}")
 
 
 def check_held_out(record: GeneRecord, ev: Evidence) -> Check:
