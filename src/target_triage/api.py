@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import shutil
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
@@ -133,11 +134,15 @@ def _sse(event: dict) -> str:
 
 
 def _has_credentials() -> bool:
-    """True if the SDK is likely to authenticate (env key or a logged-in CLI)."""
+    """True if the SDK is likely to authenticate. Either an env key, or a `claude`
+    CLI on PATH — the CLI manages its own auth (env key, ~/.claude creds file, or the
+    macOS Keychain), so its mere presence is the reliable signal. If it turns out to
+    be logged out, the SDK surfaces that as a normal error event in the stream."""
     if os.environ.get("ANTHROPIC_API_KEY"):
         return True
-    # a logged-in `claude` CLI stores creds under ~/.claude; treat as available
-    return os.path.exists(os.path.expanduser("~/.claude/.credentials.json"))
+    if os.path.exists(os.path.expanduser("~/.claude/.credentials.json")):
+        return True
+    return shutil.which("claude") is not None
 
 
 def _message_to_events(message) -> list[dict]:

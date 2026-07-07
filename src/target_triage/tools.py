@@ -203,10 +203,12 @@ async def focus_gene(args):
 
 @tool(
     "reverify",
-    "Re-run adversarial verification on a gene with CUSTOM thresholds, then update its "
-    "evidence in the view. Use when the scientist wants to stress-test a pick ('re-verify "
-    "NRAS with a stricter donor cutoff'). Any omitted threshold keeps its default. "
-    "Returns the new verdict + checks so they can see whether it still survives.",
+    "Re-run adversarial verification on a gene, overriding ONLY the thresholds you pass. "
+    "Set just the one(s) the scientist named — e.g. to stress-test with a stricter donor "
+    "cutoff, pass only min_donor_corr. EVERY OTHER THRESHOLD KEEPS ITS CALIBRATED DEFAULT; "
+    "do not pass values you were not asked to change (passing 0 is treated as 'unset'). "
+    "Returns the new verdict + checks and reports exactly which thresholds changed, so the "
+    "comparison to the default verdict is apples-to-apples.",
     {"gene": str, "min_donor_corr": float, "min_guide_corr": float,
      "min_effect": float, "min_cells": float, "min_downstream": int},
 )
@@ -215,18 +217,29 @@ async def reverify(args):
     if gene not in _BY_GENE:
         return _text({"gene": gene, "error": "not in screen"})
     d = Thresholds()
+
+    def override(key, default, cast):
+        """Use the arg only if present and positive; 0/absent -> keep the default.
+        This guarantees a re-verify changes ONLY what the scientist asked for."""
+        v = args.get(key)
+        return cast(v) if (v is not None and float(v) > 0) else default
+
     t = Thresholds(
-        min_cells=float(args.get("min_cells") or d.min_cells),
-        min_effect=float(args.get("min_effect") or d.min_effect),
-        min_downstream=int(args.get("min_downstream") or d.min_downstream),
-        min_donor_corr=float(args.get("min_donor_corr") or d.min_donor_corr),
-        min_guide_corr=float(args.get("min_guide_corr") or d.min_guide_corr),
+        min_cells=override("min_cells", d.min_cells, float),
+        min_effect=override("min_effect", d.min_effect, float),
+        min_downstream=override("min_downstream", d.min_downstream, int),
+        min_donor_corr=override("min_donor_corr", d.min_donor_corr, float),
+        min_guide_corr=override("min_guide_corr", d.min_guide_corr, float),
     )
+    changed = {k: getattr(t, k) for k in
+               ("min_donor_corr", "min_guide_corr", "min_effect", "min_cells", "min_downstream")
+               if getattr(t, k) != getattr(d, k)}
+
     row = _row_for(gene, t)
-    row["thresholds"] = {"min_donor_corr": t.min_donor_corr, "min_guide_corr": t.min_guide_corr,
-                         "min_effect": t.min_effect, "min_cells": t.min_cells,
-                         "min_downstream": t.min_downstream}
-    return _view(row, {"action": "focus", "gene": gene, "row": row})
+    row["thresholds"] = changed                  # only the deltas — honest banner
+    row["reverified"] = True
+    return _view({**row, "changed_thresholds": changed or "none (same as default)"},
+                 {"action": "focus", "gene": gene, "row": row})
 
 
 def build_server():

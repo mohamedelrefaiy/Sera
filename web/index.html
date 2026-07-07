@@ -246,8 +246,10 @@ function drawer(row){
       <div class="ck-detail">${c.detail}</div>
     </div>`).join("");
   const num = v => (typeof v==="number") ? v.toFixed(2) : "—";
-  const thr = row.thresholds
-    ? ` <span style="color:var(--amber)">· re-verified at donor≥${row.thresholds.min_donor_corr}, guide≥${row.thresholds.min_guide_corr}</span>` : "";
+  const thrParts = row.thresholds ? Object.entries(row.thresholds)
+    .map(([k,v]) => `${k.replace('min_','').replace('_corr','')}≥${v}`) : [];
+  const thr = (row.reverified)
+    ? ` <span style="color:var(--amber)">· re-verified${thrParts.length?" at "+thrParts.join(", "):" (defaults)"}</span>` : "";
   const lede = row.verdict==="REJECT"
     ? `Ranked #${row.raw_rank} by raw impact, but <b style="color:var(--coral)">rejected</b> — a gate check failed. The tool drops it rather than hand you an artifact.${thr}`
     : `Raw-impact rank #${row.raw_rank}${row.rank?`, actionable #${row.rank}`:""}. Each check below is computed, not asserted.${thr}`;
