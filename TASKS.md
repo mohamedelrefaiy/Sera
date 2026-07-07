@@ -6,9 +6,10 @@
 
 ## Active
 
-- [ ] Verify the pre-computed pseudobulk + DE tables load and one perturbation's DE is retrievable
-- [ ] Build the controls-first eval: RASA2, IL2RA, CTLA4, FOXP3, TNFAIP3 move expected programs, print PASS/FAIL per control
-- [ ] Initialize git repo with MIT license and a focused first commit (never bulk-commit)
+- [ ] Port verify.py into src/ (gate/score/bonus checks over immutable records)
+- [ ] Add Open Targets + ClinicalTrials.gov clients to src/clients/ as new work
+- [ ] Build the @tool wrappers + Claude Agent SDK loop (the agent orchestrates the tools)
+- [ ] CLI entry (python -m target_triage) that runs the agent and writes the shortlist + reports
 
 ## Waiting On
 
@@ -21,4 +22,7 @@
 
 ## Done
 
-<!-- Completed tasks. The dashboard moves cards here; you can archive old ones anytime. -->
+- [x] Set up src/ Agent SDK package skeleton + .venv (claude-agent-sdk 0.2.111, pytest)
+- [x] Data boundary: immutable loader for the Marson DE summary (src/target_triage/data.py)
+- [x] Pure ranking logic over immutable records (src/target_triage/ranking.py)
+- [x] **Controls-first gate PASSES 5/5** — RASA2/IL2RA/TNFAIP3 (broad) + CTLA4/FOXP3 (focused), two-tier by biological signature (eval/test_controls.py)
