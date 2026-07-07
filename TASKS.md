@@ -6,10 +6,9 @@
 
 ## Active
 
-- [ ] Port verify.py into src/ (gate/score/bonus checks over immutable records)
-- [ ] Add Open Targets + ClinicalTrials.gov clients to src/clients/ as new work
-- [ ] Build the @tool wrappers + Claude Agent SDK loop (the agent orchestrates the tools)
-- [ ] CLI entry (python -m target_triage) that runs the agent and writes the shortlist + reports
+- [ ] Do a real agent run end-to-end and capture the transcript for the demo
+- [ ] Emit the shortlist artifact (JSON + per-target markdown reports) from the agent result
+- [ ] README with exact reproduction steps + written summary (100-200w)
 
 ## Waiting On
 
@@ -26,3 +25,7 @@
 - [x] Data boundary: immutable loader for the Marson DE summary (src/target_triage/data.py)
 - [x] Pure ranking logic over immutable records (src/target_triage/ranking.py)
 - [x] **Controls-first gate PASSES 5/5** — RASA2/IL2RA/TNFAIP3 (broad) + CTLA4/FOXP3 (focused), two-tier by biological signature (eval/test_controls.py)
+- [x] Adversarial verifier + evidence boundary; verifier gate PASSES (A1BG REJECT, heroes PROMOTE)
+- [x] Open Targets + ClinicalTrials.gov clients in src/ with seeded caches (new work)
+- [x] **Agent SDK loop**: 4 @tool wrappers + ClaudeAgentOptions; tool-layer gate PASSES (13/13 evals)
+- [x] CLI entry `python -m target_triage` streams the agent's tool calls + reasoning
