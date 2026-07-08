@@ -15,8 +15,8 @@ from .data import load_perturbations
 from .evidence import load_evidence
 from .ranking import rank_by_impact, significant_records
 from .verify import verify
-from .clients import opentargets
-from .tools import OBVIOUS_TCR, _condition_rows
+from ..clients import opentargets
+from ..llm.tools import OBVIOUS_TCR, _condition_rows
 
 # Demo spotlight anchors: their clinical-stage inhibitor (a checkable molecule).
 SPOTLIGHT = {

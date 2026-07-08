@@ -33,7 +33,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from target_triage.data import GeneRecord, load_perturbations  # noqa: E402
+from target_triage.core.data import GeneRecord, load_perturbations  # noqa: E402
 
 # --- thresholds (a judge can see and argue every one) ---
 MIN_EFFECT = 2.0        # |ontarget_effect_size| floor for a "real" knockdown

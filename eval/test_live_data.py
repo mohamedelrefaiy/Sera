@@ -22,9 +22,9 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from target_triage.data import load_screen  # noqa: E402
-from target_triage.schema import SCHMIDT2022  # noqa: E402
-from target_triage.tools import _condition_rows, _row_for  # noqa: E402
+from target_triage.core.data import load_screen  # noqa: E402
+from target_triage.core.schema import SCHMIDT2022  # noqa: E402
+from target_triage.llm.tools import _condition_rows, _row_for  # noqa: E402
 
 
 # ---- the new fields exist and carry the verified real values (Marson) ----

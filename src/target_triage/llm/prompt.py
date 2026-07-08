@@ -1,16 +1,13 @@
-"""The agent loop — Claude orchestrates the Target Triage tools.
+"""LLM configuration: the system prompt, default task, and SDK options.
 
-This is the project's "Claude Use" headline: Claude is not handed a finished
-shortlist. It ranks candidates, adversarially verifies the ones worth trusting,
-cross-checks them against Open Targets + ClinicalTrials.gov, and reasons over the
-numbers to produce a mechanism-annotated, scrutiny-survived shortlist — showing
-its work, including the candidates it rejects.
-
-Run:  python -m target_triage  (see cli.py)
+This is the model-facing config the agent loop consumes — separated from the loop
+itself so the prompt and tool surface can be edited without touching the driver.
+Dependency direction: agent/ -> llm/ -> core/. Nothing here drives the client; it
+only assembles what the client is given.
 """
 from __future__ import annotations
 
-from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
+from claude_agent_sdk import ClaudeAgentOptions
 
 from .tools import ALLOWED_TOOLS, build_server
 
@@ -62,29 +59,6 @@ Emit them as ordinary prose text, not inside a tool call. After the final tool c
 replace NEXT with a one-line 'DONE:' summarizing the shortlist."""
 
 
-def build_options() -> ClaudeAgentOptions:
-    """Assemble the SDK options: the in-process tool server + allow-list + prompt."""
-    server = build_server()
-    return ClaudeAgentOptions(
-        mcp_servers={"target_triage": server},
-        allowed_tools=ALLOWED_TOOLS,
-        system_prompt=SYSTEM_PROMPT,
-    )
-
-
-async def run_triage(task: str, on_message=None) -> list:
-    """Run the agent on a task, returning all messages. on_message(msg) streams them."""
-    options = build_options()
-    messages: list = []
-    async with ClaudeSDKClient(options=options) as client:
-        await client.query(task)
-        async for message in client.receive_response():
-            messages.append(message)
-            if on_message is not None:
-                on_message(message)
-    return messages
-
-
 DEFAULT_TASK = (
     "Produce a shortlist of 5 druggable, disease-linked regulators of CD4+ T-cell "
     "activation that survive adversarial verification. Start by ranking the top ~30 "
@@ -93,3 +67,13 @@ DEFAULT_TASK = (
     "and for any target with a known inhibitor verify its trial status. Show the "
     "candidates you reject and why."
 )
+
+
+def build_options() -> ClaudeAgentOptions:
+    """Assemble the SDK options: the in-process tool server + allow-list + prompt."""
+    server = build_server()
+    return ClaudeAgentOptions(
+        mcp_servers={"target_triage": server},
+        allowed_tools=ALLOWED_TOOLS,
+        system_prompt=SYSTEM_PROMPT,
+    )

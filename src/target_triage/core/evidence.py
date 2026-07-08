@@ -11,7 +11,13 @@ import csv
 import os
 from dataclasses import dataclass, field
 
-_REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# evidence.py lives at src/target_triage/core/evidence.py — four dirname() hops
+# (core -> package -> src -> repo root) reach the repo, where data/ lives.
+_REPO = os.path.dirname(
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+)
 _DATA = os.path.join(_REPO, "data")
 DONOR_CSV = os.path.join(_DATA, "robustness", "DE_donor_robustness_correlation_summary.csv")
 GUIDE_CSV = os.path.join(_DATA, "robustness", "DE_by_guide_correlation_results.csv")

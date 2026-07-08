@@ -19,9 +19,9 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from target_triage.data import load_perturbations  # noqa: E402
-from target_triage.evidence import load_evidence  # noqa: E402
-from target_triage.verify import verify  # noqa: E402
+from target_triage.core.data import load_perturbations  # noqa: E402
+from target_triage.core.evidence import load_evidence  # noqa: E402
+from target_triage.core.verify import verify  # noqa: E402
 
 PANEL = ("CBLB", "RASA2", "CD5", "TNFAIP3", "DGKA", "A1BG")
 

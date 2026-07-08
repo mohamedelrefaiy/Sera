@@ -14,11 +14,11 @@ import json
 
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
-from .data import CONDITIONS, load_perturbations
-from .evidence import load_evidence
-from .ranking import rank_by_impact, significant_records
-from .verify import Thresholds, verify
-from .clients import clinicaltrials, opentargets
+from ..core.data import CONDITIONS, load_perturbations
+from ..core.evidence import load_evidence
+from ..core.ranking import rank_by_impact, significant_records
+from ..core.verify import Thresholds, verify
+from ..clients import clinicaltrials, opentargets
 
 # --- load-once immutable state -------------------------------------------------
 _RECORDS = load_perturbations()
@@ -53,7 +53,7 @@ def _actionable_rank() -> dict[str, int]:
     global _ACTIONABLE_RANK
     if _ACTIONABLE_RANK is None:
         try:
-            from .shortlist import compute_shortlist  # lazy: breaks the import cycle
+            from ..core.shortlist import compute_shortlist  # lazy: breaks the import cycle
             _ACTIONABLE_RANK = {r["gene"]: r["rank"] for r in compute_shortlist()}
         except Exception:  # noqa: BLE001 — never let a figure detail crash a tool call
             _ACTIONABLE_RANK = {}
@@ -208,7 +208,7 @@ async def check_clinical_trials(args):
     {"condition": str, "min_druggable": float, "promoted_only": bool},
 )
 async def set_view(args):
-    from .shortlist import compute_shortlist
+    from ..core.shortlist import compute_shortlist
     condition = (args.get("condition") or "").strip() or None
     min_drug = float(args.get("min_druggable") or 0.0)
     promoted = bool(args.get("promoted_only"))

@@ -26,12 +26,19 @@ from fastapi.staticfiles import StaticFiles
 
 from collections import Counter
 
-from .data import load_perturbations
-from .ranking import significant_records
-from .shortlist import SPOTLIGHT, compute_shortlist
+from ..core.data import load_perturbations
+from ..core.ranking import significant_records
+from ..core.shortlist import SPOTLIGHT, compute_shortlist
 
+# app.py lives at src/target_triage/api/app.py — walk up four levels (api -> package
+# -> src -> repo root) to reach the served web/ directory at the repo root.
 _WEB_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "web"
+    os.path.dirname(
+        os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
+    ),
+    "web",
 )
 
 # Computed once at startup — the deterministic table.
@@ -102,6 +109,72 @@ def funnel() -> dict:
     }
 
 
+# How many background (unlabelled) cloud points to ship. The full screen is ~7k
+# significant genes; a volcano only needs enough to show the cloud's shape, and a
+# lighter payload keeps the inline SVG snappy. Shortlist genes are ALWAYS kept
+# (never sampled out) so no labelled point is ever dropped.
+VOLCANO_CLOUD_CAP = 900
+
+
+def _volcano_point(record) -> dict | None:
+    """One volcano point for a gene: its strongest-effect significant, on-target
+    condition. x = on-target effect size, y = downstream breadth (this screen's
+    honest impact axis — it carries no per-perturbation p-value). Returns None if
+    the gene has no usable measurement."""
+    best = None
+    for pert in record.by_condition.values():
+        if pert.significant and not pert.offtarget:
+            if best is None or abs(pert.effect_size) > abs(best.effect_size):
+                best = pert
+    if best is None:
+        return None
+    return {
+        "gene": record.gene,
+        "effect": round(best.effect_size, 2),
+        "downstream": best.n_downstream,          # int OR None (screen may lack breadth)
+        "condition": best.condition,
+    }
+
+
+@app.get("/api/volcano")
+def volcano(cloud_cap: int = VOLCANO_CLOUD_CAP) -> dict:
+    """Screen-wide volcano data. Every significant gene is one point; shortlist genes
+    carry their verdict so the frontend can label + colour them, and the anonymous
+    background is evenly downsampled to keep the payload light. No number is typed by
+    hand — all effect/breadth values come straight from the loaded screen.
+
+    Axes the frontend should draw:
+      x = on-target effect size (|effect| grows with knockdown strength)
+      y = downstream genes moved (breadth of transcriptional impact)
+    """
+    verdict_by_gene = {r["gene"]: r["verdict"] for r in _SHORTLIST}
+
+    labelled: list[dict] = []
+    background: list[dict] = []
+    for rec in significant_records(load_perturbations()):
+        pt = _volcano_point(rec)
+        if pt is None:
+            continue
+        verdict = verdict_by_gene.get(pt["gene"])
+        if verdict is not None:
+            labelled.append({**pt, "verdict": verdict})
+        else:
+            background.append(pt)
+
+    total_background = len(background)
+    cap = max(0, cloud_cap)
+    if cap and total_background > cap:
+        step = total_background / cap  # even stride keeps the cloud's shape unbiased
+        background = [background[int(i * step)] for i in range(cap)]
+
+    return {
+        "total_significant": total_background + len(labelled),
+        "background": background,
+        "background_sampled_from": total_background,
+        "labelled": labelled,
+    }
+
+
 CHAT_TIMEOUT_S = 90  # a full triage run streams within this; else we fail cleanly
 
 
@@ -125,7 +198,7 @@ async def chat(body: dict) -> StreamingResponse:
             yield _sse({"type": "done"})
         return StreamingResponse(no_key(), media_type="text/event-stream")
 
-    from .agent import run_triage  # lazy: only the chat path needs the SDK
+    from ..agent import run_triage  # lazy: only the chat path needs the SDK
 
     queue: asyncio.Queue = asyncio.Queue()
 

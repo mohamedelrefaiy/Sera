@@ -20,7 +20,7 @@ viz = ["plotly>=5.24"]   # interactive figures (plotly skill); not a core-pipeli
 
 [project.scripts]
 target-triage = "target_triage.__main__:main"
-target-triage-serve = "target_triage.serve:main"
+target-triage-serve = "target_triage.api.serve:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
