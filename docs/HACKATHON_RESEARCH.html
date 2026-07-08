@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Built with Claude: Life Sciences — Competitive Research Briefing</title>
+<style>
+  :root {
+    --bg: #0d0f12;
+    --panel: #14171c;
+    --panel-2: #191d23;
+    --border: #262b33;
+    --border-soft: #1e232a;
+    --ink: #e7e9ec;
+    --ink-dim: #a3abb5;
+    --ink-faint: #6b7480;
+    --accent: #d98c5f;
+    --accent-2: #7fb3a3;
+    --good: #6fae7f;
+    --warn: #d4a24e;
+    --danger: #cf6a6a;
+    --link: #8ab4d8;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.6;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px 120px; }
+
+  header.masthead {
+    border-bottom: 1px solid var(--border);
+    padding: 56px 0 40px;
+    margin-bottom: 8px;
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-size: 34px;
+    line-height: 1.15;
+    margin: 0 0 16px;
+    letter-spacing: -0.02em;
+    font-weight: 650;
+  }
+  .lede { font-size: 17px; color: var(--ink-dim); max-width: 72ch; margin: 0; }
+  .meta-row {
+    display: flex; flex-wrap: wrap; gap: 8px 20px;
+    margin-top: 26px;
+    font-family: var(--mono); font-size: 12.5px; color: var(--ink-faint);
+  }
+  .meta-row b { color: var(--ink-dim); font-weight: 500; }
+
+  .banner {
+    margin: 28px 0 40px;
+    background: linear-gradient(180deg, rgba(212,162,78,0.09), rgba(212,162,78,0.03));
+    border: 1px solid rgba(212,162,78,0.32);
+    border-left: 3px solid var(--warn);
+    border-radius: 10px;
+    padding: 18px 22px;
+  }
+  .banner h3 { margin: 0 0 6px; font-size: 14px; color: var(--warn); letter-spacing: 0.01em; }
+  .banner p { margin: 0; color: var(--ink-dim); font-size: 14.5px; }
+
+  section { margin: 52px 0 0; scroll-margin-top: 24px; }
+  h2 {
+    font-size: 13px; font-family: var(--mono); text-transform: uppercase;
+    letter-spacing: 0.13em; color: var(--ink-faint);
+    padding-bottom: 12px; margin: 0 0 24px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: baseline; gap: 12px;
+  }
+  h2 .num { color: var(--accent); }
+  h3.block { font-size: 20px; margin: 0 0 12px; letter-spacing: -0.01em; font-weight: 600; }
+  p { margin: 0 0 14px; }
+  a { color: var(--link); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .15s; }
+  a:hover { border-bottom-color: var(--link); }
+  strong { color: #f2f3f5; font-weight: 600; }
+  em { color: var(--ink-dim); }
+
+  .facts {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px; background: var(--border-soft);
+    border: 1px solid var(--border-soft); border-radius: 10px; overflow: hidden;
+  }
+  .fact { background: var(--panel); padding: 16px 18px; }
+  .fact .k { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; }
+  .fact .v { font-size: 15px; color: var(--ink); font-weight: 500; }
+  .fact .v small { display:block; color: var(--ink-faint); font-weight: 400; font-size: 12.5px; margin-top: 3px; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px 22px; margin: 0 0 14px;
+  }
+  .card.accent { border-left: 3px solid var(--accent); }
+  .card.good   { border-left: 3px solid var(--good); }
+  .card.warn   { border-left: 3px solid var(--warn); }
+  .card h4 { margin: 0 0 4px; font-size: 16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .card .sub { font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); margin-bottom: 10px; }
+  .card p:last-child { margin-bottom: 0; }
+  .tag {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.05em;
+    padding: 2px 8px; border-radius: 20px; text-transform: uppercase;
+    border: 1px solid var(--border); color: var(--ink-dim); white-space: nowrap;
+  }
+  .tag.rival { border-color: rgba(207,106,106,0.4); color: #e39a9a; }
+  .tag.edge  { border-color: rgba(111,174,127,0.4); color: #96c9a4; }
+  .tag.prior { border-color: rgba(138,180,216,0.4); color: var(--link); }
+
+  .tbl-scroll { overflow-x: auto; border: 1px solid var(--border-soft); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 560px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); background: var(--panel-2); position: sticky; top: 0; }
+  tr:last-child td { border-bottom: none; }
+  td.mono { font-family: var(--mono); font-size: 12.5px; color: var(--ink-dim); white-space: nowrap; }
+  .pill { font-family: var(--mono); font-size: 10.5px; padding: 1px 7px; border-radius: 4px; }
+  .pill.now  { background: rgba(212,162,78,0.16); color: var(--warn); }
+  .pill.done { background: rgba(107,116,128,0.18); color: var(--ink-faint); }
+  .pill.open { background: rgba(111,174,127,0.16); color: var(--good); }
+  .pill.up   { background: rgba(138,180,216,0.16); color: var(--link); }
+
+  ul.clean { list-style: none; padding: 0; margin: 0; }
+  ul.clean li { padding: 9px 0 9px 26px; position: relative; border-bottom: 1px solid var(--border-soft); color: var(--ink-dim); }
+  ul.clean li:last-child { border-bottom: none; }
+  ul.clean li::before { content: "→"; position: absolute; left: 4px; color: var(--accent); }
+  ul.clean li b { color: var(--ink); }
+
+  ol.play { counter-reset: step; list-style: none; padding: 0; margin: 0; }
+  ol.play li { counter-increment: step; padding: 12px 0 12px 44px; position: relative; border-bottom: 1px solid var(--border-soft); }
+  ol.play li:last-child { border-bottom: none; }
+  ol.play li::before {
+    content: counter(step); position: absolute; left: 0; top: 11px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--accent); font-family: var(--mono); font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } h1 { font-size: 27px; } }
+
+  .rubric { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 12px; }
+  .rubric .ax { background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 15px 16px; }
+  .rubric .ax .n { font-family: var(--mono); font-size: 11px; color: var(--ink-faint); }
+  .rubric .ax .t { font-weight: 600; margin: 4px 0 6px; font-size: 15px; }
+  .rubric .ax.hot { border-color: rgba(217,140,95,0.45); background: linear-gradient(180deg, rgba(217,140,95,0.07), transparent); }
+  .rubric .ax .d { font-size: 12.5px; color: var(--ink-dim); }
+
+  .callout { background: var(--panel-2); border: 1px solid var(--border); border-radius: 9px; padding: 16px 18px; font-size: 14px; color: var(--ink-dim); margin: 14px 0; }
+  .callout b { color: var(--accent-2); }
+
+  footer.foot { margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--ink-faint); }
+  footer.foot a { color: var(--ink-faint); }
+  .src-list { columns: 2; column-gap: 32px; font-size: 12.5px; }
+  .src-list a { display: block; margin-bottom: 5px; line-height: 1.4; }
+  @media (max-width: 640px) { .src-list { columns: 1; } }
+
+  nav.toc {
+    position: sticky; top: 0; background: rgba(13,15,18,0.9); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border-soft); z-index: 10;
+    display: flex; gap: 6px; overflow-x: auto; padding: 12px 24px; margin: 0 -24px 0;
+    font-family: var(--mono); font-size: 11.5px;
+  }
+  nav.toc a { color: var(--ink-faint); white-space: nowrap; padding: 4px 10px; border-radius: 6px; border-bottom: none; }
+  nav.toc a:hover { color: var(--ink); background: var(--panel); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="kicker">Competitive Research Briefing · 10-Agent Sweep</div>
+    <h1>Built with Claude: Life Sciences — the landscape, the rivals, and where Target Triage wins</h1>
+    <p class="lede">Ten parallel research agents swept the official event, the 2026 bio-hackathon calendar, Anthropic's judging rubric, comparable winning projects, and the closest competitor tooling. This is the synthesis — mapped to the Target Triage build.</p>
+    <div class="meta-row">
+      <span><b>Compiled</b> 2026-07-07</span>
+      <span><b>Method</b> 10 concurrent web-research agents</span>
+      <span><b>For</b> Target Triage · solo Build-track entry</span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <a href="#event">The Event</a>
+    <a href="#datasets">Datasets</a>
+    <a href="#rubric">Judging Rubric</a>
+    <a href="#rivals">Competitors</a>
+    <a href="#whitespace">Whitespace</a>
+    <a href="#priorart">Prior Art</a>
+    <a href="#calendar">Calendar</a>
+    <a href="#winners">Past Winners</a>
+    <a href="#playbook">Playbook</a>
+    <a href="#sources">Sources</a>
+  </nav>
+
+  <div class="banner">
+    <h3>⚠ There are no 2026 winners yet — and there cannot be</h3>
+    <p>The hackathon runs <strong>July 7–13, 2026</strong>. Today is July 7 — it started today. No submission gallery, no finalists, no winners exist; any "2026 winner" claim right now is fabricated. This briefing is therefore built on what <em>does</em> exist: the event's structure, the judging rubric, comparable projects from prior events, and the current competitor landscape — the actionable signal for a team competing this week.</p>
+  </div>
+
+  <section id="event">
+    <h2><span class="num">01</span> The Event — confirmed across Anthropic, Gladstone &amp; 4+ outlets</h2>
+    <div class="facts">
+      <div class="fact"><div class="k">Name</div><div class="v">Built with Claude: Life Sciences</div></div>
+      <div class="fact"><div class="k">Organizers</div><div class="v">Anthropic <small>+ Cerebral Valley (producer)<br>+ Gladstone Institutes (science partner)</small></div></div>
+      <div class="fact"><div class="k">Dates</div><div class="v">Jul 7–13, 2026 <small>Apps closed Jul 5 · running now</small></div></div>
+      <div class="fact"><div class="k">Format</div><div class="v">Global · fully virtual</div></div>
+      <div class="fact"><div class="k">Scale</div><div class="v">500 participants <small>Max team size: 2</small></div></div>
+      <div class="fact"><div class="k">Prize pool</div><div class="v">$100,000 <small>in Claude API / usage credits</small></div></div>
+      <div class="fact"><div class="k">Perk (top 500)</div><div class="v">1 mo Claude Max 20× <small>+ $200 API credits each</small></div></div>
+      <div class="fact"><div class="k">Judges</div><div class="v">Anthropic + Gladstone reps <small>Detailed rubric not public (JS-gated page)</small></div></div>
+    </div>
+
+    <div class="two-col" style="margin-top:16px;">
+      <div class="card accent">
+        <h4>Research track <span class="tag">"build from the bench"</span></h4>
+        <div class="sub">Tool: Claude Science</div>
+        <p>Start from a biological question; produce a <strong>discrete, reproducible deliverable</strong> — a finding, a trained model, or a reproducible analysis.</p>
+      </div>
+      <div class="card good">
+        <h4>Build track <span class="tag">"build beyond the bench"</span></h4>
+        <div class="sub">Tool: Claude Code · ← Target Triage fits here</div>
+        <p>Start from a <strong>named life-sciences user</strong> (scientist, clinic, biotech); build the tool they're missing — software that outlasts the week.</p>
+      </div>
+    </div>
+    <div class="callout">
+      <b>Naming correction for your docs:</b> project notes reference a "Builder track" — the official name is the <strong>Build track</strong> (press sometimes rebrands the pair as "Lab / Dev track"). Also keep the hackathon distinct from Anthropic's separate <em>"AI for Science" credits program</em> (~$30K, applications through Jul 15) — different thing.
+    </div>
+  </section>
+
+  <section id="datasets">
+    <h2><span class="num">02</span> The Featured Datasets — one is your exact use case</h2>
+    <p>Gladstone and partner labs supplied the Research-track datasets. The first is the same context Target Triage's proof-of-concept is built on.</p>
+    <div class="card accent">
+      <h4>Alex Marson (Gladstone) + Jonathan Pritchard (Stanford) <span class="tag edge">matches Target Triage</span></h4>
+      <div class="sub">T-cell Perturb-seq · immune sequencing for finding drug targets</div>
+      <p>The organizers themselves chose to feature exactly the Marson/Pritchard T-cell perturbation context your Marson proof case uses — strong validation that the build is aimed at the right target, not off to the side.</p>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h4>Katie Pollard (Gladstone)</h4>
+        <div class="sub">Regulatory genomics / MPRA</div>
+        <p>Train a model that reads DNA to predict regulatory activity.</p>
+      </div>
+      <div class="card">
+        <h4>Nevan Krogan (Gladstone)</h4>
+        <div class="sub">Protein interaction networks</div>
+        <p>Network-level evidence — a natural aggregation source for target triage.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="rubric">
+    <h2><span class="num">03</span> The Judging Rubric — and your single highest-leverage axis</h2>
+    <p>Anthropic "Built with Claude" events score four dimensions. Bio events add <strong>scientific relevance + real data + reproducibility</strong> as first-class criteria — things your controls-first discipline already delivers.</p>
+    <div class="rubric">
+      <div class="ax"><div class="n">Axis 1</div><div class="t">Technical Innovation</div><div class="d">Genuinely novel, not a wrapper.</div></div>
+      <div class="ax"><div class="n">Axis 2</div><div class="t">Organization &amp; Conventions</div><div class="d">Clean, commented, professional code — its own scored line.</div></div>
+      <div class="ax hot"><div class="n">Axis 3 · highest leverage</div><div class="t">Use of AI</div><div class="d">Explicitly separates "wraps APIs with prompt engineering" from "incorporates <b>MCP servers, custom RAG, advanced agentic capabilities</b>."</div></div>
+      <div class="ax"><div class="n">Axis 4</div><div class="t">UI / UX</div><div class="d">Usability &amp; polish. Your live.html is the asset here.</div></div>
+    </div>
+    <div class="callout" style="margin-top:18px;">
+      <b>The winning move, doubly evidenced:</b> expose Target Triage's tools/data as an <strong>MCP server</strong>. It's simultaneously (a) the clearest signal on the highest-differentiation rubric axis, and (b) a proven prize-winner — the MCP-server-for-bio-data pattern won cash at Bio×AI 2025 (PDB-MCP, Holy Bio MCP). Depth in a real workflow beats a thin integration.
+    </div>
+  </section>
+
+  <section id="rivals">
+    <h2><span class="num">04</span> The Competitor Map — who you're up against</h2>
+    <div class="card">
+      <h4>OrphaFold <span class="tag rival">nearest shipped project</span></h4>
+      <div class="sub">Gemini 3 Hackathon 2026 · Honorable Mention</div>
+      <p>Multi-agent evidence synthesis over Open Targets–style sources (Orphanet/OMIM, UniProt, AlphaFold, PubMed, ClinicalTrials.gov, ClinVar) for target ID + drug-repurposing hypotheses — the closest analog to Target Triage. <strong>But: built on Gemini, no MCP, scoped to rare-disease repurposing.</strong> It placed, so the category clearly resonates with judges — your Claude + MCP + deterministic-eval angle is the differentiator.</p>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h4>drug-discovery-skills <span class="tag rival">closest form-factor</span></h4>
+        <div class="sub">huifer / WellAlly · Claude Code plugin · MIT</div>
+        <p>Same intent (target dossier → Go/No-Go), same sources (Open Targets, ChEMBL, ClinicalTrials.gov). But immature (~14 stars, Jan 2026) and <strong>not a scored/deterministic pipeline</strong> — it narrates, it doesn't gate on a control.</p>
+      </div>
+      <div class="card">
+        <h4>OriGene <span class="tag prior">gold-standard to cite</span></h4>
+        <div class="sub">GenTEL Lab · bioRxiv Jun 2025</div>
+        <p>Self-evolving multi-agent "virtual disease biologist," 600+ tools over MCP, validated novel targets (GPR160, ARG2) in patient-derived organoids. Closed research system aimed at <em>de novo</em> discovery — the benchmark to cite, not a fast-triage rival.</p>
+      </div>
+      <div class="card">
+        <h4>BioMCP <span class="tag rival">best substrate</span></h4>
+        <div class="sub">GenomOncology · Rust · MIT · ~529★</div>
+        <p>Best-engineered evidence-retrieval MCP (PubTator3, Europe PMC, ClinicalTrials.gov, cBioPortal analytics). Retrieval-first — <strong>no scored verdict</strong>.</p>
+      </div>
+      <div class="card">
+        <h4>Open Targets MCP <span class="tag prior">official Anthropic</span></h4>
+        <div class="sub">Open Targets × Anthropic · Jan 12, 2026</div>
+        <p>Official connector for LLM-agent target discovery + prioritization + safety (worked example: PTGS2). It's the <strong>evidence layer</strong>, not a triage verdict — study it as prior art and a potential backend.</p>
+      </div>
+    </div>
+    <div class="callout">Also in the landscape: <b>Biomni</b> (Stanford, general biomedical agent), <b>ToolUniverse / TxAgent</b> (Harvard Zitnik, 600+ tools), <b>BioContextAI KB</b> (~18-source MCP). All general platforms where triage is one task among many — none is a focused, control-gated triage instrument.</div>
+  </section>
+
+  <section id="whitespace">
+    <h2><span class="num">05</span> The Whitespace — confirmed from three independent angles</h2>
+    <div class="card good">
+      <h4>No shipped project pairs Claude + MCP + drug-target triage / trial-evidence scoring</h4>
+      <p>Three separate agents (Devpost sweep, clinical-trials sweep, MCP-tooling sweep) converged on the same finding. Adjacent efforts do something else:</p>
+      <ul class="clean">
+        <li><b>Patient-to-trial matching</b> — TrialGPT, MatchMiner-AI, TrialMatchAI. Not target-level.</li>
+        <li><b>EHR / FHIR workflows</b> — MeldRx, HL7 Global AI Challenge, OOP. Not target-level.</li>
+        <li><b>Model-training on fixed datasets</b> — PharmaHacks 2026 winners (binding affinity, toxicity). Not evidence-integration.</li>
+        <li><b>Patient-facing genomics explainers</b> — BNFOthon variant dashboards. Not target-discovery.</li>
+      </ul>
+      <p style="margin-top:14px;">Your specific twist — <strong>rolling ClinicalTrials.gov + genetic + dependency evidence <em>up to the target level</em> for prioritization</strong> — is done in research papers and production platforms, but not as a competition-shipped, controls-gated instrument. That's defensible novelty, not a gap.</p>
+    </div>
+    <h3 class="block" style="margin-top:26px;">Your differentiators (the gaps rivals leave open)</h3>
+    <ul class="clean">
+      <li><b>Deterministic, control-gated scoring under the agent.</b> Every rival is retrieval-and-narrate or free-form multi-agent. None advertises a reproducible eval that <em>gates</em> a target's verdict. Your "nothing's done until the positive-control eval prints PASS" is uncopied.</li>
+      <li><b>DepMap + PrimeKG integration.</b> Largely absent from Claude-native bio tools — an obvious edge for a genomics-strong solo builder.</li>
+      <li><b>A transparent, auditable verdict — not a chat log.</b> Show the aggregated evidence table + the agent's reasoning + a control-validated score. Open Targets scores but doesn't reason; the agents reason but don't emit a defensible score.</li>
+      <li><b>Video-first live-run notebook (web/live.html).</b> A demo/UX angle none of them have — they're CLIs, plugins, or papers.</li>
+    </ul>
+    <div class="callout"><b>Reproducibility is a real edge — Anthropic said so itself.</b> Its own BioMysteryBench found ~half of Claude's hard-problem wins came via <em>non-reproducible</em> reasoning paths. A deterministic, auditable evidence trail directly answers a weakness Anthropic has publicly flagged.</div>
+  </section>
+
+  <section id="priorart">
+    <h2><span class="num">06</span> Reusable Prior Art — schemas &amp; citations to ground your pitch</h2>
+    <div class="card" style="border-left:3px solid var(--link);">
+      <h4>Open Targets: genetics ~halves the odds of trial early-stoppage</h4>
+      <p>Open Targets' NLP study of ClinicalTrials.gov stop-reasons showed trials halted for safety/efficacy were <em>less</em> supported by genetic evidence — genetic support roughly <strong>halved</strong> the odds of early stoppage. The canonical published proof that <em>trial outcomes + genetics jointly predict target quality</em> — exactly Target Triage's logic. Cite this to ground the whole approach in established science.</p>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <h4>Six-axis target-prioritization rubric</h4>
+        <div class="sub">LLM AD-target paper · medRxiv 2025</div>
+        <p>Ranks targets on biological confidence · technical feasibility · clinical developability · patient impact · competitive landscape · safety. A ready-made, citable scoring schema to aggregate evidence over.</p>
+      </div>
+      <div class="card">
+        <h4>Method precedents to reference</h4>
+        <div class="sub">shows judges you know the field</div>
+        <p><b>TrialGPT</b> (NIH/NLM, retrieval→match→rank, 87% acc). <b>MatchMiner-AI</b> (Dana-Farber, synthetic-EHR, open weights). <b>ClinicalTrialsHub</b> (registry + PubMed fusion). <b>DrugAgent</b> (+45% F1 with reasoning agents).</p>
+      </div>
+    </div>
+    <div class="callout"><b>Eval-harness angle for the controls-first gate:</b> named benchmarks exist to cite — BixBench, BioAgentBench, CompBioBench, BiomniBench. Grounding your positive-control eval in a named harness strengthens the reproducibility claim.</div>
+  </section>
+
+  <section id="calendar">
+    <h2><span class="num">07</span> The 2026 Bio-Hackathon Calendar</h2>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>Event</th><th>Dates</th><th>Format</th><th>Theme</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><b>Built with Claude: Life Sciences</b><br><span class="mono" style="font-size:11px">Anthropic + Gladstone + Cerebral Valley</span></td><td class="mono">Jul 7–13</td><td>Virtual</td><td>Claude Science / Claude Code for bio</td><td><span class="pill now">ONGOING</span></td></tr>
+          <tr><td>InnovATEBIO Big Ideas Hackathon</td><td class="mono">Jun 29–Jul 1</td><td>Virtual</td><td>Biotech-education challenges</td><td><span class="pill done">Concluded</span></td></tr>
+          <tr><td>NSRI Summer Research Hackathon</td><td class="mono">Jul 13–18</td><td>Virtual</td><td>Research methods incl. healthcare/biotech</td><td><span class="pill open">Open</span></td></tr>
+          <tr><td>Berlin Bio × AI Hackathon</td><td class="mono">Feb 27–28</td><td>Berlin</td><td>Protein design, genome modeling, agentic AI</td><td><span class="pill done">Concluded</span></td></tr>
+          <tr><td>YC Bio × AI Hackathon (1-day)</td><td class="mono">Mar 8</td><td>SF</td><td>Bio × AI</td><td><span class="pill done">Concluded</span></td></tr>
+          <tr><td>Harvard HSIL Hackathon</td><td class="mono">Apr 10–11</td><td>Hybrid</td><td>AI health-systems solutions</td><td><span class="pill done">Concluded</span></td></tr>
+          <tr><td>AIxBio Hackathon (Apart)</td><td class="mono">Apr 24–26</td><td>Virtual</td><td>AI × biosecurity</td><td><span class="pill done">Concluded</span></td></tr>
+          <tr><td>Bio-IT World FAIR Data Hackathon</td><td class="mono">May 18–19</td><td>Boston</td><td>Open-source &amp; FAIR data</td><td><span class="pill done">Concluded</span></td></tr>
+          <tr><td>BioHackathon Japan (bh26)</td><td class="mono">Sep 13–19</td><td>Japan</td><td>Bioinformatics / linked data</td><td><span class="pill up">Upcoming</span></td></tr>
+          <tr><td>BioHackathon Europe (ELIXIR)</td><td class="mono">Nov 9–13</td><td>Barcelona</td><td>Bioinformatics tools &amp; standards</td><td><span class="pill up">Upcoming</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout"><b>Naming caution:</b> several distinct "Bio × AI" events exist — BIO Protocol's flagship <b>$125K</b> event was <b>2025</b> (not 2026); YC's was a 1-day Mar 2026; Berlin's was Feb 2026. Don't conflate them. Also don't confuse this event with unrelated university "Claude hackathons" (Cornell, Columbia×NYU, Cambridge) that surface on Devpost.</div>
+  </section>
+
+  <section id="winners">
+    <h2><span class="num">08</span> What Actually Wins — patterns from real winners</h2>
+    <p>No Life Sciences winners exist yet, but Anthropic's <em>other</em> 2025–26 events reveal a consistent winning formula.</p>
+    <div class="two-col">
+      <div class="card">
+        <h4>Built with Opus 4.6 <span class="tag">$100K · 13,000 applied</span></h4>
+        <ul class="clean" style="margin-top:6px">
+          <li><b>1st CrossBeam</b> — lawyer; housing-permit parser</li>
+          <li><b>2nd Elisa</b> — visual IDE; <em>1,500+ tests, 39K LOC in 30h</em></li>
+          <li><b>3rd PostVisit.ai</b> — cardiologist; clinical-evidence surfacing</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Built with Opus 4.7 <span class="tag">two agent categories</span></h4>
+        <ul class="clean" style="margin-top:6px">
+          <li><b>1st Medkit</b> — physician; clinic sim w/ Managed Agents grading</li>
+          <li><b>2nd Wrench Board</b> — agent builds electrical graphs</li>
+          <li><b>ARIA</b> — Best Use of Managed Agents (factory maintenance)</li>
+        </ul>
+      </div>
+    </div>
+    <h3 class="block" style="margin-top:24px;">The winning formula, distilled</h3>
+    <ul class="clean">
+      <li><b>Domain expert &gt; pro engineer.</b> Anthropic celebrates a named real user in a specific field — lawyer, cardiologist, physician, carpenter. You <em>are</em> the genomics domain expert.</li>
+      <li><b>Agents are the headline.</b> Opus 4.7 had two dedicated agent-orchestration prize categories. Multi-step agentic framing wins.</li>
+      <li><b>Real, verifiable, traceable output over demos.</b> Tekton ("every component traceable to its source"), Sim Francisco (Census-grounded) — reproducibility is quoted as a quality signal.</li>
+      <li><b>Eval/test discipline is visibly rewarded.</b> Anthropic quotes test counts (Elisa's 1,500+). Your control-gate is exactly this signal.</li>
+      <li><b>Wet-lab / experimental validation is the top bio differentiator.</b> OriGene's organoid validation is what elevates it. "Nothing is done until it validates" is the winning posture.</li>
+    </ul>
+  </section>
+
+  <section id="playbook">
+    <h2><span class="num">09</span> The Playbook — a solo Build-track entry, this week</h2>
+    <ol class="play">
+      <li><b>Pick the Build track + one tractable target-triage flow</b> you personally find annoying in genomics. Write the one-sentence problem statement first.</li>
+      <li><b>Define "done" = the positive-control eval printing PASS.</b> This is your Impact + Reproducibility proof <em>and</em> your demo punchline.</li>
+      <li><b>Max the "Use of AI" axis:</b> be genuinely agentic (multi-step reasoning) <em>and</em> expose your tools/data as an <strong>MCP server</strong>. This is the highest-leverage single move.</li>
+      <li><b>Lean into DepMap + PrimeKG</b> — the evidence sources rivals skip. Differentiate on genomics depth.</li>
+      <li><b>Storyboard the ~90-second demo before coding</b>; build the skeleton to that one flow. Cut anything off the demo path. (Overscoping is the #1 killer.)</li>
+      <li><b>Use real Marson/Gladstone data, not toy data</b> — directly scored in bio events, and it's the featured dataset.</li>
+      <li><b>Hard-code/cache the happy path</b> — mock slow APIs, keep the ClinicalTrials.gov cache warm (already done), screenshot fallbacks. Judges penalize demos that never reach the punchline.</li>
+      <li><b>Record a tight video:</b> problem (30%) → solution + live demo (70%) → the eval PASS on screen. Keep tech jargon under two sentences.</li>
+      <li><b>Keep code clean and commented</b> (its own scored axis); start from your existing base. <b>Submit early evening, not the last hour.</b></li>
+    </ol>
+    <div class="callout" style="margin-top:20px; border-color: rgba(111,174,127,0.4);">
+      <b>Bottom line:</b> the research doesn't tell you to change course — it tells you the course is right and where to sharpen. You sit in a genuine gap between "thin solo plugin" and "600-tool research platform": a <strong>focused, controls-validated, genomics-literate target-triage instrument, exposed over MCP, demoed video-first on the exact dataset the organizers chose to feature.</strong> That's a defensible pitch on every rubric axis at once.
+    </div>
+  </section>
+
+  <section id="sources">
+    <h2><span class="num">10</span> Key Sources</h2>
+    <div class="src-list">
+      <a href="https://cerebralvalley.ai/e/built-with-claude-life-sciences">Cerebral Valley — event page</a>
+      <a href="https://alphasignal.ai/news/anthropic-s-claude-science-hackathon-offers-researchers-100k-to-reinvent">AlphaSignal — hackathon coverage</a>
+      <a href="https://www.anthropic.com/news/claude-science-ai-workbench">Anthropic — Claude Science launch</a>
+      <a href="https://www.anthropic.com/news/healthcare-life-sciences">Anthropic — Claude for Healthcare &amp; Life Sciences</a>
+      <a href="https://www.anthropic.com/research/Evaluating-Claude-For-Bioinformatics-With-BioMysteryBench">Anthropic — BioMysteryBench</a>
+      <a href="https://blog.opentargets.org/official-open-targets-mcp/">Open Targets MCP × Anthropic</a>
+      <a href="https://www.opentargets.org/news/clinical-trial-stop-reasons-Jul24.html">Open Targets — genetics &amp; trial stop-reasons</a>
+      <a href="https://blog.opentargets.org/machine-learning-for-drug-target-identification-and-prioritisation-at-open-targets/">Open Targets — ML for target prioritisation</a>
+      <a href="https://devpost.com/software/orphafold">OrphaFold (Devpost)</a>
+      <a href="https://github.com/huifer/drug-discovery-skills">drug-discovery-skills (GitHub)</a>
+      <a href="https://gentel-lab.github.io/OriGene-Homepage/">OriGene</a>
+      <a href="https://github.com/genomoncology/biomcp">BioMCP (GitHub)</a>
+      <a href="https://github.com/anthropics/life-sciences">Anthropic life-sciences marketplace</a>
+      <a href="https://claude.com/connectors/open-targets">Claude — Open Targets connector</a>
+      <a href="https://www.bio.xyz/blog-posts/midpoint-winners-of-the-bio-x-ai-hackathon-these-are-the-projects-driving-agentic-science-forward">Bio×AI 2025 — winners</a>
+      <a href="https://claude.com/blog/meet-the-winners-of-our-built-with-opus-4-6-claude-code-hackathon">Built with Opus 4.6 — winners</a>
+      <a href="https://claude.com/blog/meet-the-winners-of-built-with-opus-4-7-claude-code-hackathon">Built with Opus 4.7 — winners</a>
+      <a href="https://claude.com/blog/meet-the-winners-of-our-claude-opus-4-8-build-day-hackathon">Opus 4.8 Build Day — winners</a>
+      <a href="https://www.ncbi.nlm.nih.gov/research/trialgpt/">TrialGPT (NIH/NLM)</a>
+      <a href="https://arxiv.org/abs/2412.17228">MatchMiner-AI (arXiv)</a>
+      <a href="https://blog.jetbrains.com/ai/2026/06/how-to-win-a-hackathon-notes-from-the-judging-table/">JetBrains — how to win a hackathon</a>
+      <a href="https://info.devpost.com/blog/hackathon-judging-tips">Devpost — judging tips</a>
+    </div>
+    <footer class="foot">
+      <p>Generated 2026-07-07 from a 10-agent parallel web-research sweep for the <b>2026-BuiltwithClaude-LifeSciences</b> project (Target Triage). Every substantive claim traces to a cited source above. Winners for the Life Sciences edition are not included because the event was still in progress at time of writing — treat any such claim dated before ~July 13–20, 2026 as unverified.</p>
+    </footer>
+  </section>
+
+</div>
+</body>
+</html>

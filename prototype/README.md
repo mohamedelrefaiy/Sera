@@ -42,7 +42,7 @@ python3 rank_sketch.py   # full ranking (uses cached Open Targets; first run ~3 
 python3 report.py        # emit the bench artifact to output/ (shortlist.json + .md + per-target reports)
 ```
 
-## Key findings (locked into ../ARCHITECTURE.md)
+## Key findings (locked into ../docs/ARCHITECTURE.md)
 
 - **Data path**: the summary CSV (4.6 MB) + repo robustness tables (< 1 MB) + 2 screens make the
   whole tool laptop-native. The 44/16.8 GB h5ad files are NOT needed for v1.

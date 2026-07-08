@@ -1,7 +1,8 @@
 # Project Working Memory
 
 Project-local context for the **Built with Claude: Life Sciences** hackathon. Read this
-first; deeper notes live in `memory/`. Task list is `TASKS.md` (view/edit via `dashboard.html`).
+first; deeper notes live in `memory/`. Task list is `docs/TASKS.md` (view/edit via
+`docs/dashboard.html`). All prose docs and the HTML tools live under `docs/`.
 
 ## Me
 
@@ -23,7 +24,24 @@ Project vocabulary lives in `memory/glossary.md`. Started clean; grows as we go.
 ## Projects
 
 - **Target Triage** — the hackathon build. See `memory/projects/target-triage.md`,
-  plus `HACKATHON_PLAN.md` (phases + deadline) and `ARCHITECTURE.md` (pipeline, upgrades).
+  plus `docs/HACKATHON_PLAN.md` (phases + deadline) and `docs/ARCHITECTURE.md` (pipeline, upgrades).
+
+## Frontend design (mandatory)
+
+Any frontend/UI work — new pages, redesigns, or visual polish — MUST go through the
+installed design-taste skills. Do not hand-roll UI without them.
+
+- **Redesign / audit existing pages** → invoke `/redesign-existing-projects` first (it
+  audits before changing, so it won't break live wiring), then apply.
+- **Aesthetic direction** → layer in `/minimalist-ui` (clean editorial data UI — the
+  right register for a genomics evidence tool; the data is the hero). Port its principles
+  into the existing dark palette; do not flip pages to light mode.
+- **New pages from scratch** → `/design-taste-frontend` (v2 default).
+- Other variants available if a task calls for them: `/high-end-visual-design`,
+  `/full-output-enforcement`, `/design-taste-frontend-v1` (legacy fallback).
+
+Precedent: `web/run.html` was redesigned this way (two-column sticky rail + polish pass,
+zero data touched). Keep that bar.
 
 ## Preferences
 

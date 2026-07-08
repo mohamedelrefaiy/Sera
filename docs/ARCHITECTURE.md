@@ -10,6 +10,91 @@ that could win Gladstone's $10k "advance the field" award.
 
 ---
 
+## THE REFRAMING — this is a general instrument, not a T-cell script (2026-07-07)
+
+Read the whole document below through this lens: **the T-cell screen is the *proof domain*, not the
+product.** What we actually built is a domain-agnostic method — `prioritize -> falsify -> corroborate`,
+with an agent reasoning over computed facts and a positive-control gate proving it works — that happens
+to be demonstrated on Marson Perturb-seq. Everything downstream of ingest is an instance of that method.
+
+This is not aspirational. `src/target_triage/data.py` already maps ANY screen's columns onto immutable
+internal records via a `ScreenSchema`, and `eval/test_reusable.py` PROVES the identical pipeline recovers
+known biology on two structurally different screens — Marson (Perturb-seq; has effect-breadth, boolean
+significance, 3 conditions) and Schmidt2022 (MAGeCK CRISPRi; no breadth column, FDR-derived significance).
+That green two-screen control **is** the general-instrument claim, empirically, today.
+
+**How to pitch it (and how NOT to).** Pitch the *mechanism*, never "point it at anything":
+
+> A screen-agnostic instrument: add a schema and a positive-control eval; if the controls reproduce, the
+> same falsify -> corroborate loop runs — and if they don't, it refuses to load.
+
+That single sentence is simultaneously the credibility guarantee and the safety guarantee (it's our
+controls-first discipline promoted into the headline). Avoid "a judgment layer for all of science" /
+"point it at anything" — that is the Galaxy/Terra graveyard pitch (a substrate with no opinion), it starts
+a breadth fight with general AI-co-scientist tools we can't win, and "anything" is exactly the phrase a
+dual-use reviewer flags.
+
+**The autonomous loop is the verifier loop iterated — there is no second loop to build.** The autonomous
+mode is `verify()` run inside a *bounded* `for`, where the agent chooses the next surviving candidate to
+try to falsify. The ordering is load-bearing for trust: every step's only power is to REJECT a candidate,
+never to generate one, so the loop can only *shrink* the shortlist against fixed thresholds — it cannot
+amplify into novel capability, because no step emits anything actionable. Demo-safe minimum: fixed N (never
+`while`), seed from a non-obvious overlay-mover, "propose next experiment" = a threshold-stress `reverify`
+(purely in-silico re-analysis), end on a printed `loop complete: N verified, K promoted, M rejected`.
+
+### Target architecture (post-hackathon — the "Tuesday" refactor, NOT a Monday task)
+
+A domain-agnostic **core** + per-domain **plugins**. Ship the *words* of this now (the code already proves
+them); build the formal `Candidate`/`Protocol` refactor only after submission.
+
+- **Core (never varies per domain):** the DTOs (`Candidate`, `Scored`, `Check`, `Verdict` +
+  GATE/SCORE/BONUS taxonomy — already domain-agnostic in `verify.py`), the `prioritize -> falsify ->
+  corroborate` orchestration, the controls-gate runner, the plugin loader, the view-update protocol, and
+  the bounded autonomous loop.
+- **A plugin supplies exactly four surfaces** (all pure, typed as `Protocol`s): (1) a **schema/loader**
+  (`ScreenSchema` today), (2) **scorer(s)** (`ranking.py`), (3) **refutation checks** (the `check_*` in
+  `verify.py`), (4) **held-out evidence source(s)** (`evidence.py` + Open Targets) — plus its **positive
+  controls** (the IDs that MUST recover).
+- **Hard invariant, enforced by the loader:** a plugin does not register unless its positive-control eval
+  passes. Generality is allowed *only where a control can gate it*. T-cells is simply the first plugin.
+- **The autonomous loop needs NO new plugin method.** "Propose next candidate" = pop the highest-scoring
+  not-yet-tested survivor. Keep candidate-selection a *policy* the loop owns (default: greedy-by-score;
+  agent may reorder), never a plugin hook — a `propose_next()` on the plugin would let a domain author
+  smuggle heuristics *past* the verifier, destroying the exact trust property. Selection policy, never a
+  validation bypass.
+
+### Safety guardrails worth building into the core (proportionate — not security theater)
+
+1. **Output-type boundary (the one that matters).** The pipeline output type is `Ranking | Verdict |
+   Evidence` — numbers/records over rows — and nothing else. No plugin surface may return a sequence, an
+   edit, a construct, or a synthesis spec. The `@dataclass(frozen=True)` return types already have exactly
+   this shape; formalizing it keeps `prioritize -> falsify -> corroborate` definitionally on the *analysis*
+   side of the analysis-vs-design line, no matter what plugin loads.
+2. **Plugin allow-listing — don't regress what exists.** `schema.REGISTRY` is curated and `get_schema`
+   already raises on unknown names. Plugins load from a vetted registry, never by arbitrary path or
+   auto-discovery. This is the line between "an instrument with known domains" and "point it at anything."
+3. **Human-in-the-loop seam (reserve, don't build).** Keep "propose experiment" a distinct output type from
+   "verdict," so IF the 6-12mo "sim-execute the next experiment" vision ever lands, requiring sign-off is
+   trivial. For now, "propose = threshold-stress reverify" keeps everything in-silico. Explicitly do NOT
+   build sequence/hazard screening, synthesis interdiction, or approval-gating on read-only DB lookups —
+   disproportionate for a defensive analysis tool, and it muddies the pitch.
+
+### The honest open question (name it, don't paper over it)
+
+Two screens proves the **schema mapping** generalizes; it does NOT prove the **refutation logic** does. Our
+gates (`donor_robustness`, `cross_guide`, `cross_condition`) are Perturb-seq-shaped; Schmidt2022 is still
+genomics reusing the same vocabulary. A genuinely different field (chemistry, structure, proteomics) needs
+an *entirely different refutation catalog*, and nothing yet shows authoring one is cheap — the exact
+assumption that sank the general-platform graveyard (framework easy, domain content hard). Cheapest test:
+a tiny **non-biological toy plugin** (rank integers, GATE = is-prime, evidence = a lookup table). If the
+core runs green on genes AND on integers, it's domain-agnostic by construction. That is the first
+post-hackathon build — it de-risks the whole generalization roadmap for an afternoon's work.
+
+> This section is a lens over the rest of the document. The detailed pipeline, upgrades, and risks below
+> are all instances of the general method; the Marson-specific numbers remain the *proof*, not the scope.
+
+---
+
 ## The core insight (what all research converged on)
 Gladstone's real bottleneck is NOT prediction — it's the **funnel from genome-scale results down to
 a short, trustworthy, wet-lab-testable shortlist.** Their AI lead (Theodoris): *"AI allows us to
