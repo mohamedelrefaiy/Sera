@@ -4,3 +4,14 @@ __pycache__/
 .DS_Store
 .venv/
 *.egg-info/
+.claude
+.gstack/
+.agents
+
+# Documents and working notes — kept local, not published. The public repo is
+# code only: application/ (the app) + LICENSE + README.
+docs/
+memory/
+prototype/
+CLAUDE.md
+skills-lock.json
