@@ -21,6 +21,15 @@ judges, or lab contacts come up.
 
 Project vocabulary lives in `memory/glossary.md`. Started clean; grows as we go.
 
+## Layout
+
+- **`application/`** — the runnable app, self-contained: `src/` (the `target_triage`
+  package), `data/` (screen CSVs), `web/` (served frontend), `eval/` (controls gate +
+  tests), and its own `pyproject.toml`/`requirements.txt`. Install: `pip install -e application/`.
+  Serve: `python application/src/target_triage/api/serve.py`. Tests: `pytest application/eval`.
+- **`docs/`** — all prose + the HTML tools (task board, skills guide, research).
+- Repo root also holds `CLAUDE.md`, `LICENSE`, and working dirs (`memory/`, `prototype/`).
+
 ## Projects
 
 - **Target Triage** — the hackathon build. See `memory/projects/target-triage.md`,

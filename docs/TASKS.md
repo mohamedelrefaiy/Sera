@@ -30,10 +30,10 @@
 
 ## Done
 
-- [x] Set up src/ Agent SDK package skeleton + .venv (claude-agent-sdk 0.2.111, pytest)
-- [x] Data boundary: immutable loader for the Marson DE summary (src/target_triage/data.py)
-- [x] Pure ranking logic over immutable records (src/target_triage/ranking.py)
-- [x] **Controls-first gate PASSES 5/5** — RASA2/IL2RA/TNFAIP3 (broad) + CTLA4/FOXP3 (focused), two-tier by biological signature (eval/test_controls.py)
+- [x] Set up application/src/ Agent SDK package skeleton + .venv (claude-agent-sdk 0.2.111, pytest)
+- [x] Data boundary: immutable loader for the Marson DE summary (application/src/target_triage/core/data.py)
+- [x] Pure ranking logic over immutable records (application/src/target_triage/core/ranking.py)
+- [x] **Controls-first gate PASSES 5/5** — RASA2/IL2RA/TNFAIP3 (broad) + CTLA4/FOXP3 (focused), two-tier by biological signature (application/eval/test_controls.py)
 - [x] Adversarial verifier + evidence boundary; verifier gate PASSES (A1BG REJECT, heroes PROMOTE)
 - [x] Open Targets + ClinicalTrials.gov clients in src/ with seeded caches (new work)
 - [x] **Agent SDK loop**: 4 @tool wrappers + ClaudeAgentOptions; tool-layer gate PASSES (13/13 evals)

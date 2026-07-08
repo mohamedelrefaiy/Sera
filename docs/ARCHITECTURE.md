@@ -17,8 +17,8 @@ product.** What we actually built is a domain-agnostic method — `prioritize ->
 with an agent reasoning over computed facts and a positive-control gate proving it works — that happens
 to be demonstrated on Marson Perturb-seq. Everything downstream of ingest is an instance of that method.
 
-This is not aspirational. `src/target_triage/data.py` already maps ANY screen's columns onto immutable
-internal records via a `ScreenSchema`, and `eval/test_reusable.py` PROVES the identical pipeline recovers
+This is not aspirational. `application/src/target_triage/core/data.py` already maps ANY screen's columns onto immutable
+internal records via a `ScreenSchema`, and `application/eval/test_reusable.py` PROVES the identical pipeline recovers
 known biology on two structurally different screens — Marson (Perturb-seq; has effect-breadth, boolean
 significance, 3 conditions) and Schmidt2022 (MAGeCK CRISPRi; no breadth column, FDR-derived significance).
 That green two-screen control **is** the general-instrument claim, empirically, today.
