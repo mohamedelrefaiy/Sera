@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Screen-wide volcano — Target Triage</title>
+<style>
+  :root{
+    --ink:#0B1220; --slate:#141d2e; --slate-2:#101a2c;
+    --line:#26324a; --line-soft:#1c2740;
+    --bone:#E8ECF4; --dim:#8FA0BF; --dimmer:#5c6b86;
+    --peri:#7DA2FF; --viridian:#5FE3B3; --coral:#FF6B6B; --amber:#F5C36B;
+    --disp:"Space Grotesk","Inter",system-ui,sans-serif;
+    --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap');
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--bone);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:48px 24px 80px}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0 0 14px}
+  h1{font-family:var(--disp);font-weight:600;letter-spacing:-.01em;font-size:30px;margin:0 0 10px}
+  .lede{color:var(--dim);max-width:64ch;margin:0 0 8px}
+  .src{font-family:var(--mono);font-size:11px;color:var(--dimmer);margin:0 0 28px}
+  .src .live{color:var(--viridian)} .src .fallback{color:var(--amber)}
+  .src code{background:var(--slate);padding:1px 5px;border-radius:4px}
+
+  figure{margin:0;border:1px solid var(--line);border-radius:12px;background:var(--slate-2);overflow:hidden}
+  figure .fig-head{padding:11px 16px;border-bottom:1px solid var(--line-soft);display:flex;justify-content:space-between;align-items:center;gap:12px}
+  figure .fig-head h4{font-family:var(--disp);font-size:13px;font-weight:600;margin:0}
+  figure .fig-head .cond{font-family:var(--mono);font-size:10px;color:var(--dimmer)}
+  figure .plot{padding:14px 16px 4px}
+  figure svg{display:block;width:100%;height:auto;overflow:visible}
+  figcaption{padding:2px 16px 14px;font-size:12.5px;color:var(--dim);line-height:1.5}
+  .svg-t{font-family:var(--mono);font-size:10px;fill:var(--dimmer)}
+  .svg-g{font-family:var(--disp);font-size:11px;font-weight:600}
+  .svg-ax{font-family:var(--mono);font-size:11px;fill:var(--dim)}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin:16px 0 0;font-family:var(--mono);font-size:11px;color:var(--dim)}
+  .legend .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker">Target Triage · screen-wide volcano</p>
+  <h1>Every knockdown in the Marson CD4+ screen, at a glance</h1>
+  <p class="lede">One dot per significant gene. Horizontal position is the on-target effect size (how hard the knockdown hit its own target); vertical position is how many downstream genes that knockdown moved — the breadth of its transcriptional footprint. Shortlist genes are labelled and coloured by verdict.</p>
+  <p class="src" id="src">loading…</p>
+
+  <figure>
+    <div class="fig-head">
+      <h4>On-target effect vs downstream breadth</h4>
+      <span class="cond" id="ncount"></span>
+    </div>
+    <div class="plot" id="plot"></div>
+    <figcaption id="cap">
+      A gene that is both far-right and high — strong knockdown, wide downstream program — is a
+      regulatory hub. The y-axis is downstream genes moved, not a p-value: this screen carries no
+      per-perturbation p, so the honest impact axis is breadth. Nothing here is hand-typed.
+    </figcaption>
+  </figure>
+
+  <div class="legend">
+    <span><span class="sw" style="background:var(--viridian)"></span>Promoted</span>
+    <span><span class="sw" style="background:var(--peri)"></span>Promoted · corroborated</span>
+    <span><span class="sw" style="background:var(--coral)"></span>Rejected</span>
+    <span><span class="sw" style="background:#3b4763"></span>Background gene (significant)</span>
+  </div>
+</div>
+
+<script>
+// ---- static fallback: real numbers from the loaded screen (used only if /api/volcano is unreachable) ----
+const FALLBACK = {
+  total_significant: 7195,
+  labelled: [
+    {gene:"PARK7",effect:-45.9,downstream:94,verdict:"PROMOTE"},
+    {gene:"CSK",effect:-43.7,downstream:547,verdict:"PROMOTE"},
+    {gene:"NRAS",effect:-41.4,downstream:146,verdict:"REJECT"},
+    {gene:"UBE2L3",effect:-38.5,downstream:2873,verdict:"PROMOTE (corroborated)"},
+    {gene:"NFKB2",effect:-33.8,downstream:737,verdict:"REJECT"},
+    {gene:"NCKAP1L",effect:-32.4,downstream:2946,verdict:"PROMOTE"},
+    {gene:"PSMB8",effect:-29.7,downstream:40,verdict:"PROMOTE"},
+    {gene:"RAC2",effect:-28.5,downstream:34,verdict:"PROMOTE (corroborated)"},
+    {gene:"PSMB9",effect:-24.8,downstream:124,verdict:"REJECT"},
+    {gene:"PTPRC",effect:-24.8,downstream:54,verdict:"PROMOTE (corroborated)"},
+    {gene:"STAT6",effect:-18.7,downstream:232,verdict:"PROMOTE"},
+    {gene:"AHR",effect:-17.8,downstream:1776,verdict:"PROMOTE (corroborated)"},
+    {gene:"STAT3",effect:-17.6,downstream:1369,verdict:"PROMOTE (corroborated)"},
+    {gene:"CBLB",effect:-16.0,downstream:1027,verdict:"PROMOTE (corroborated)"},
+    {gene:"MALT1",effect:-12.2,downstream:1639,verdict:"PROMOTE (corroborated)"},
+    {gene:"RIPK1",effect:-11.5,downstream:437,verdict:"PROMOTE"},
+    {gene:"PTPN2",effect:-9.0,downstream:101,verdict:"PROMOTE"}
+  ],
+  background: [{"e":-4.8,"d":0},{"e":-10.2,"d":0},{"e":-6.0,"d":3},{"e":-29.2,"d":2},{"e":-4.7,"d":4},{"e":-13.2,"d":11},{"e":-8.4,"d":1},{"e":-9.3,"d":6},{"e":-13.6,"d":3},{"e":-5.9,"d":1},{"e":-3.3,"d":373},{"e":-12.9,"d":0},{"e":-39.2,"d":0},{"e":-7.7,"d":2},{"e":-1.0,"d":25},{"e":-4.0,"d":15},{"e":-4.7,"d":2},{"e":-13.9,"d":1},{"e":-8.9,"d":2},{"e":-5.5,"d":4},{"e":-17.3,"d":1},{"e":-18.6,"d":1},{"e":-24.6,"d":0},{"e":-9.0,"d":292},{"e":-5.1,"d":0},{"e":-17.5,"d":158},{"e":-7.2,"d":1},{"e":-27.9,"d":1},{"e":-4.4,"d":1},{"e":-7.9,"d":0},{"e":-16.9,"d":1},{"e":-20.1,"d":38},{"e":-7.8,"d":96},{"e":-3.0,"d":35},{"e":-6.6,"d":8},{"e":-12.1,"d":5},{"e":-12.2,"d":3},{"e":-14.4,"d":6},{"e":-5.2,"d":10},{"e":-18.4,"d":319},{"e":-39.2,"d":3},{"e":-25.7,"d":3},{"e":-8.1,"d":2},{"e":-6.2,"d":4},{"e":-20.9,"d":2},{"e":-5.4,"d":0},{"e":-9.1,"d":0},{"e":-12.5,"d":3},{"e":-4.3,"d":2},{"e":-25.6,"d":78},{"e":-10.6,"d":0},{"e":-10.0,"d":0},{"e":-10.3,"d":812},{"e":-31.9,"d":2},{"e":-13.6,"d":3},{"e":-12.6,"d":1},{"e":-22.2,"d":11},{"e":-8.0,"d":1},{"e":-15.5,"d":4},{"e":-7.7,"d":0},{"e":-1.5,"d":26},{"e":-1.1,"d":32},{"e":-9.0,"d":562},{"e":-29.5,"d":3},{"e":-2.3,"d":89},{"e":-11.7,"d":3},{"e":-5.5,"d":0},{"e":-18.5,"d":1},{"e":-9.0,"d":2},{"e":-9.6,"d":0},{"e":-11.3,"d":0},{"e":-36.5,"d":8},{"e":-11.3,"d":0},{"e":-11.2,"d":264},{"e":-4.7,"d":24},{"e":-24.3,"d":1},{"e":-9.9,"d":39},{"e":-14.1,"d":2},{"e":-13.9,"d":0},{"e":-14.7,"d":4},{"e":-5.3,"d":4},{"e":-5.6,"d":5},{"e":-4.7,"d":427},{"e":-8.7,"d":1},{"e":-8.6,"d":0},{"e":-14.1,"d":4},{"e":-6.1,"d":881},{"e":-18.2,"d":0},{"e":-7.6,"d":324},{"e":-17.5,"d":0},{"e":-8.1,"d":0},{"e":-5.5,"d":2},{"e":-13.7,"d":755},{"e":-28.4,"d":2},{"e":-17.6,"d":1},{"e":-37.8,"d":30},{"e":-5.4,"d":1},{"e":-7.5,"d":0},{"e":-4.4,"d":1},{"e":-5.1,"d":3},{"e":-7.7,"d":1055},{"e":-13.5,"d":2},{"e":-10.9,"d":9},{"e":-4.8,"d":0},{"e":-29.9,"d":28},{"e":-15.5,"d":138},{"e":-19.8,"d":3},{"e":-21.9,"d":4},{"e":-3.4,"d":349},{"e":-8.4,"d":0},{"e":-15.3,"d":0},{"e":-16.3,"d":1},{"e":-13.8,"d":3},{"e":-32.9,"d":2},{"e":-13.0,"d":0},{"e":-10.3,"d":3},{"e":-6.8,"d":0},{"e":-16.9,"d":7},{"e":-8.0,"d":1},{"e":-9.6,"d":2}]
+};
+
+const esc = s => String(s).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+
+// ---- geometry ----
+const W=820, H=440, PADL=54, PADR=20, PADT=20, PADB=44;
+const X0=PADL, X1=W-PADR, Y0=H-PADB, Y1=PADT;
+// x: |effect| 0 -> EFFMAX ; y: log10(downstream+1) 0 -> DMAX
+const EFFMAX=60, DMAX=Math.log10(5260);
+const sx = eff => X0 + (Math.min(Math.abs(eff),EFFMAX)/EFFMAX)*(X1-X0);
+const sy = d   => Y0 - (Math.log10((d||0)+1)/DMAX)*(Y0-Y1);
+
+function colorFor(v){
+  if(!v) return "#3b4763";
+  if(v.startsWith("REJECT")) return "#FF6B6B";
+  if(v.includes("corroborated")) return "#7DA2FF";
+  return "#5FE3B3";
+}
+
+function draw(data){
+  document.getElementById("ncount").textContent =
+    (data.total_significant||0).toLocaleString()+" significant genes";
+
+  // axes + gridlines
+  const yticks=[0,1,10,100,1000,5000];
+  let grid = yticks.map(t=>{
+    const y=sy(t).toFixed(1);
+    return `<line x1="${X0}" y1="${y}" x2="${X1}" y2="${y}" stroke="#1c2740"/>
+      <text x="${X0-8}" y="${(+y+3).toFixed(1)}" text-anchor="end" class="svg-t">${t}</text>`;
+  }).join("");
+  const xticks=[0,15,30,45,60];
+  grid += xticks.map(t=>{
+    const x=sx(t).toFixed(1);
+    return `<text x="${x}" y="${Y0+16}" text-anchor="middle" class="svg-t">${t}</text>`;
+  }).join("");
+
+  // background cloud (muted, small)
+  const bg = (data.background||[]).map(p=>{
+    const e = p.e!==undefined ? p.e : p.effect;
+    const d = p.d!==undefined ? p.d : p.downstream;
+    return `<circle cx="${sx(e).toFixed(1)}" cy="${sy(d).toFixed(1)}" r="2.4" fill="#3b4763" opacity="0.55"/>`;
+  }).join("");
+
+  // labelled shortlist points (drawn on top), with de-collided labels
+  const lab = (data.labelled||[]).slice().sort((a,b)=>Math.abs(b.effect)-Math.abs(a.effect));
+  const placed=[];
+  const pts = lab.map(p=>{
+    const c=colorFor(p.verdict);
+    const x=sx(p.effect), y=sy(p.downstream);
+    // nudge label clear of its own dot and of any already-placed label
+    let ly=y-9;
+    while(placed.some(P=>Math.abs(P.x-x)<54 && Math.abs(P.y-ly)<13)) ly-=13;
+    placed.push({x,y:ly});
+    const anchor = x>X1-70 ? "end" : "start";
+    const lx = anchor==="end" ? x-8 : x+8;
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${c}" stroke="#0B1220" stroke-width="1"/>
+      <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}" class="svg-g" fill="${c}">${esc(p.gene)}</text>`;
+  }).join("");
+
+  document.getElementById("plot").innerHTML =
+    `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Volcano plot of the Marson CD4+ T-cell screen. Each dot is a significant gene: x-axis on-target effect size 0 to 60, y-axis downstream genes moved on a log scale 0 to 5000. Rejected genes NRAS and NFKB2 are red; corroborated hub genes STAT3, MALT1, AHR, CBLB, UBE2L3 sit high on breadth; PTPN2 sits low-breadth but druggable.">
+      ${grid}
+      <line x1="${X0}" y1="${Y0}" x2="${X1}" y2="${Y0}" stroke="#26324a"/>
+      <line x1="${X0}" y1="${Y1}" x2="${X0}" y2="${Y0}" stroke="#26324a"/>
+      ${bg}${pts}
+      <text x="${((X0+X1)/2).toFixed(0)}" y="${H-6}" text-anchor="middle" class="svg-ax">on-target effect size (|knockdown strength|)</text>
+      <text transform="translate(16,${((Y0+Y1)/2).toFixed(0)}) rotate(-90)" text-anchor="middle" class="svg-ax">downstream genes moved (log)</text>
+    </svg>`;
+}
+
+(async function(){
+  const srcEl = document.getElementById("src");
+  try{
+    const r = await fetch("api/volcano");
+    if(!r.ok) throw new Error("status "+r.status);
+    const d = await r.json();
+    if(!d.labelled || !d.labelled.length) throw new Error("empty");
+    draw(d);
+    const n = (d.background_sampled_from||d.background.length);
+    srcEl.innerHTML = `<span class="live">● live</span> — /api/volcano · `+
+      `${d.labelled.length} labelled + ${d.background.length} of ${n.toLocaleString()} background genes`;
+  }catch(e){
+    draw(FALLBACK);
+    srcEl.innerHTML = `<span class="fallback">● snapshot</span> — live API not reachable; showing an embedded snapshot `+
+      `(real numbers from the loaded screen). Run the FastAPI app (<code>triage</code> launch config) for the full live cloud.`;
+  }
+})();
+</script>
+</body>
+</html>
