@@ -18,14 +18,10 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-# schema.py lives at src/target_triage/core/schema.py — four dirname() hops
-# (core -> package -> src -> repo root) reach the repo, where data/ lives.
-_REPO = os.path.dirname(
-    os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    )
-)
-_DATA = os.path.join(_REPO, "data")
+# schema.py lives at target_triage/core/schema.py; data/ is bundled inside the
+# package at target_triage/data/ — two dirname() hops (core -> target_triage).
+_PKG = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_DATA = os.path.join(_PKG, "data")
 
 
 @dataclass(frozen=True)

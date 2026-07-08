@@ -22,5 +22,17 @@ viz = ["plotly>=5.24"]   # interactive figures (plotly skill); not a core-pipeli
 target-triage = "target_triage.__main__:main"
 target-triage-serve = "target_triage.api.serve:main"
 
+# App-layout: the package sits directly under application/ (no src/ wrapper).
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["target_triage*"]
+
+# The screen CSVs and the served frontend are bundled inside the package, so they
+# must ship with an install (they are not .py and would otherwise be dropped).
+[tool.setuptools.package-data]
+target_triage = [
+  "data/**/*.csv",
+  "data/**/*.md",
+  "frontend/**/*",
+  "clients/*.json",
+]

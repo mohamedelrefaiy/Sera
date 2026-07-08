@@ -20,7 +20,7 @@ from __future__ import annotations
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from target_triage.core.data import load_screen  # noqa: E402
 from target_triage.core.schema import SCHMIDT2022  # noqa: E402

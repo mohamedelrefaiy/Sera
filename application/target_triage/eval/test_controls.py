@@ -31,7 +31,7 @@ from dataclasses import dataclass
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from target_triage.core.data import GeneRecord, load_perturbations  # noqa: E402
 

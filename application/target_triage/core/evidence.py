@@ -11,14 +11,10 @@ import csv
 import os
 from dataclasses import dataclass, field
 
-# evidence.py lives at src/target_triage/core/evidence.py — four dirname() hops
-# (core -> package -> src -> repo root) reach the repo, where data/ lives.
-_REPO = os.path.dirname(
-    os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    )
-)
-_DATA = os.path.join(_REPO, "data")
+# evidence.py lives at target_triage/core/evidence.py; data/ is bundled inside the
+# package at target_triage/data/ — two dirname() hops (core -> target_triage).
+_PKG = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_DATA = os.path.join(_PKG, "data")
 DONOR_CSV = os.path.join(_DATA, "robustness", "DE_donor_robustness_correlation_summary.csv")
 GUIDE_CSV = os.path.join(_DATA, "robustness", "DE_by_guide_correlation_results.csv")
 SCHMIDT_CSV = os.path.join(_DATA, "external_screens", "Schmidt2022_CRISPRi_gene_phenotypes.csv")

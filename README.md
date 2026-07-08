@@ -17,15 +17,15 @@ installable unit:
 
 ```
 application/
-├── src/target_triage/   the package, layered by responsibility
+├── target_triage/       the package (app-layout: no src/ wrapper)
 │   ├── core/            deterministic pipeline (data, ranking, verify, shortlist, controls)
 │   ├── clients/         read-only external evidence (Open Targets, ClinicalTrials.gov)
 │   ├── llm/             Claude-facing adapters (@tool wrappers, system prompt, SDK options)
 │   ├── agent/           the driver loop that lets Claude orchestrate the tools
-│   └── api/             FastAPI web surface + uvicorn launcher
-├── data/                the screen CSVs the pipeline reads
-├── web/                 the static frontend the app serves
-├── eval/                the controls-first gate + unit tests
+│   ├── api/             FastAPI web surface + uvicorn launcher
+│   ├── frontend/        the static frontend the app serves (bundled with the package)
+│   ├── data/            the screen CSVs the pipeline reads (bundled with the package)
+│   └── eval/            the controls-first gate + unit tests
 ├── pyproject.toml
 └── requirements.txt
 ```
@@ -43,7 +43,7 @@ pip install -e application/
 python -m target_triage.core.controls          # expect 5/5 PASS on Marson + Schmidt2022
 
 # Serve the web app — deterministic shortlist works with no key; chat needs one
-python application/src/target_triage/api/serve.py   # http://127.0.0.1:8000
+python application/target_triage/api/serve.py   # http://127.0.0.1:8000
 
 # Run the live agent end-to-end (requires ANTHROPIC_API_KEY or a logged-in claude CLI)
 python -m target_triage
@@ -52,7 +52,7 @@ python -m target_triage
 ## Tests
 
 ```bash
-pytest application/eval
+pytest application/target_triage/eval
 ```
 
 The controls-first gate is the trust contract: before any novel pick is shown, the

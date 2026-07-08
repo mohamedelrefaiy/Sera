@@ -13,12 +13,13 @@ import sys
 
 # Make the package importable even when launched from an arbitrary cwd (e.g. the
 # preview harness) without relying on an editable install being on the path.
-# serve.py lives at src/target_triage/api/serve.py — three levels up reaches src/.
-_SRC = os.path.dirname(
+# serve.py lives at target_triage/api/serve.py — three dirname() hops (api ->
+# target_triage -> application) reach the package's parent, which must be on the path.
+_PKG_PARENT = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
-if _SRC not in sys.path:
-    sys.path.insert(0, _SRC)
+if _PKG_PARENT not in sys.path:
+    sys.path.insert(0, _PKG_PARENT)
 
 import uvicorn
 

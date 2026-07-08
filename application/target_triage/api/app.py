@@ -30,15 +30,11 @@ from ..core.data import load_perturbations
 from ..core.ranking import significant_records
 from ..core.shortlist import SPOTLIGHT, compute_shortlist
 
-# app.py lives at src/target_triage/api/app.py — walk up four levels (api -> package
-# -> src -> repo root) to reach the served web/ directory at the repo root.
+# app.py lives at target_triage/api/app.py; the served frontend is bundled inside
+# the package at target_triage/frontend/ — two dirname() hops (api -> target_triage).
 _WEB_DIR = os.path.join(
-    os.path.dirname(
-        os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
-    ),
-    "web",
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "frontend",
 )
 
 # Computed once at startup — the deterministic table.
