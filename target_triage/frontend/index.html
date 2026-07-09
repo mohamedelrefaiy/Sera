@@ -118,7 +118,60 @@
     text-transform:uppercase;letter-spacing:0.11em;color:var(--dimmer);
   }
   .canvas-head .count{font-family:var(--mono);font-size:11px;color:var(--dimmer)}
-  .canvas-scroll{overflow-y:auto;flex:1 1 auto;padding:6px 0}
+  /* provenance legend: quiet key explaining the thread's two node kinds */
+  .provenance-legend{margin-left:auto;display:flex;gap:14px;align-items:center}
+  .provenance-legend .pl{display:flex;gap:5px;align-items:center;
+    font-family:var(--mono);font-size:10px;color:var(--dimmer);
+    text-transform:uppercase;letter-spacing:.06em}
+  .provenance-legend .pl i{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .provenance-legend .pl.computed i{background:var(--dimmer)}
+  .provenance-legend .pl.live i{background:var(--peri);
+    box-shadow:0 0 0 2px rgba(125,162,255,.18)}
+
+  /* canvas body = the ledger (scroll) + the provenance thread rail on the far right */
+  .canvas-body{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:1fr 132px}
+  .canvas-scroll{overflow-y:auto;min-height:0;padding:6px 0}
+
+  /* ---- provenance thread (move #4): one node per domain tool call ---- */
+  .thread{
+    border-left:1px solid var(--line);overflow-y:auto;min-height:0;
+    padding:14px 12px 14px 0;position:relative;
+  }
+  .thread:empty{border-left:1px solid var(--line-soft)}
+  /* the spine line the nodes hang off */
+  .thread::before{content:"";position:absolute;left:16px;top:16px;bottom:16px;
+    width:1px;background:var(--line-soft)}
+  .tnode{
+    position:relative;padding:0 0 16px 26px;cursor:pointer;
+    animation:msgIn .3s ease both;
+  }
+  .tnode .tdot{
+    position:absolute;left:11px;top:3px;width:11px;height:11px;border-radius:50%;
+    background:var(--ink);border:1.5px solid var(--dimmer);box-sizing:border-box;
+  }
+  .tnode.live .tdot{border-color:var(--peri);background:var(--peri);
+    animation:threadPulse 1.6s ease-in-out infinite}
+  @keyframes threadPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(125,162,255,.35)}
+    50%{box-shadow:0 0 0 4px rgba(125,162,255,0)}
+  }
+  .tnode .tlabel{font-family:var(--mono);font-size:10.5px;color:var(--dim);
+    line-height:1.35;letter-spacing:-0.01em;word-break:break-word}
+  .tnode.live .tlabel{color:var(--peri)}
+  .tnode .tsub{display:block;font-size:9px;color:var(--dimmer);margin-top:1px;
+    text-transform:uppercase;letter-spacing:.06em}
+  .tnode:hover .tlabel{color:var(--bone)}
+  .thread::-webkit-scrollbar{width:7px}
+  .thread::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
+
+  /* live-sourced external metrics (move #3): the drawer's OT / clinical-stage
+     values are FETCHED, not computed — mark them with the live peri dot so the
+     eye reads 'this came from a live source' at a glance. */
+  .ext .e.live b{position:relative}
+  .ext .e.live b::before{content:"";position:absolute;left:-11px;top:50%;
+    transform:translateY(-50%);width:6px;height:6px;border-radius:50%;
+    background:var(--peri);box-shadow:0 0 0 2px rgba(125,162,255,.18)}
+  .ext .e.live span::after{content:" · live";color:var(--peri);opacity:.75}
 
   /* ---- verdict-ledger rows (stamp in one at a time) ---- */
   .row{
@@ -257,8 +310,17 @@
     <div class="canvas-head">
       <h2>Evidence</h2>
       <span class="count" id="count"></span>
+      <span class="provenance-legend" id="prov-legend" hidden>
+        <span class="pl computed"><i></i>computed</span>
+        <span class="pl live"><i></i>live source</span>
+      </span>
     </div>
-    <div class="canvas-scroll" id="canvas"></div>
+    <!-- canvas body: the ledger + a provenance thread on the far-right edge -->
+    <div class="canvas-body">
+      <div class="canvas-scroll" id="canvas"></div>
+      <!-- provenance thread: one node per domain tool call; live-API nodes pulse -->
+      <aside class="thread" id="thread" aria-label="Provenance — tools the agent called"></aside>
+    </div>
   </section>
 </main>
 
@@ -268,6 +330,27 @@ const $ = s => document.querySelector(s);
 // (first reasoned-about first); `byGene` lets a later event (re-verify) update a
 // row in place without duplicating it.
 const canvas = { order:[], byGene:new Map(), open:null, split:false };
+
+/* ---- provenance: which tool calls are LIVE external fetches vs local compute ----
+   The distinction is derived from the emitting TOOL NAME, never hand-tagged: the two
+   check_* tools hit real external APIs (Open Targets, ClinicalTrials.gov); everything
+   else is deterministic compute over the loaded screen. Tools not listed here (e.g.
+   the agent's own ToolSearch) are NOT domain tools and are excluded from the thread. */
+const TOOL_META = {
+  rank_candidates:      {live:false, label:"rank",        sub:"screen"},
+  verify_candidate:     {live:false, label:"verify",      sub:"adversarial"},
+  focus_gene:           {live:false, label:"focus",       sub:"screen"},
+  set_view:             {live:false, label:"filter view", sub:"screen"},
+  reverify:             {live:false, label:"re-verify",   sub:"thresholds"},
+  check_open_targets:   {live:true,  label:"Open Targets",   sub:"live API"},
+  check_clinical_trials:{live:true,  label:"ClinicalTrials", sub:"live API"},
+};
+// gene-bearing inputs the thread appends to a node's label, so "verify NRAS" reads
+// as what actually happened rather than a bare tool name.
+function toolSubject(input){
+  if(!input) return "";
+  return input.gene || input.compound || "";
+}
 
 /* ---- verdict vocabulary (preserved from the prior console) ---- */
 const vClass = v => v==="REJECT" ? "v-rej"
@@ -365,10 +448,10 @@ function drawer(row){
     <div class="lede">${lede}</div>
     <div class="checks">${checks || '<div class="ck-detail" style="color:var(--dimmer)">no checks reported</div>'}</div>
     <div class="ext">
-      <div class="e"><b>${num(row.druggable_score)}</b><span>druggable (OT)</span></div>
-      <div class="e"><b>${num(row.disease_score)}</b><span>immune-disease (OT)</span></div>
+      <div class="e live"><b>${num(row.druggable_score)}</b><span>druggable (OT)</span></div>
+      <div class="e live"><b>${num(row.disease_score)}</b><span>immune-disease (OT)</span></div>
       <div class="e"><b>${num(row.context_specificity)}</b><span>context specificity</span></div>
-      <div class="e"><b>${row.clinical_stage || "—"}</b><span>clinical stage</span></div>
+      <div class="e live"><b>${row.clinical_stage || "—"}</b><span>clinical stage</span></div>
     </div>
     <button class="ask" data-q="Walk me through the evidence for ${row.gene} — should I validate it?">
       Ask the agent about ${row.gene} →</button>`;
@@ -421,6 +504,40 @@ function addTool(tool,input){
   $("#stream").appendChild(el); $("#stream").scrollTop = 1e9;
 }
 
+/* Provenance thread node — one per DOMAIN tool call. Non-domain calls (the agent's
+   own ToolSearch, etc.) aren't in TOOL_META, so they never enter the thread. Live
+   nodes (the check_* external hits) pulse; a click scrolls the related gene's row
+   into view so the thread reads as a table of contents for the evidence. */
+function addThreadNode(tool, input){
+  const meta = TOOL_META[tool];
+  if(!meta) return;                       // non-domain call — excluded by design
+  ensureSplit();                          // a tool fired → the canvas is in play
+  $("#prov-legend").hidden = false;
+  const subject = toolSubject(input);
+  const el = document.createElement("div");
+  el.className = "tnode" + (meta.live ? " live" : "");
+  el.tabIndex = 0; el.setAttribute("role","button");
+  el.dataset.gene = (input && input.gene) || "";
+  el.setAttribute("aria-label",
+    `${meta.label}${subject?" "+subject:""} — ${meta.live?"live source":"computed"}`);
+  el.innerHTML = `
+    <span class="tdot"></span>
+    <span class="tlabel">${meta.label}${subject?` <b style="color:inherit;font-weight:600">${subject}</b>`:""}
+      <span class="tsub">${meta.sub}</span></span>`;
+  const jump = () => {
+    const g = el.dataset.gene;
+    if(!g) return;
+    const row = document.querySelector(`.row[data-gene="${cssEscape(g)}"]`);
+    if(row){ canvas.open = g; renderCanvas();
+      document.querySelector(`.row[data-gene="${cssEscape(g)}"]`)
+        ?.scrollIntoView({block:"center", behavior:"smooth"}); }
+  };
+  el.onclick = jump;
+  el.onkeydown = e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); jump(); } };
+  $("#thread").appendChild(el);
+  $("#thread").scrollTop = 1e9;
+}
+
 async function ask(q){
   if(!q?.trim()) return;
   addMsg("user", q);
@@ -438,7 +555,7 @@ async function ask(q){
         const line = buf.slice(0,i).trim(); buf = buf.slice(i+2);
         if(!line.startsWith("data:")) continue;
         const ev = JSON.parse(line.slice(5).trim());
-        if(ev.type==="tool_call") addTool(ev.tool, ev.input||{});
+        if(ev.type==="tool_call"){ addTool(ev.tool, ev.input||{}); addThreadNode(ev.tool, ev.input||{}); }
         else if(ev.type==="view_update") applyViewUpdate(ev.update);
         else if(ev.type==="tool_result") applyToolResult(ev.output);
         else if(ev.type==="text"){ if(!agentEl) agentEl=addMsg("agent",""); agentEl.textContent+=ev.text; $("#stream").scrollTop=1e9; }
