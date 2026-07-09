@@ -58,11 +58,50 @@ _WEB_DIR = os.path.join(
 # whichever screen the picker selects.
 _SHORTLISTS: dict[str, list[dict]] = {}
 
+# Concord's concordance table (the 2x2(+1) verdicts), loaded once from the precomputed
+# parquet artifact. Concord is served alongside Target Triage from the same process; this
+# cache stays empty (and its routes 503) if the artifact hasn't been built — the
+# deterministic Target Triage paths never depend on it.
+_CONCORDANCE: list[dict] = []
+_CONCORDANCE_PARQUET = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "data", "artifacts", "concordance.parquet",
+)
+
+
+def _load_concordance() -> list[dict]:
+    """Read the concordance artifact into plain JSON-able dicts, or [] if absent.
+
+    Kept dependency-light: pandas is only imported here (the artifact is optional), so the
+    core deterministic paths never require it. NaN/NA are normalised to None so the JSON is
+    valid (a bare NaN is not legal JSON)."""
+    if not os.path.exists(_CONCORDANCE_PARQUET):
+        return []
+    import math
+
+    import pandas as pd
+
+    df = pd.read_parquet(_CONCORDANCE_PARQUET)
+    records = df.to_dict("records")
+    clean: list[dict] = []
+    for r in records:
+        row = {}
+        for k, v in r.items():
+            if v is None or (isinstance(v, float) and math.isnan(v)):
+                row[k] = None
+            elif hasattr(v, "item"):        # numpy scalar -> python scalar
+                row[k] = v.item()
+            else:
+                row[k] = v
+        clean.append(row)
+    return clean
+
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     for name, schema in REGISTRY.items():
         _SHORTLISTS[name] = compute_shortlist(schema)
+    _CONCORDANCE.extend(_load_concordance())
     yield
 
 
@@ -161,6 +200,75 @@ def target(gene: str, screen: str | None = None) -> dict:
         raise HTTPException(
             status_code=404, detail=f"{gene} not in the {schema.name} shortlist")
     return row
+
+
+# ---- Concord: cross-modality concordance verdicts (served alongside Target Triage) -----
+# The 2x2(+1) verdict per (gene, cytokine, condition): replicated / discordant / mrna_only /
+# protein_only / neither. Read from the precomputed concordance.parquet — no live compute.
+# A 503 (not a silent empty list) is returned if the artifact hasn't been built, so a caller
+# knows the difference between "no hits" and "pipeline not run".
+
+# The order verdicts should be presented in (most→least actionable). The frontend reads this.
+_VERDICT_ORDER = ("replicated", "discordant", "protein_only", "mrna_only", "neither")
+
+
+def _require_concordance() -> list[dict]:
+    if not _CONCORDANCE:
+        raise HTTPException(
+            status_code=503,
+            detail="concordance artifact not built — run "
+                   "`python pipeline/02_build_concordance.py` first.")
+    return _CONCORDANCE
+
+
+@app.get("/api/concordance")
+def concordance(condition: str | None = None, cytokine: str | None = None,
+                verdict: str | None = None, limit: int = 500) -> dict:
+    """The concordance table, optionally filtered by condition / cytokine / verdict.
+
+    Rows are ordered by verdict actionability (replicated first) then by the stronger of the
+    two significance values, so the most trustworthy concordant hits surface at the top."""
+    rows = _require_concordance()
+    if cytokine:
+        rows = [r for r in rows if r["cytokine"] == cytokine.upper()]
+    if condition:
+        rows = [r for r in rows if r["condition"] == condition]
+    if verdict:
+        rows = [r for r in rows if r["verdict"] == verdict]
+
+    order = {v: i for i, v in enumerate(_VERDICT_ORDER)}
+
+    def _rank(r: dict) -> tuple:
+        # best available q across the two sides; None sorts last
+        qs = [q for q in (r.get("q_rna"), r.get("q_prot")) if q is not None]
+        best_q = min(qs) if qs else 1.0
+        return (order.get(r["verdict"], 99), best_q)
+
+    ordered = sorted(rows, key=_rank)
+    tally: dict[str, int] = {}
+    for r in rows:
+        tally[r["verdict"]] = tally.get(r["verdict"], 0) + 1
+    return {
+        "total": len(rows),
+        "shown": min(limit, len(ordered)),
+        "verdict_order": list(_VERDICT_ORDER),
+        "counts": tally,
+        "rows": ordered[:limit],
+    }
+
+
+@app.get("/api/concordance/{gene}")
+def concordance_gene(gene: str, cytokine: str | None = None) -> dict:
+    """One gene's verdict across all conditions (for the Single-gene view's condition tabs)."""
+    rows = _require_concordance()
+    g = gene.upper()
+    hits = [r for r in rows if r["gene"] == g]
+    if cytokine:
+        hits = [r for r in hits if r["cytokine"] == cytokine.upper()]
+    if not hits:
+        raise HTTPException(status_code=404, detail=f"{gene} not in the concordance table")
+    by_condition = {r["condition"]: r for r in hits}
+    return {"gene": g, "cytokine": hits[0]["cytokine"], "by_condition": by_condition}
 
 
 @app.get("/api/funnel")
