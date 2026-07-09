@@ -52,6 +52,11 @@ class ScreenSchema:
     # which internal signals this screen actually provides
     has_breadth: bool = False
     has_conditions: bool = False
+    # The quantity this screen can honestly plot against effect size. A screen with
+    # breadth but no per-perturbation p-value (Marson) plots breadth; a screen with an
+    # FDR but no breadth (Schmidt2022) plots -log10(FDR). The chart reads this; it never
+    # assumes an axis. See docs/adr/0001-screens-declare-their-own-capabilities.md.
+    impact_axis: str = "breadth"          # "breadth" | "neg_log10_fdr"
 
 
 # ---- registered built-in screens (each is a worked proof the tool is reusable) ----
@@ -71,6 +76,7 @@ MARSON = ScreenSchema(
     description="Marson genome-scale CD4+ T-cell Perturb-seq (Zhu et al. 2025)",
     has_breadth=True,
     has_conditions=True,
+    impact_axis="breadth",             # no per-perturbation p-value; breadth is the honest axis
 )
 
 # Schmidt 2022 — a DIFFERENT assay format (MAGeCK CRISPRi): FDR-based significance,
@@ -95,6 +101,7 @@ SCHMIDT2022 = ScreenSchema(
     description="Schmidt & Steinhart 2022 CRISPRi CD4+/CD8+ cytokine screen (Science)",
     has_breadth=False,
     has_conditions=True,
+    impact_axis="neg_log10_fdr",       # no breadth; the classic volcano axis
 )
 
 REGISTRY: dict[str, ScreenSchema] = {s.name: s for s in (MARSON, SCHMIDT2022)}

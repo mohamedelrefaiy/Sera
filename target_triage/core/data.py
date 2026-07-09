@@ -8,8 +8,12 @@ same instrument run on Marson, Schmidt2022, or a scientist's own screen.
 
 Signals a screen may or may not carry are represented honestly:
   - n_downstream is int OR None (None = this screen has no breadth signal).
+  - fdr is float OR None (None = this screen reports no FDR — NOT "FDR of zero").
   - offtarget defaults to False when the screen has no off-target flag.
   - condition defaults to a single "all" bucket when the screen has no condition col.
+
+breadth and fdr are the two candidate impact axes; a screen declares which one it can
+honestly plot (ScreenSchema.impact_axis). Neither field ever stands in for the other.
 """
 from __future__ import annotations
 
@@ -35,6 +39,7 @@ class Perturbation:
     significant: bool
     offtarget: bool
     n_downstream: int | None         # effect breadth; None if the screen has none
+    fdr: float | None = None         # raw FDR; None if the screen reports none
 
 
 @dataclass(frozen=True)
@@ -53,12 +58,23 @@ def _to_float(value, default: float = 0.0) -> float:
         return default
 
 
-def _significant(row: dict, schema: ScreenSchema) -> bool:
+def _fdr(row: dict, schema: ScreenSchema) -> float | None:
+    """The row's raw FDR, or None when the screen reports none.
+
+    None is not 1.0. A missing FDR means 'this screen cannot speak to significance
+    this way'; an FDR of 1.0 means 'reported, and not significant'. Collapsing the two
+    would let a breadth-only screen plot as maximally significant."""
+    if schema.fdr_col is None:
+        return None
+    return _to_float(row.get(schema.fdr_col), 1.0)
+
+
+def _significant(row: dict, schema: ScreenSchema, fdr: float | None) -> bool:
     """Significance from an explicit bool column, or derived from FDR < fdr_max."""
     if schema.sig_col is not None:
         return row.get(schema.sig_col) == "True"
-    if schema.fdr_col is not None:
-        return _to_float(row.get(schema.fdr_col), 1.0) < schema.fdr_max
+    if fdr is not None:
+        return fdr < schema.fdr_max
     return False
 
 
@@ -86,15 +102,17 @@ def load_screen(schema: ScreenSchema = MARSON) -> tuple[GeneRecord, ...]:
                 int(_to_float(row.get(schema.breadth_col)))
                 if schema.breadth_col else None
             )
+            fdr = _fdr(row, schema)
             pert = Perturbation(
                 gene=gene,
                 condition=cond,
                 ensembl_id=eid,
                 n_cells=_to_float(row.get(schema.ncells_col)) if schema.ncells_col else None,
                 effect_size=_to_float(row.get(schema.effect_col)),
-                significant=_significant(row, schema),
+                significant=_significant(row, schema, fdr),
                 offtarget=(row.get(schema.offtarget_col) == "True") if schema.offtarget_col else False,
                 n_downstream=breadth,
+                fdr=fdr,
             )
             by_gene.setdefault(gene, {}).setdefault(cond, pert)
             if eid:

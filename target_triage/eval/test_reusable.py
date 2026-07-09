@@ -45,3 +45,40 @@ def test_marson_still_has_breadth():
     rasa2 = by["RASA2"]
     assert any(p.n_downstream is not None and p.n_downstream > 0
                for p in rasa2.by_condition.values())
+
+
+# ---- impact axis: each screen declares the quantity it can honestly plot ----
+# See docs/adr/0001-screens-declare-their-own-capabilities.md. Marson has breadth but
+# no per-perturbation p-value; Schmidt2022 has an FDR but no breadth. Neither screen's
+# axis is assumed by the chart — it is read from the schema.
+
+
+def test_each_screen_declares_an_impact_axis():
+    assert MARSON.impact_axis == "breadth"
+    assert SCHMIDT2022.impact_axis == "neg_log10_fdr"
+
+
+def test_marson_carries_breadth_and_no_fdr():
+    """Marson reports no FDR. The field must be None, never 0.0 (which would plot as
+    infinitely significant)."""
+    by_gene = {r.gene: r for r in load_screen(MARSON)}
+    perts = list(by_gene["RASA2"].by_condition.values())
+    assert all(p.fdr is None for p in perts), "Marson has no FDR column"
+    assert any(p.n_downstream is not None for p in perts)
+
+
+def test_schmidt_carries_fdr_and_no_breadth():
+    """Schmidt's impact axis is -log10(FDR), so the raw float must survive the loader."""
+    by_gene = {r.gene: r for r in load_screen(SCHMIDT2022)}
+    perts = list(by_gene["ZAP70"].by_condition.values())
+    assert all(p.n_downstream is None for p in perts), "Schmidt has no breadth column"
+    assert any(isinstance(p.fdr, float) for p in perts), "FDR float must be retained"
+    assert all(p.fdr is None or 0.0 <= p.fdr <= 1.0 for p in perts)
+
+
+def test_significance_still_derives_from_the_retained_fdr():
+    """Splitting out the float must not change what 'significant' means."""
+    for rec in load_screen(SCHMIDT2022):
+        for p in rec.by_condition.values():
+            if p.fdr is not None:
+                assert p.significant == (p.fdr < SCHMIDT2022.fdr_max)
