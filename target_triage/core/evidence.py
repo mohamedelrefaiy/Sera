@@ -86,16 +86,36 @@ def _load_screen(path: str, name: str, id_col: str, label_col: str) -> dict[str,
     return hits
 
 
-def load_evidence() -> Evidence:
+# Which registered screen each external evidence file IS. A screen listed here cannot
+# corroborate itself: when it is the primary screen, it is dropped from the held-out set.
+_EVIDENCE_SCREENS: tuple[tuple[str, str, str, str, str], ...] = (
+    # (screen_name, csv_path, label, id_col, readout_col)
+    ("schmidt2022", SCHMIDT_CSV, "Schmidt2022", "id", "phenotype"),
+    # Freimer's id column carries a BOM; the loader keys on the literal header.
+    ("freimer2022", FREIMER_CSV, "Freimer2022", "﻿id", "screen"),
+)
+
+
+def held_out_screens(primary: str | None = None) -> tuple[str, ...]:
+    """The evidence screens that remain independent of `primary`."""
+    return tuple(label for name, _, label, _, _ in _EVIDENCE_SCREENS if name != primary)
+
+
+def load_evidence(primary: str | None = None) -> Evidence:
+    """External evidence, with the primary screen excluded from its own corroboration.
+
+    `primary` is the ScreenSchema.name currently under analysis. A screen may never be
+    both analysed and held out: a gene would then be "independently confirmed" by the
+    file it was ranked from, and verify() would escalate it to PROMOTE (corroborated) on
+    the strength of its own data. Pass None only when no screen is being analysed."""
     donor = _load_donor()
     guide = _load_guide()
-    # Freimer's id column carries a BOM; the loader keys on the literal header.
-    schmidt = _load_screen(SCHMIDT_CSV, "Schmidt2022", "id", "phenotype")
-    freimer = _load_screen(FREIMER_CSV, "Freimer2022", "﻿id", "screen")
 
     merged: dict[str, tuple[ScreenHit, ...]] = {}
-    for src in (schmidt, freimer):
-        for gene, lst in src.items():
+    for name, path, label, id_col, readout_col in _EVIDENCE_SCREENS:
+        if name == primary:
+            continue  # a screen cannot corroborate itself
+        for gene, lst in _load_screen(path, label, id_col, readout_col).items():
             merged[gene] = merged.get(gene, ()) + tuple(lst)
 
     return Evidence(donor_corr=donor, guide_corr=guide, screen_hits=merged)

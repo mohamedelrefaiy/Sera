@@ -11,20 +11,18 @@ Both are shown, including rejected candidates.
 """
 from __future__ import annotations
 
-from .data import load_perturbations
+from .data import load_screen
 from .evidence import load_evidence
 from .ranking import rank_by_impact, significant_records
+from .schema import MARSON, ScreenSchema
 from .verify import verify
 from ..clients import opentargets
-from ..llm.tools import OBVIOUS_TCR, _condition_rows
+from ..llm.tools import _condition_rows
 
-# Demo spotlight anchors: their clinical-stage inhibitor (a checkable molecule).
-SPOTLIGHT = {
-    "PTPN2": {"compound": "ABBV-CLS-484",
-              "note": "druggable phosphatase brake on T-cell activation"},
-    "CBLB": {"compound": "NX-1607",
-             "note": "context-dependent brake on T-cell activation, MS-linked"},
-}
+# Back-compat: the Marson anchors, which used to live here as a global. Screens now
+# declare their own (ScreenSchema.spotlight) — see docs/adr/0001-*.md. Prefer
+# `schema.spotlight`; this alias exists only for callers not yet threading a screen.
+SPOTLIGHT = MARSON.spotlight
 
 
 def _overlay(impact: float, drug: float, disease: float, obvious: bool) -> float:
@@ -35,13 +33,19 @@ def _overlay(impact: float, drug: float, disease: float, obvious: bool) -> float
     return impact * mult * penalty
 
 
-def compute_shortlist(annotate: bool = True, progress=None) -> list[dict]:
+def compute_shortlist(schema: ScreenSchema = MARSON, annotate: bool = True,
+                      progress=None) -> list[dict]:
     """Return every significant gene as a scored, verified, annotated dict, sorted
-    by actionable score (descending). Deterministic; uses cached OT scores."""
-    records = load_perturbations()
+    by actionable score (descending). Deterministic; uses cached OT scores.
+
+    The screen supplies its own biology: which genes are already obvious (ranked down)
+    and which external screens remain genuinely held out. Nothing here is Marson-specific.
+    """
+    records = load_screen(schema)
     sig = significant_records(records)
     by_gene = {r.gene: r for r in records}
-    evidence = load_evidence()
+    # The screen under analysis is never its own corroboration.
+    evidence = load_evidence(primary=schema.name)
 
     ranked = rank_by_impact(sig)
     raw_rank = {s.gene: i + 1 for i, s in enumerate(ranked)}
@@ -56,7 +60,7 @@ def compute_shortlist(annotate: bool = True, progress=None) -> list[dict]:
         a = ann.get(s.gene)
         drug = a.druggable_score if a else 0.0
         disease = a.disease_score if a else 0.0
-        obvious = s.gene in OBVIOUS_TCR
+        obvious = s.gene in schema.obvious
         v = verify(by_gene[s.gene], evidence)
         rows.append({
             "gene": s.gene,
@@ -85,7 +89,8 @@ def compute_shortlist(annotate: bool = True, progress=None) -> list[dict]:
     return rows
 
 
-def get_target(gene: str, rows: list[dict] | None = None) -> dict | None:
+def get_target(gene: str, rows: list[dict] | None = None,
+               schema: ScreenSchema = MARSON) -> dict | None:
     """Full record for one gene (from a precomputed shortlist or a fresh compute)."""
-    rows = rows if rows is not None else compute_shortlist()
+    rows = rows if rows is not None else compute_shortlist(schema)
     return next((r for r in rows if r["gene"] == gene), None)

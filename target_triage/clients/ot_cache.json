@@ -50363,5 +50363,12 @@
 "disease_score": 0.0,
 "top_disease": null,
 "clinical": "Approved"
+},
+"": {
+"symbol": "RDX",
+"druggable_score": 0.0,
+"disease_score": 0.0,
+"top_disease": null,
+"clinical_stage": null
 }
 }

@@ -16,7 +16,7 @@ The tool NEVER fabricates a signal a screen lacks; it degrades honestly.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 # schema.py lives at target_triage/core/schema.py; data/ is bundled inside the
 # package at target_triage/data/ — two dirname() hops (core -> target_triage).
@@ -48,6 +48,12 @@ class ScreenSchema:
     ncells_col: str | None = None         # cell count for power check; None = unknown
     # the scientist's positive controls for THIS screen (the controls-first gate)
     controls: tuple[str, ...] = ()
+    # Genes already textbook for THIS assay. Ranked down so novelty floats up. A gene
+    # obvious in one screen may be another's positive control (Marson's TCR signalosome
+    # IS Schmidt's control set), so this can never be a global constant.
+    obvious: frozenset[str] = frozenset()
+    # Demo anchors for THIS screen: a gene mapped to a clinical-stage, checkable molecule.
+    spotlight: dict[str, dict[str, str]] = field(default_factory=dict)
     description: str = ""
     # which internal signals this screen actually provides
     has_breadth: bool = False
@@ -73,6 +79,17 @@ MARSON = ScreenSchema(
     ensembl_col="target_contrast",
     ncells_col="n_cells_target",
     controls=("RASA2", "IL2RA", "CTLA4", "FOXP3", "TNFAIP3"),
+    # The TCR signalosome: real hits, but nobody needs a screen to find them.
+    obvious=frozenset({
+        "CD3E", "CD3D", "CD3G", "CD247", "LAT", "ZAP70", "PLCG1", "LCP2",
+        "VAV1", "CD28", "LCK", "FYN", "ITK", "CD2", "CD5",
+    }),
+    spotlight={
+        "PTPN2": {"compound": "ABBV-CLS-484",
+                  "note": "druggable phosphatase brake on T-cell activation"},
+        "CBLB": {"compound": "NX-1607",
+                 "note": "context-dependent brake on T-cell activation, MS-linked"},
+    },
     description="Marson genome-scale CD4+ T-cell Perturb-seq (Zhu et al. 2025)",
     has_breadth=True,
     has_conditions=True,
@@ -98,6 +115,14 @@ SCHMIDT2022 = ScreenSchema(
     # which a cytokine-production screen must recover. (PTPN2/CBLB are brakes and are
     # NOT significant hits here — correctly, so they'd be the wrong controls.)
     controls=("VAV1", "LCP2", "ZAP70", "CD3D", "LAT"),
+    # Deliberately EMPTY, and it must stay disjoint from `controls` above. Marson's
+    # obvious set IS this screen's control set; importing it would penalise the very
+    # genes that prove the screen loaded correctly. A cytokine-production screen has no
+    # established "too obvious to report" list of its own.
+    obvious=frozenset(),
+    # PTPN2/CBLB are brakes and are not significant hits here; Marson's anchors are
+    # meaningless on this screen.
+    spotlight={},
     description="Schmidt & Steinhart 2022 CRISPRi CD4+/CD8+ cytokine screen (Science)",
     has_breadth=False,
     has_conditions=True,

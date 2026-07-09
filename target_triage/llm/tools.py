@@ -17,6 +17,7 @@ from claude_agent_sdk import create_sdk_mcp_server, tool
 from ..core.data import CONDITIONS, load_perturbations
 from ..core.evidence import load_evidence
 from ..core.ranking import rank_by_impact, significant_records
+from ..core.schema import MARSON
 from ..core.verify import Thresholds, verify
 from ..clients import clinicaltrials, opentargets
 
@@ -24,16 +25,15 @@ from ..clients import clinicaltrials, opentargets
 _RECORDS = load_perturbations()
 _SIGNIFICANT = significant_records(_RECORDS)
 _BY_GENE = {r.gene: r for r in _RECORDS}
-_EVIDENCE = load_evidence()
+_EVIDENCE = load_evidence(primary=MARSON.name)   # Marson is primary; never self-corroborate
 _RANKED = rank_by_impact(_SIGNIFICANT)
 _RAW_RANK = {s.gene: i + 1 for i, s in enumerate(_RANKED)}
 
 # Obvious TCR machinery — high raw impact but not actionable drug targets. The
-# agent is TOLD this set so it can reason about reproduction-vs-novelty.
-OBVIOUS_TCR = {
-    "CD3E", "CD3D", "CD3G", "CD247", "LAT", "ZAP70", "PLCG1", "LCP2",
-    "VAV1", "CD28", "LCK", "FYN", "ITK", "CD2", "CD5",
-}
+# agent is TOLD this set so it can reason about reproduction-vs-novelty. Declared by
+# the screen, not by this module: one screen's obvious hit is another's positive
+# control. The agent layer is Marson-only today, hence MARSON here.
+OBVIOUS_TCR = MARSON.obvious
 
 # Canonical condition order so the live condition-context figure always draws
 # Rest -> Stim8hr -> Stim48hr regardless of dict insertion order.
@@ -41,7 +41,7 @@ _COND_ORDER = {c: i for i, c in enumerate(CONDITIONS)}
 
 # The overlay (actionable) rank per gene — the RIGHT axis of the rank-shift figure.
 # Computed once from the deterministic shortlist and memoized; the lazy import
-# inside breaks the tools<->shortlist import cycle (shortlist imports OBVIOUS_TCR
+# inside breaks the tools<->shortlist import cycle (shortlist imports _condition_rows
 # from this module). First call costs ~0.5s against the warm OT cache (no network);
 # every later call is a dict lookup, so the value cannot drift within a process.
 _ACTIONABLE_RANK: dict[str, int] | None = None
