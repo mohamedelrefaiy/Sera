@@ -35,17 +35,31 @@ Dependency direction reads top-to-bottom: `api → agent → llm → core → cl
 
 ## Quickstart
 
+One command runs the whole app (it creates the venv and installs on first run):
+
+```bash
+./start.sh            # http://127.0.0.1:8010
+PORT=9000 ./start.sh  # pick a port
+```
+
+`start.sh` launches a single server: the FastAPI backend serves both the JSON API
+(`/api/*`) and the static frontend (`target_triage/frontend/`) on one port — there
+is no separate frontend process. The deterministic shortlist works with no API key;
+the chat panel needs `ANTHROPIC_API_KEY` (or a logged-in `claude` CLI).
+
+Or run the pieces manually:
+
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e .
 
-# Run the deterministic pipeline's positive-control gate (no API key needed)
-python -m target_triage.core.controls          # expect 5/5 PASS on Marson + Schmidt2022
+# The web app (frontend + backend, single server)
+python target_triage/api/serve.py --port 8010   # http://127.0.0.1:8010
 
-# Serve the web app — deterministic shortlist works with no key; chat needs one
-python target_triage/api/serve.py   # http://127.0.0.1:8000
+# The deterministic pipeline's positive-control gate (no API key needed)
+python -m target_triage.core.controls           # expect 5/5 PASS on Marson + Schmidt2022
 
-# Run the live agent end-to-end (requires ANTHROPIC_API_KEY or a logged-in claude CLI)
+# The live agent end-to-end (requires ANTHROPIC_API_KEY or a logged-in claude CLI)
 python -m target_triage
 ```
 
