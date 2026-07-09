@@ -19,7 +19,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from target_triage.core.data import load_perturbations  # noqa: E402
+from target_triage.core.data import load_marson  # noqa: E402
 from target_triage.core.evidence import load_evidence  # noqa: E402
 from target_triage.core.verify import verify  # noqa: E402
 
@@ -27,7 +27,7 @@ PANEL = ("CBLB", "RASA2", "CD5", "TNFAIP3", "DGKA", "A1BG")
 
 
 def _verdicts():
-    by_gene = {r.gene: r for r in load_perturbations()}
+    by_gene = {r.gene: r for r in load_marson()}
     ev = load_evidence()
     return {g: verify(by_gene[g], ev) for g in PANEL if g in by_gene}, by_gene
 

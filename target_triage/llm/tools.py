@@ -14,7 +14,7 @@ import json
 
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
-from ..core.data import CONDITIONS, load_perturbations
+from ..core.data import CONDITIONS, load_marson
 from ..core.evidence import load_evidence
 from ..core.ranking import rank_by_impact, significant_records
 from ..core.schema import MARSON
@@ -22,7 +22,7 @@ from ..core.verify import Thresholds, verify
 from ..clients import clinicaltrials, opentargets
 
 # --- load-once immutable state -------------------------------------------------
-_RECORDS = load_perturbations()
+_RECORDS = load_marson()   # the agent layer is Marson-only today
 _SIGNIFICANT = significant_records(_RECORDS)
 _BY_GENE = {r.gene: r for r in _RECORDS}
 _EVIDENCE = load_evidence(primary=MARSON.name)   # Marson is primary; never self-corroborate
@@ -54,7 +54,7 @@ def _actionable_rank() -> dict[str, int]:
     if _ACTIONABLE_RANK is None:
         try:
             from ..core.shortlist import compute_shortlist  # lazy: breaks the import cycle
-            _ACTIONABLE_RANK = {r["gene"]: r["rank"] for r in compute_shortlist()}
+            _ACTIONABLE_RANK = {r["gene"]: r["rank"] for r in compute_shortlist(MARSON)}
         except Exception:  # noqa: BLE001 — never let a figure detail crash a tool call
             _ACTIONABLE_RANK = {}
     return _ACTIONABLE_RANK

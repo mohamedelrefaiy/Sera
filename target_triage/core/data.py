@@ -124,9 +124,15 @@ def load_screen(schema: ScreenSchema = MARSON) -> tuple[GeneRecord, ...]:
     )
 
 
-def load_perturbations(path: str | None = None) -> tuple[GeneRecord, ...]:
-    """Back-compat entry: load the Marson screen (the default proof dataset).
+def load_marson() -> tuple[GeneRecord, ...]:
+    """The Marson screen — the default proof dataset.
 
-    Existing callers used load_perturbations(); they keep working unchanged. New code
-    that wants a different screen calls load_screen(schema) directly."""
+    Named for what it loads. It takes no `path`: an earlier signature accepted one and
+    silently ignored it, so a caller reading it would reasonably assume screen-switching
+    worked. Any other screen goes through load_screen(schema)."""
     return load_screen(MARSON)
+
+
+# Deprecated alias. Callers that are genuinely Marson-only (the agent layer, the Marson
+# biology-fidelity evals) should say load_marson(); anything else takes a ScreenSchema.
+load_perturbations = load_marson

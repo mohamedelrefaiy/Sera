@@ -33,7 +33,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from target_triage.core.data import GeneRecord, load_perturbations  # noqa: E402
+from target_triage.core.data import GeneRecord, load_marson  # noqa: E402
 
 # --- thresholds (a judge can see and argue every one) ---
 MIN_EFFECT = 2.0        # |ontarget_effect_size| floor for a "real" knockdown
@@ -100,14 +100,14 @@ def evaluate_control(
 
 
 def run_all() -> tuple[ControlResult, ...]:
-    records = load_perturbations()
+    records = load_marson()
     by_gene = {r.gene: r for r in records}
     return tuple(evaluate_control(g, t, by_gene) for g, t in CONTROLS)
 
 
 @pytest.mark.parametrize("gene,tier", CONTROLS)
 def test_control_passes(gene: str, tier: str) -> None:
-    by_gene = {r.gene: r for r in load_perturbations()}
+    by_gene = {r.gene: r for r in load_marson()}
     result = evaluate_control(gene, tier, by_gene)
     assert result.passed, f"{gene} ({tier}): {result.reason}"
 

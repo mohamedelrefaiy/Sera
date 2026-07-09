@@ -8,7 +8,7 @@ other way around.
 from __future__ import annotations
 
 from .controls import ControlResult, GateResult, run_controls_gate
-from .data import CONDITIONS, GeneRecord, Perturbation, load_perturbations, load_screen
+from .data import CONDITIONS, GeneRecord, Perturbation, load_marson, load_screen
 from .evidence import Evidence, ScreenHit, load_evidence
 from .ranking import ScoredGene, rank_by_impact, significant_records
 from .schema import MARSON, REGISTRY, SCHMIDT2022, ScreenSchema, get_schema
@@ -22,7 +22,7 @@ __all__ = [
     "CONDITIONS",
     "GeneRecord",
     "Perturbation",
-    "load_perturbations",
+    "load_marson",
     "load_screen",
     "Evidence",
     "ScreenHit",

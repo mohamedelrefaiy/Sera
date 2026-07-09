@@ -2,13 +2,23 @@
 
 Two clean paths:
   DETERMINISTIC (no API cost, always works, offline-reproducible):
+    GET /api/screens           — the registered screens the picker offers
+    GET /api/controls          — that screen's controls-first gate (shown BEFORE picks)
     GET /api/shortlist         — the ranked + verified + annotated table
     GET /api/target/{gene}     — one gene's full evidence + verdict
+    GET /api/funnel            — the narrowing, sourced from the loader
+    GET /api/volcano           — screen-wide points on the axes THAT screen can plot
   AGENT (live Claude, streamed; the interrogation layer):
     POST /api/chat             — SSE stream of the agent's tool calls + reasoning
 
-The shortlist is computed once at startup and cached in memory (the screen is
-static), so the table loads instantly on every request.
+Every deterministic route takes `?screen=` and defaults to Marson. Each registered
+screen's shortlist is computed once at startup and cached (screens are static), so
+the table loads instantly whichever screen the picker selects. An unknown screen is
+a 404 — never a silent fall-back to Marson, which would show one screen's biology
+under another's name.
+
+The screen supplies its own controls, obvious-hit set, and impact axis; this module
+assumes none of them. See docs/adr/0001-screens-declare-their-own-capabilities.md.
 
 Run:  python -m target_triage.serve      (see serve.py)
 """
@@ -16,6 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
 import os
 import shutil
 from contextlib import asynccontextmanager
@@ -26,9 +37,11 @@ from fastapi.staticfiles import StaticFiles
 
 from collections import Counter
 
-from ..core.data import load_perturbations
+from ..core.controls import run_controls_gate
+from ..core.data import load_screen
 from ..core.ranking import significant_records
-from ..core.shortlist import SPOTLIGHT, compute_shortlist
+from ..core.schema import MARSON, REGISTRY, ScreenSchema
+from ..core.shortlist import compute_shortlist
 from . import runlog
 from .replay import replay_stream
 
@@ -39,26 +52,92 @@ _WEB_DIR = os.path.join(
     "frontend",
 )
 
-# Computed once at startup — the deterministic table.
-_SHORTLIST: list[dict] = []
+# One deterministic table per registered screen, computed once at startup. Both
+# screens together cost well under a second against the warm Open Targets cache, so
+# precomputing beats lazy caching: no invalidation logic, and every request is instant
+# whichever screen the picker selects.
+_SHORTLISTS: dict[str, list[dict]] = {}
 
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
-    global _SHORTLIST
-    _SHORTLIST = compute_shortlist()
+    for name, schema in REGISTRY.items():
+        _SHORTLISTS[name] = compute_shortlist(schema)
     yield
 
 
 app = FastAPI(title="Target Triage", version="0.1.0", lifespan=_lifespan)
 
 
+def _resolve(screen: str | None) -> ScreenSchema:
+    """`?screen=` -> schema, or 404. The single gate: no route may silently fall back
+    to Marson, which would present one screen's biology under another's name."""
+    if screen is None:
+        return MARSON
+    if screen not in REGISTRY:
+        raise HTTPException(
+            status_code=404,
+            detail=f"unknown screen '{screen}'; registered: {sorted(REGISTRY)}",
+        )
+    return REGISTRY[screen]
+
+
+def _rows(schema: ScreenSchema) -> list[dict]:
+    """The precomputed shortlist for a screen (computed on demand if the lifespan
+    hasn't run — e.g. a direct import in a test)."""
+    if schema.name not in _SHORTLISTS:
+        _SHORTLISTS[schema.name] = compute_shortlist(schema)
+    return _SHORTLISTS[schema.name]
+
+
+@app.get("/api/screens")
+def screens() -> dict:
+    """What the picker offers. Each screen advertises the signals it carries, so the
+    UI can label honestly rather than assume a Marson-shaped screen."""
+    return {
+        "default": MARSON.name,
+        "screens": [
+            {
+                "name": s.name,
+                "description": s.description,
+                "impact_axis": s.impact_axis,
+                "has_breadth": s.has_breadth,
+                "has_conditions": s.has_conditions,
+                "controls": list(s.controls),
+                "spotlight": list(s.spotlight),
+            }
+            for s in REGISTRY.values()
+        ],
+    }
+
+
+@app.get("/api/controls")
+def controls(screen: str | None = None) -> dict:
+    """The controls-first gate for a screen. The UI must render this BEFORE a single
+    novel pick: if a screen cannot recover its own known biology, nothing below it is
+    trustworthy, and the tool says so rather than handing back a plausible table."""
+    schema = _resolve(screen)
+    gate = run_controls_gate(schema)
+    return {
+        "screen": gate.screen,
+        "passed": gate.passed,
+        "summary": gate.summary,
+        "results": [
+            {"gene": r.gene, "found": r.found, "passed": r.passed,
+             "best_effect": r.best_effect, "condition": r.condition, "reason": r.reason}
+            for r in gate.results
+        ],
+    }
+
+
 @app.get("/api/shortlist")
-def shortlist(limit: int = 50, condition: str | None = None,
+def shortlist(screen: str | None = None, limit: int = 50, condition: str | None = None,
               min_druggable: float = 0.0, promoted_only: bool = False) -> dict:
     """The ranked, verified shortlist. Filters are applied server-side so the
     table stays honest (rank reflects the full set; filters only narrow the view)."""
-    rows = _SHORTLIST
+    schema = _resolve(screen)
+    all_rows = _rows(schema)
+    rows = all_rows
     if condition:
         rows = [r for r in rows if r["best_condition"] == condition]
     if min_druggable > 0:
@@ -66,34 +145,40 @@ def shortlist(limit: int = 50, condition: str | None = None,
     if promoted_only:
         rows = [r for r in rows if r["verdict"].startswith("PROMOTE")]
     return {
-        "total": len(_SHORTLIST),
+        "screen": schema.name,
+        "total": len(all_rows),
         "shown": min(limit, len(rows)),
-        "spotlight": list(SPOTLIGHT.keys()),
+        "spotlight": list(schema.spotlight),
         "rows": rows[:limit],
     }
 
 
 @app.get("/api/target/{gene}")
-def target(gene: str) -> dict:
-    row = next((r for r in _SHORTLIST if r["gene"] == gene.upper()), None)
+def target(gene: str, screen: str | None = None) -> dict:
+    schema = _resolve(screen)
+    row = next((r for r in _rows(schema) if r["gene"] == gene.upper()), None)
     if row is None:
-        raise HTTPException(status_code=404, detail=f"{gene} not in the shortlist")
+        raise HTTPException(
+            status_code=404, detail=f"{gene} not in the {schema.name} shortlist")
     return row
 
 
 @app.get("/api/funnel")
-def funnel() -> dict:
+def funnel(screen: str | None = None) -> dict:
     """Deterministic funnel counts (no key). Every number is SOURCED from the loader
     or the verified shortlist — none is typed by hand. The frontend draws the narrowing
     from these, so 'perturbations -> shortlist' can never show a fabricated tally.
 
-    Note the distinction the funnel must respect: the screen has 33,983 perturbation x
-    condition ROWS, but 11,526 unique GENES — the first funnel gene-bar is loaded_genes,
-    never the row count."""
-    recs = load_perturbations()
+    Note the distinction the funnel must respect: a screen has many perturbation x
+    condition ROWS but fewer unique GENES (Marson: 33,983 rows, 11,526 genes). The
+    first funnel gene-bar is loaded_genes, never the row count."""
+    schema = _resolve(screen)
+    rows = _rows(schema)
+    recs = load_screen(schema)
     sig = significant_records(recs)
-    tally = Counter(r["verdict"] for r in _SHORTLIST)
+    tally = Counter(r["verdict"] for r in rows)
     return {
+        "screen": schema.name,
         "loaded_genes": len(recs),
         "significant": len(sig),
         "verdicts": {
@@ -103,7 +188,7 @@ def funnel() -> dict:
             "PROMOTE (corroborated)": tally.get("PROMOTE (corroborated)", 0),
         },
         "survived": sum(v for k, v in tally.items() if k.startswith("PROMOTE")),
-        "obvious_tcr_in_ranked": sum(1 for r in _SHORTLIST if r["is_obvious_tcr"]),
+        "obvious_tcr_in_ranked": sum(1 for r in rows if r["is_obvious_tcr"]),
     }
 
 
@@ -114,11 +199,29 @@ def funnel() -> dict:
 VOLCANO_CLOUD_CAP = 900
 
 
-def _volcano_point(record) -> dict | None:
+# An FDR of exactly 0.0 (MAGeCK reports these) has no finite -log10. Clamp to the
+# smallest float the table can distinguish, so the point plots at the top of the axis
+# instead of vanishing to infinity or being dropped.
+_MIN_FDR = 1e-10
+
+
+def _impact(pert, schema: ScreenSchema) -> float | None:
+    """The y-value this screen can honestly plot. None when the signal is absent —
+    never 0.0, which would read as 'measured, and nil'. See ADR-0001."""
+    if schema.impact_axis == "breadth":
+        return float(pert.n_downstream) if pert.n_downstream is not None else None
+    if schema.impact_axis == "neg_log10_fdr":
+        if pert.fdr is None:
+            return None
+        return round(-math.log10(max(pert.fdr, _MIN_FDR)), 3)
+    return None
+
+
+def _volcano_point(record, schema: ScreenSchema) -> dict | None:
     """One volcano point for a gene: its strongest-effect significant, on-target
-    condition. x = on-target effect size, y = downstream breadth (this screen's
-    honest impact axis — it carries no per-perturbation p-value). Returns None if
-    the gene has no usable measurement."""
+    condition. x = effect size; y = whatever impact axis THIS screen declares (Marson
+    has no per-perturbation p-value, so it plots breadth; Schmidt2022 has no breadth,
+    so it plots -log10(FDR)). Returns None if the gene has no usable measurement."""
     best = None
     for pert in record.by_condition.values():
         if pert.significant and not pert.offtarget:
@@ -129,28 +232,52 @@ def _volcano_point(record) -> dict | None:
     return {
         "gene": record.gene,
         "effect": round(best.effect_size, 2),
-        "downstream": best.n_downstream,          # int OR None (screen may lack breadth)
+        "impact": _impact(best, schema),         # float OR None; axis named in the payload
+        "downstream": best.n_downstream,         # int OR None (screen may lack breadth)
         "condition": best.condition,
     }
 
 
+# How the frontend should label each declared axis. The chart reads this rather than
+# hardcoding "downstream genes moved" — a caption that would be a lie on any screen
+# without breadth.
+_AXIS_LABELS: dict[str, dict[str, str]] = {
+    "breadth": {
+        "y_label": "downstream genes moved",
+        # log1p, not log: a knockdown that moved zero downstream genes reports 0, which
+        # is a real measurement (not a missing signal) and has no log.
+        "y_scale": "log1p",
+        "note": "this screen carries no per-perturbation p-value, "
+                "so breadth of transcriptional impact is the honest y-axis",
+    },
+    "neg_log10_fdr": {
+        "y_label": "−log10(FDR)",
+        "y_scale": "linear",
+        "note": "this screen reports no downstream breadth, "
+                "so significance is the honest y-axis (the classic volcano)",
+    },
+}
+
+
 @app.get("/api/volcano")
-def volcano(cloud_cap: int = VOLCANO_CLOUD_CAP) -> dict:
+def volcano(screen: str | None = None, cloud_cap: int = VOLCANO_CLOUD_CAP) -> dict:
     """Screen-wide volcano data. Every significant gene is one point; shortlist genes
     carry their verdict so the frontend can label + colour them, and the anonymous
     background is evenly downsampled to keep the payload light. No number is typed by
-    hand — all effect/breadth values come straight from the loaded screen.
+    hand — every value comes straight from the loaded screen.
 
     Axes the frontend should draw:
-      x = on-target effect size (|effect| grows with knockdown strength)
-      y = downstream genes moved (breadth of transcriptional impact)
+      x = effect size (|effect| grows with knockdown strength)
+      y = `impact`, whose meaning is named by `impact_axis` / `y_label`. The screen
+          declares it; this route never assumes one. See ADR-0001.
     """
-    verdict_by_gene = {r["gene"]: r["verdict"] for r in _SHORTLIST}
+    schema = _resolve(screen)
+    verdict_by_gene = {r["gene"]: r["verdict"] for r in _rows(schema)}
 
     labelled: list[dict] = []
     background: list[dict] = []
-    for rec in significant_records(load_perturbations()):
-        pt = _volcano_point(rec)
+    for rec in significant_records(load_screen(schema)):
+        pt = _volcano_point(rec, schema)
         if pt is None:
             continue
         verdict = verdict_by_gene.get(pt["gene"])
@@ -166,6 +293,9 @@ def volcano(cloud_cap: int = VOLCANO_CLOUD_CAP) -> dict:
         background = [background[int(i * step)] for i in range(cap)]
 
     return {
+        "screen": schema.name,
+        "impact_axis": schema.impact_axis,
+        **_AXIS_LABELS[schema.impact_axis],
         "total_significant": total_background + len(labelled),
         "background": background,
         "background_sampled_from": total_background,
