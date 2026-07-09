@@ -12,11 +12,11 @@ work, including the candidates it rejects.
 
 ## Layout
 
-The runnable application lives under [`application/`](application/), a self-contained,
-installable unit:
+The package and its build files sit at the repo root — a conventional, installable
+Python app:
 
 ```
-application/
+.
 ├── target_triage/       the package (app-layout: no src/ wrapper)
 │   ├── core/            deterministic pipeline (data, ranking, verify, shortlist, controls)
 │   ├── clients/         read-only external evidence (Open Targets, ClinicalTrials.gov)
@@ -37,13 +37,13 @@ Dependency direction reads top-to-bottom: `api → agent → llm → core → cl
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -e application/
+pip install -e .
 
 # Run the deterministic pipeline's positive-control gate (no API key needed)
 python -m target_triage.core.controls          # expect 5/5 PASS on Marson + Schmidt2022
 
 # Serve the web app — deterministic shortlist works with no key; chat needs one
-python application/target_triage/api/serve.py   # http://127.0.0.1:8000
+python target_triage/api/serve.py   # http://127.0.0.1:8000
 
 # Run the live agent end-to-end (requires ANTHROPIC_API_KEY or a logged-in claude CLI)
 python -m target_triage
@@ -52,7 +52,7 @@ python -m target_triage
 ## Tests
 
 ```bash
-pytest application/target_triage/eval
+pytest target_triage/eval
 ```
 
 The controls-first gate is the trust contract: before any novel pick is shown, the
