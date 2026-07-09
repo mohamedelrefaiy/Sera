@@ -29,6 +29,8 @@ from collections import Counter
 from ..core.data import load_perturbations
 from ..core.ranking import significant_records
 from ..core.shortlist import SPOTLIGHT, compute_shortlist
+from . import runlog
+from .replay import replay_stream
 
 # app.py lives at target_triage/api/app.py; the served frontend is bundled inside
 # the package at target_triage/frontend/ — two dirname() hops (api -> target_triage).
@@ -177,22 +179,36 @@ CHAT_TIMEOUT_S = 90  # a full triage run streams within this; else we fail clean
 @app.post("/api/chat")
 async def chat(body: dict) -> StreamingResponse:
     """Stream the live agent as Server-Sent Events, incrementally. Each event is one
-    JSON line: {type: tool_call|text|error|done, ...}. Imported lazily so the
-    deterministic paths never depend on an API key being present.
+    JSON line: {type: tool_call|text|view_update|tool_result|error|done, ...}.
+    Imported lazily so the deterministic paths never depend on an API key being
+    present.
 
     If no credentials are configured we fail fast with a clear event rather than
-    hanging — the frontend then falls back to the deterministic shortlist."""
+    hanging — the frontend then falls back to the deterministic shortlist.
+
+    Every event is ALSO teed to a run log (see runlog.py) so the run can be
+    replayed later via GET /api/replay/{run_id} — one code path renders both
+    live and replayed events. The run id is returned as the `X-Run-Id` response
+    header (chosen over embedding it in the first event: a header is available
+    to the client the instant headers arrive, before any SSE event is parsed,
+    and it keeps the event payloads themselves byte-identical to what a replay
+    will later re-emit)."""
     task = (body or {}).get("message", "").strip()
     if not task:
         raise HTTPException(status_code=400, detail="empty message")
 
+    run_id, run_log_path = runlog.new_run()
+    headers = {"X-Run-Id": run_id}
+
     if not _has_credentials():
         async def no_key():
-            yield _sse({"type": "error",
+            for ev in ({"type": "error",
                         "detail": "No Anthropic credentials configured. The shortlist "
-                                  "works without the agent; set ANTHROPIC_API_KEY to enable chat."})
-            yield _sse({"type": "done"})
-        return StreamingResponse(no_key(), media_type="text/event-stream")
+                                  "works without the agent; set ANTHROPIC_API_KEY to enable chat."},
+                       {"type": "done"}):
+                runlog.append_event(run_log_path, ev)
+                yield _sse(ev)
+        return StreamingResponse(no_key(), media_type="text/event-stream", headers=headers)
 
     from ..agent import run_triage  # lazy: only the chat path needs the SDK
 
@@ -222,15 +238,29 @@ async def chat(body: dict) -> StreamingResponse:
                 try:
                     ev = await asyncio.wait_for(queue.get(), timeout=CHAT_TIMEOUT_S)
                 except asyncio.TimeoutError:
-                    yield _sse({"type": "error", "detail": "agent timed out"})
+                    ev = {"type": "error", "detail": "agent timed out"}
+                    runlog.append_event(run_log_path, ev)
+                    yield _sse(ev)
+                    done_ev = {"type": "done"}
+                    runlog.append_event(run_log_path, done_ev)
+                    yield _sse(done_ev)
                     break
+                runlog.append_event(run_log_path, ev)
                 yield _sse(ev)
                 if ev.get("type") == "done":
                     break
         finally:
             worker.cancel()
 
-    return StreamingResponse(event_stream(), media_type="text/event-stream")
+    return StreamingResponse(event_stream(), media_type="text/event-stream", headers=headers)
+
+
+@app.get("/api/replay/{run_id}")
+async def replay(run_id: str, speed: float = 1.0) -> StreamingResponse:
+    """Re-stream a saved run's event log as SSE at recorded pacing. See replay.py
+    for the pacing/404 contract; kept as a thin route so the replay logic itself
+    stays independently testable and importable from eval/test_replay.py."""
+    return await replay_stream(run_id, speed=speed)
 
 
 def _sse(event: dict) -> str:

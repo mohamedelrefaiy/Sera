@@ -8,6 +8,9 @@ __pycache__/
 .gstack/
 .agents
 
+# Chat run logs (replay spine) — reproducible from a live run, never published.
+runs/
+
 # Documents and working notes — kept local, not published. The public repo is
 # code only: application/ (the app) + LICENSE + README.
 docs/
