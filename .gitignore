@@ -11,6 +11,13 @@ __pycache__/
 # Chat run logs (replay spine) — reproducible from a live run, never published.
 runs/
 
+# Concord pipeline: the 16.8 GB source h5ad (only present if 00_download.py --download
+# was run) is huge and reproducible from public S3 — never commit it. The small extracted
+# parquet under data/artifacts/ IS the served deliverable and is intentionally NOT ignored.
+data/raw/
+*.h5ad
+*.h5mu
+
 # Documents and working notes — kept local, not published. The public repo is
 # code only: application/ (the app) + LICENSE + README.
 docs/

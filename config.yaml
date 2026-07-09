@@ -1,0 +1,84 @@
+# Concord configuration — thresholds, cytokines, conditions, and data provenance.
+#
+# Every tunable that the brief (concord-build-brief.md) says must NOT be hardcoded lives
+# here. The deterministic core reads these; nothing downstream invents a cutoff. Kept as
+# plain YAML so a reviewer can see and change the science without reading code.
+#
+# NOTE: the existing Target Triage core is intentionally stdlib-only. This file is read by
+# the (optional) Concord pipeline + concordance builder, not by the base app's hot path.
+
+# ---- cytokine scope (brief §3.5) -------------------------------------------------------
+cytokines:
+  primary: IL2            # CD4+ in BOTH screens — the clean apples-to-apples anchor. Ship first.
+  # IFNG is CD8+ in Schmidt but CD4+ in Zhu — a CROSS-CELL-TYPE comparison. Kept here so the
+  # extractor pulls its column, but the UI must flag it as not-clean, never sell it as concordant.
+  experimental:
+    - IFNG
+  # extra columns the one-time h5ad extraction should also slice (cheap; future-proofs the parquet)
+  extract_also:
+    - IL4
+    - IL13
+    - IL10
+    - IL17A
+    - TNF
+
+# ---- activation conditions (Zhu/Marson axis) -------------------------------------------
+conditions:
+  - Rest
+  - Stim8hr
+  - Stim48hr
+
+# ---- verdict thresholds (brief §3.2) ---------------------------------------------------
+# One significance regime only (brief §3.4 hazard 2): DESeq2 adj_p_value on the mRNA side,
+# MAGeCK FDR on the protein side. Never mix in MASH lfsr.
+thresholds:
+  q_rna: 0.10             # Zhu DESeq2 adj_p_value cutoff for hit_rna
+  q_prot: 0.10            # Schmidt MAGeCK FDR cutoff for hit_prot
+  # A hit must also move in the expected direction (knockdown REDUCES the cytokine): z_rna < 0
+  # and protein lfc < 0. Set false only to study bidirectional effects.
+  require_negative_direction: true
+
+# ---- confidence tier (brief §3.3, from DE_stats QC columns) -----------------------------
+confidence:
+  high:
+    min_crossdonor_corr: 0.50
+    min_crossguide_corr: 0.50
+    require_ontarget_significant: true
+    require_offtarget_clean: true
+  low:
+    max_crossdonor_corr: 0.20     # weak/negative cross-correlation OR not on-target-significant
+  # anything between high and low is Medium
+
+# ---- the two hazards the join MUST handle (brief §3.4) ----------------------------------
+hazards:
+  # 1. On-target contamination: a gene's knockdown trivially lowers its OWN transcript. Drop
+  #    any row where the perturbed gene IS the cytokine readout (IL2-KD on IL2 mRNA).
+  exclude_self_perturbation: true      # perturbed_gene != cytokine_readout_gene
+  # 2. Significance regime is pinned above; this names it for the provenance line/UI.
+  significance_regime: "DESeq2 adj_p_value (mRNA) + MAGeCK FDR (protein)"
+
+# ---- data provenance (verified 2026-07-09; see docs/planning/CONCORD_PLAN.md §6) --------
+data:
+  # The per-cytokine mRNA matrix. Public S3, HTTP-range-capable (Accept-Ranges: bytes), 16.8 GB.
+  # Confirmed reachable: HTTP 200, HDF5 magic verified, IL2 column at index 2377, canonical
+  # TCR hits (ITK/BCL10/TSC1) come out negative at adj_p<0.1. Extract once → parquet.
+  h5ad_url: "https://genome-scale-tcell-perturb-seq.s3.amazonaws.com/marson2025_data/GWCD4i.DE_stats.h5ad"
+  h5ad_bytes: 16786240107
+  h5ad_var_symbol_col: "gene_name"          # var/_index is Ensembl; symbols live in var/gene_name
+  h5ad_obs_gene_col: "target_contrast_gene_name"
+  h5ad_obs_condition_col: "culture_condition"
+  h5ad_layers: [zscore, adj_p_value, log_fc, p_value, lfcSE, baseMean]
+  # Schmidt protein side — already bundled in the repo.
+  schmidt_csv: "target_triage/data/external_screens/Schmidt2022_CRISPRi_gene_phenotypes.csv"
+  schmidt_phenotype_il2: "CD4+ IL2"
+  schmidt_phenotype_ifng: "CD8+ IFNG"       # cross-cell-type — flag, do not sell as clean
+  # Zhu 2025 citation — DOI confirmed 2026-07-09 from the CZI Virtual Cells + bioRxiv pages.
+  zhu_2025_doi: "10.64898/2025.12.23.696273"
+
+# ---- output artifact (brief §5) --------------------------------------------------------
+artifacts_dir: "target_triage/data/artifacts"
+concordance_parquet: "target_triage/data/artifacts/concordance.parquet"
+
+# ---- Claude interpretation (brief §4 Phase 4 / §7.3) -----------------------------------
+model:
+  name: "claude-sonnet-5"    # grounded explanations interpret provided numbers ONLY
