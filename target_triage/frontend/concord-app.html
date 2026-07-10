@@ -445,53 +445,8 @@ ZNF250</div>
 
 <script>
 (function(){
-  var DATA = {
-    ITK:{ role:"IL2-inducible T-cell kinase · TCR signaling",
-      quality:{tier:"High",bar:88, donor:["ρ 0.71 · 4/4","strong"], guide:["ρ 0.66","strong"], kd:["82%","strong"], off:["clean","strong"]},
-      gwas:{status:"yes", label:"◆ Autoimmune-linked", list:"Rheumatoid arthritis · Type 1 diabetes · IBD", note:"Falls in a perturbation cluster enriched for autoimmune GWAS loci (Zhu 2025)."},
-      drug:{sm:["Advanced clinical","p-clin"], ab:["—","p-none"], clin:["Phase II","p-clin"], note:"Kinase — ITK inhibitors in clinical development."},
-      conds:{
-        Rest:{v:"no",zP:"−0.4",zR:"−0.7",qP:"0.62",qR:"0.55",hP:0,hR:0, why:"Neither screen sees ITK doing much in resting cells — expected, since it works downstream of the T-cell receptor, which is quiet until stimulation.",mech:""},
-        Stim8h:{v:"rep",zP:"−3.9",zR:"−4.6",qP:"0.004",qR:"0.001",hP:1,hR:1, why:"By 8h both rulers agree: ITK knockdown lowers cytokines at the protein and mRNA level. Agreement across two independent readouts makes this high-confidence.",mech:""},
-        Stim48h:{v:"rep",zP:"−4.2",zR:"−5.1",qP:"0.002",qR:"0.0004",hP:1,hR:1, why:"Both screens independently flag ITK as required for cytokine output at 48h. A core signaling kinase, druggable, autoimmune-linked — the strongest kind of hit.",mech:""}
-      }},
-    TSC1:{ role:"TSC complex · restrains mTOR",
-      quality:{tier:"High",bar:82, donor:["ρ 0.63 · 4/4","strong"], guide:["ρ 0.61","strong"], kd:["78%","strong"], off:["clean","strong"]},
-      gwas:{status:"yes", label:"◆ Autoimmune-linked (weak)", list:"Multiple sclerosis (suggestive)", note:"Modest colocalization; treat as supporting, not primary, evidence."},
-      drug:{sm:["Pathway (mTOR)","p-disc"], ab:["—","p-none"], clin:["Approved (pathway)","p-clin"], note:"Not directly drugged, but mTOR-pathway inhibitors (rapalogs) are approved."},
-      conds:{
-        Rest:{v:"no",zP:"+0.2",zR:"−0.9",qP:"0.71",qR:"0.40",hP:0,hR:0, why:"Quiet in both screens at rest.",mech:""},
-        Stim8h:{v:"rep",zP:"−3.1",zR:"−3.6",qP:"0.02",qR:"0.008",hP:1,hR:1, why:"Both readouts agree TSC1 loss reshapes cytokine output once cells activate — consistent with releasing the mTOR brake.",mech:""},
-        Stim48h:{v:"rep",zP:"−3.8",zR:"−4.4",qP:"0.006",qR:"0.001",hP:1,hR:1, why:"Replicated across protein and mRNA at 48h. Mechanistically sensible and confident.",mech:""}
-      }},
-    VPS37B:{ role:"ESCRT-I component · membrane trafficking",
-      quality:{tier:"Medium",bar:52, donor:["ρ 0.44 · 3/4","mix"], guide:["ρ 0.38","mix"], kd:["71%","strong"], off:["clean","strong"]},
-      gwas:{status:"no", label:"○ No autoimmune association", list:"None reported", note:"No colocalizing immune-disease signal in current data."},
-      drug:{sm:["Limited","p-none"], ab:["—","p-none"], clin:["None","p-none"], note:"Trafficking protein — poor small-molecule tractability."},
-      conds:{
-        Rest:{v:"no",zP:"−0.3",zR:"−1.1",qP:"0.66",qR:"0.31",hP:0,hR:0, why:"No effect in either screen at rest.",mech:""},
-        Stim8h:{v:"mo",zP:"−0.6",zR:"−3.9",qP:"0.55",qR:"0.004",hP:0,hR:1, why:"The mRNA atlas calls VPS37B a hit; the protein screen doesn't. It shifts the transcriptome without moving secreted cytokine.",mech:"post-transcriptional candidate — confirm at protein level"},
-        Stim48h:{v:"mo",zP:"−0.8",zR:"−4.2",qP:"0.48",qR:"0.002",hP:0,hR:1, why:"Still mRNA-only at 48h, and guide agreement is only moderate. A real lead, but not a confirmed target — exactly the case cross-checking exists for.",mech:"post-transcriptional candidate — confirm at protein level"}
-      }},
-    LCP2:{ role:"SLP-76 adaptor · TCR signal relay",
-      quality:{tier:"High",bar:80, donor:["ρ 0.68 · 4/4","strong"], guide:["ρ 0.64","strong"], kd:["80%","strong"], off:["clean","strong"]},
-      gwas:{status:"yes", label:"◆ Autoimmune-linked", list:"Rheumatoid arthritis · Psoriasis", note:"Adaptor central to TCR signaling; supported by immune-disease loci."},
-      drug:{sm:["Low","p-none"], ab:["—","p-none"], clin:["None","p-none"], note:"Scaffold protein — hard for small molecules; a PROTAC/degrader candidate."},
-      conds:{
-        Rest:{v:"no",zP:"−0.5",zR:"−0.2",qP:"0.58",qR:"0.80",hP:0,hR:0, why:"Quiet at rest in both.",mech:""},
-        Stim8h:{v:"po",zP:"−3.7",zR:"−0.9",qP:"0.007",qR:"0.44",hP:1,hR:0, why:"The protein screen fires but the mRNA atlas stays flat. LCP2 relays the signal that drives secretion — it can change protein output without changing transcript levels.",mech:"signaling / secretion — invisible to a transcriptome-only search"},
-        Stim48h:{v:"po",zP:"−3.9",zR:"−1.2",qP:"0.005",qR:"0.28",hP:1,hR:0, why:"Protein-only again at 48h — a reminder that an mRNA atlas alone will miss genuine post-transcriptional regulators.",mech:"signaling / secretion — invisible to a transcriptome-only search"}
-      }},
-    ZNF250:{ role:"Zinc-finger protein · uncharacterized here",
-      quality:{tier:"Low",bar:22, donor:["ρ 0.12","weak"], guide:["ρ 0.09","weak"], kd:["61%","mix"], off:["clean","strong"]},
-      gwas:{status:"no", label:"○ No autoimmune association", list:"None reported", note:"No immune-disease genetic support."},
-      drug:{sm:["Unknown","p-none"], ab:["—","p-none"], clin:["None","p-none"], note:"Zinc-finger TF — poor tractability."},
-      conds:{
-        Rest:{v:"no",zP:"+0.3",zR:"+0.5",qP:"0.74",qR:"0.61",hP:0,hR:0, why:"No signal in either screen at rest.",mech:""},
-        Stim8h:{v:"no",zP:"−0.7",zR:"−0.6",qP:"0.52",qR:"0.49",hP:0,hR:0, why:"Both screens agree there's nothing here. Concordant absence is still useful — you can drop it with confidence.",mech:""},
-        Stim48h:{v:"no",zP:"−0.9",zR:"−1.0",qP:"0.41",qR:"0.38",hP:0,hR:0, why:"Still nothing at 48h in either readout. Not your gene for cytokine control.",mech:""}
-      }}
-  };
+  // (The mockup's hardcoded illustrative DATA object was removed — the app is fully data-driven
+  //  off /api/concordance. Nothing below references it.)
 
   // Gate-plot geometry per verdict. discordant has NO quadrant (the two screens point to
   // different corners), so it sits on the diagonal midline — an honest "the axes disagree".
@@ -535,6 +490,13 @@ ZNF250</div>
   function whyText(row){
     if(!row) return "No measurement for this gene at this condition.";
     var v=row.verdict;
+    // The protein screen's library is smaller than the transcriptome — a gene it never assayed
+    // is UNTESTED, not a tested-negative. Say so honestly rather than imply a confident negative.
+    var protUntested=(row.prot_tested===false);
+    if(protUntested){
+      if(row.hit_rna) return state.gene+" is a hit in the Perturb-seq (mRNA) screen, but the FACS (protein) screen never assayed it — so its protein effect is UNTESTED, not negative. Treat as an mRNA-only lead pending a protein check.";
+      return state.gene+" shows no mRNA effect here, and the protein screen never assayed it — so this is 'no mRNA signal, protein untested', not a concordant negative.";
+    }
     if(v==="replicated") return "Both screens independently flag "+state.gene+" at this condition, moving the same direction — the strongest kind of hit.";
     if(v==="discordant") return state.gene+" is significant in BOTH screens but they DISAGREE on direction: it "+(row.rna_promotes?"lowers":"raises")+" the transcript while it "+(row.prot_promotes?"lowers":"raises")+" the protein. A real mRNA/protein decoupling, not a clean replication.";
     if(v==="mrna_only") return "The mRNA screen calls "+state.gene+" a hit; the protein screen does not. It shifts the transcriptome without moving secreted cytokine — a lead to confirm at the protein level.";
@@ -558,12 +520,16 @@ ZNF250</div>
     $("plotGene").textContent=state.gene; $("plotCond").textContent=COND_LABEL[state.cond];
     $("resGene").textContent=state.gene; $("resRole").textContent=(row&&row.cytokine?("IL2 concordance"):"—"); $("geneInput").value=state.gene;
 
-    $("verdictBadge").className="verdict-badge vb "+vm.cls; $("verdictText").textContent=vm.txt;
+    // Was the protein side actually assayed? A gene absent from Schmidt's library is UNTESTED,
+    // not a tested-negative — the badge and metric say "untested" rather than imply a negative.
+    var protUntested=(row&&row.prot_tested===false);
+    $("verdictBadge").className="verdict-badge vb "+vm.cls; $("verdictText").textContent=vm.txt+(protUntested?" · protein untested":"");
     // Channel metrics: protein = Schmidt lfc/q; mRNA = Zhu z/q. hit flags drive the tag.
     var zP=row?row.lfc_prot:null, qP=row?row.q_prot:null, hP=row?row.hit_prot:false;
     var zR=row?row.z_rna:null, qR=row?row.q_rna:null, hR=row?row.hit_rna:false;
-    $("zProt").textContent=fmt(zP); $("zRna").textContent=fmt(zR);
-    $("qProt").innerHTML="q="+(qP===null?"—":Number(qP).toPrecision(2))+" "+(hP?'<span class="hit-y">hit</span>':'<span class="hit-n">n.s.</span>');
+    $("zProt").textContent=protUntested?"untested":fmt(zP); $("zRna").textContent=fmt(zR);
+    $("qProt").innerHTML=protUntested?'<span class="hit-n">not in FACS library</span>'
+      :("q="+(qP===null?"—":Number(qP).toPrecision(2))+" "+(hP?'<span class="hit-y">hit</span>':'<span class="hit-n">n.s.</span>'));
     $("qRna").innerHTML="q="+(qR===null?"—":Number(qR).toPrecision(2))+" "+(hR?'<span class="hit-y">hit</span>':'<span class="hit-n">n.s.</span>');
     // Prefer the grounded (cached Claude) explanation; fall back to the deterministic template.
     // Strip light markdown (**bold**, *italic*, a leading title line) so it reads as clean prose.

@@ -24,8 +24,10 @@ _APP = os.path.dirname(_HERE)
 if _APP not in sys.path:
     sys.path.insert(0, _APP)
 
+from dataclasses import asdict  # noqa: E402
+
 from target_triage.core.concordance import (  # noqa: E402 — path set above
-    Config, MrnaEffect, classify, load_protein)
+    Config, MrnaEffect, _direction, classify, load_protein)
 
 _MRNA = os.path.join(_APP, "target_triage", "data", "artifacts", "cytokine_mrna_effects.parquet")
 _OUT = os.path.join(_APP, "target_triage", "data", "artifacts", "concordance.parquet")
@@ -51,10 +53,10 @@ def build(cytokine: str | None = None, progress=print) -> pd.DataFrame:
     rows = []
     for rec in mrna_df.itertuples(index=False):
         m = MrnaEffect(gene=rec.gene, condition=rec.condition, z=rec.z_rna, q=rec.q_rna,
-                       promotes=rec.z_rna < 0)
+                       promotes=_direction(rec.z_rna))
         p = protein.get(rec.gene)        # None if the gene wasn't in Schmidt's library
         c = classify(m, p, cfg, gene=rec.gene, cytokine=cyto, condition=rec.condition)
-        rows.append(c.__dict__)
+        rows.append(asdict(c))
 
     df = pd.DataFrame(rows)
     counts = df["verdict"].value_counts().to_dict()

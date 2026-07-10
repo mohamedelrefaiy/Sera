@@ -158,6 +158,45 @@ def test_replicated_plus_discordant_count_is_about_24_at_stim48hr():
         "outside the brief's ~24 ballpark — the join or thresholds may be off")
 
 
+# ---- (e) honesty invariants from the code review — untested ≠ negative, no guessed sign ----
+
+
+def test_untested_protein_is_distinct_from_tested_negative():
+    """A gene absent from Schmidt's library was NEVER assayed on the protein side — the record
+    must mark it prot_tested=False, distinct from a gene tested and found negative. Presenting
+    an unmeasured gene as a confident negative is the exact overclaim the doctrine forbids."""
+    df = _load_conc()
+    assert "prot_tested" in df.columns, "concordance record lost the prot_tested field"
+    untested = df[df["lfc_prot"].isna()]
+    assert len(untested) > 0, "expected some genes outside Schmidt's protein library"
+    assert (untested["prot_tested"] == False).all(), (  # noqa: E712 — pandas boolean mask
+        "a gene with no protein measurement is not flagged prot_tested=False")
+    tested = df[df["lfc_prot"].notna()]
+    assert (tested["prot_tested"] == True).all(), (  # noqa: E712
+        "a gene WITH a protein measurement is wrongly flagged untested")
+
+
+def test_direction_is_never_guessed_for_a_zero_effect():
+    """_direction must return None (undefined) for exactly zero — never silently default a
+    zero-but-significant effect to 'brake'. A wrong sign here would flip a verdict."""
+    from target_triage.core.concordance import _direction
+    assert _direction(-1.5) is True, "negative effect must read as 'promotes'"
+    assert _direction(2.0) is False, "positive effect must read as 'brake'"
+    assert _direction(0.0) is None, "exactly-zero effect must be direction-undefined, not a guess"
+
+
+def test_classify_marks_an_unassayed_protein_side_untested():
+    """Unit-level: classify() with prot=None records prot_tested=False and does not invent a
+    protein hit/direction — the mRNA side alone decides the verdict."""
+    from target_triage.core.concordance import Config, MrnaEffect, classify
+    cfg = Config.load()
+    m = MrnaEffect(gene="FAKE", condition="Stim48hr", z=-3.0, q=0.001, promotes=True)
+    c = classify(m, None, cfg, gene="FAKE", cytokine="IL2", condition="Stim48hr")
+    assert c.prot_tested is False and c.rna_tested is True
+    assert c.hit_prot is False and c.prot_promotes is None
+    assert c.verdict == "mrna_only", "an mRNA hit with the protein side untested is mrna_only"
+
+
 # ---- gate runner (prints PASS/FAIL + the numbers) --------------------------------------
 
 

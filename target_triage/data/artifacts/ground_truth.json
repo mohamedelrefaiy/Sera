@@ -98,7 +98,7 @@
    "verdict": "discordant",
    "z_rna": -2.52,
    "lfc_prot": 0.81,
-   "recovered": true
+   "recovered": false
   },
   {
    "gene": "CBLB",

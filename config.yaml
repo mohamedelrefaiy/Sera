@@ -34,9 +34,9 @@ conditions:
 thresholds:
   q_rna: 0.10             # Zhu DESeq2 adj_p_value cutoff for hit_rna
   q_prot: 0.10            # Schmidt MAGeCK FDR cutoff for hit_prot
-  # A hit must also move in the expected direction (knockdown REDUCES the cytokine): z_rna < 0
-  # and protein lfc < 0. Set false only to study bidirectional effects.
-  require_negative_direction: true
+  # Direction is NOT a hit filter — a hit is q < threshold in EITHER direction. Direction is
+  # instead recorded per side (promotes = effect < 0) and used to split the both-hit case into
+  # replicated (same direction) vs discordant (opposite). See core/concordance.classify().
 
 # ---- confidence tier (brief §3.3, from DE_stats QC columns) -----------------------------
 confidence:

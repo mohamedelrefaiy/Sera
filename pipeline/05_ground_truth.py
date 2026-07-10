@@ -45,10 +45,12 @@ POSITIVE_REGULATORS = ("ITK", "BCL10", "VAV1", "PLCG1", "LCP2", "ZAP70",
                        "LAT", "CD3D", "CD3E", "CD28", "LCK")
 BRAKES = ("TSC1", "CBLB", "PTPN2", "SOCS1", "TNFAIP3")
 
-# A positive regulator is "recovered" if Concord flags it as a hit on at least one side — i.e.
-# NOT 'neither'. Replicated is the strongest recovery; protein_only / mrna_only are single-
-# modality recoveries (still correct, and informative).
-_RECOVERED = {"replicated", "protein_only", "mrna_only", "discordant"}
+# A positive regulator is "recovered" when Concord flags it as a hit in the PROMOTING direction
+# on at least one side: replicated (both agree), or a single-modality hit (protein_only /
+# mrna_only). `discordant` is deliberately EXCLUDED — for a positive regulator, a direction
+# disagreement between the screens is NOT clean recovery of "KD lowers IL-2", so counting it
+# would overclaim. (`neither` is also excluded: not recovered.)
+_RECOVERED = {"replicated", "protein_only", "mrna_only"}
 
 
 def _spearman(xs, ys) -> float:
