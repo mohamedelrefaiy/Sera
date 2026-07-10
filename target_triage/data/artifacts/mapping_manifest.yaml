@@ -1,0 +1,148 @@
+sign_convention: positive = perturbation INCREASES the readout
+screens:
+- run_label: ''
+  screen_id: schmidt2022
+  source_file: Schmidt2022_CRISPRi_gene_phenotypes.csv
+  source_sha256: 4e0ba5ad3159cfe77e867da01575184b8df97ea963d27706f8b50befbf72e352
+  proposer: heuristic
+  model: null
+  confidence: 1.0
+  rationale: deterministic name-pattern match (no model)
+  mapping:
+    gene: id
+    cytokine:
+      column: phenotype
+      constant: null
+      extract: last_token
+    condition:
+      column: null
+      constant: Stimulated
+    cell_type:
+      column: phenotype
+      constant: null
+      extract: first_token
+    effect_size: neg|lfc
+    significance:
+      columns:
+      - neg|fdr
+      - pos|fdr
+      combine: min_of
+      regime: benjamini_fdr
+    modality: protein
+  hazards:
+    h1_ontarget_rows_found: 1
+    h2_regime_chosen: benjamini_fdr
+    h2_regimes_found:
+    - benjamini_fdr
+    h2_regimes_discarded: []
+    h3_sign_inverted_in_source: false
+    h3_sign_corrected: false
+    h3_source_evidence: 1 on-target row(s) all negative; effect column matches the
+      convention (positive = perturbation INCREASES the readout)
+    h3_source_ontarget_negative: 1
+    h3_source_ontarget_positive: 0
+    h3_after_correction: null
+  unmapped_columns:
+  - ''
+  - num
+  - neg|score
+  - neg|p-value
+  - neg|rank
+  - neg|goodsgrna
+  - pos|score
+  - pos|p-value
+  - pos|rank
+  - pos|goodsgrna
+  - pos|lfc
+  validation:
+    n_rows: 18939
+    regime: benjamini_fdr
+    modality: protein
+    sign_convention: positive = perturbation INCREASES the readout
+- run_label: ''
+  screen_id: freimer2022_il2
+  source_file: Freimer2022_Screen.csv
+  source_sha256: 9024408b5e8a00a445197d3b99ba32e5543d4b18547a0e457bb279dc99aa0111
+  proposer: heuristic
+  model: null
+  confidence: 1.0
+  rationale: deterministic name-pattern match (no model)
+  mapping:
+    gene: id
+    cytokine:
+      column: screen
+      constant: null
+      extract: whole
+    condition:
+      column: null
+      constant: Stimulated
+    cell_type:
+      column: null
+      constant: CD4
+      extract: whole
+    effect_size: neg|lfc
+    significance:
+      columns:
+      - neg|fdr
+      - pos|fdr
+      combine: min_of
+      regime: benjamini_fdr
+    modality: protein
+  hazards:
+    h1_ontarget_rows_found: 1
+    h2_regime_chosen: benjamini_fdr
+    h2_regimes_found:
+    - benjamini_fdr
+    h2_regimes_discarded: []
+    h3_sign_inverted_in_source: true
+    h3_sign_corrected: true
+    h3_source_evidence: 1 on-target row(s) all positive; effect column is INVERTED
+      relative to the convention (positive = perturbation INCREASES the readout) --
+      signs will be flipped
+    h3_source_ontarget_negative: 0
+    h3_source_ontarget_positive: 1
+    h3_after_correction: 1 on-target row(s) all negative; effect column matches the
+      convention (positive = perturbation INCREASES the readout)
+  unmapped_columns:
+  - num
+  - neg|score
+  - neg|p-value
+  - neg|rank
+  - neg|goodsgrna
+  - pos|score
+  - pos|p-value
+  - pos|rank
+  - pos|goodsgrna
+  - pos|lfc
+  validation:
+    n_rows: 1350
+    regime: benjamini_fdr
+    modality: protein
+    sign_convention: positive = perturbation INCREASES the readout
+- screen_id: zhu2025
+  source_file: cytokine_mrna_effects.parquet
+  proposer: pipeline/01_extract_cytokines.py
+  confidence: 1.0
+  mapping:
+    gene: target_contrast_gene_name
+    effect_size: zscore
+    significance:
+      columns:
+      - adj_p_value
+      combine: single
+      regime: deseq2_adjp
+    modality: rna
+  hazards:
+    h1_ontarget_rows_found: 0
+    h2_regime_chosen: deseq2_adjp
+    h3_sign_check: not_checkable
+    h3_reason: 'on-target rows were consumed by Hazard 1 during extraction, so no
+      calibration standard remains. Polarity is established at source (DESeq2 z-score:
+      negative = knockdown lowers the transcript) and corroborated by the sanity gate''s
+      positive controls.'
+  unmapped_columns: []
+  validation:
+    n_rows: 33980
+    regime: deseq2_adjp
+    modality: rna
+    sign_convention: positive = perturbation INCREASES the readout
