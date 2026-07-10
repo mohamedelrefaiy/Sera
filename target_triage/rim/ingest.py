@@ -380,6 +380,10 @@ SYSTEM_PROMPT = (
     "- cytokine_extract / cell_type_extract: 'whole' if the cell already IS the value; "
     "'last_token' / 'first_token' if one column fuses two axes (e.g. a phenotype 'CD4+ IL2' has "
     "cell_type=first_token, cytokine=last_token). Only these three rules exist.\n"
+    "- You map COLUMNS ONLY. If an axis (cytokine, condition, cell_type) has no column in this "
+    "file, set it to null. Do NOT invent a value for it. Whether the cells were stimulated is a "
+    "fact about the experiment, not about the columns, and you cannot read it from a profile -- a "
+    "human supplies those constants separately.\n"
     "- If a column cannot be confidently mapped, leave it out and list it in unmapped_columns. "
     "Never guess an axis -- lower your confidence instead.\n"
     "- confidence is your own honest [0,1] estimate that this mapping is correct."
@@ -393,16 +397,29 @@ def _profile_text(profiles: Sequence[ColumnProfile]) -> str:
         for p in profiles)
 
 
+# Axes whose value is a fact about the EXPERIMENT, not about the file. The model is never asked for
+# these and its answers are discarded if it volunteers them. See `_parse_mapping`.
+EXPERIMENT_CONSTANTS = ("cytokine_const", "condition_const", "cell_type_const")
+
+
 def user_prompt(profiles: Sequence[ColumnProfile], screen_id: str, modality: Modality) -> str:
-    """The single-turn message: column profile in, JSON mapping out."""
+    """The single-turn message: column profile in, JSON mapping out.
+
+    The schema deliberately omits every `*_const` field. A constant is a claim about the experiment
+    ("the cells were stimulated"), and no column profile contains that fact -- so a model asked for
+    it can only confabulate. Measured, three times, on Schmidt: it proposed condition_const=
+    "unstimulated" (the sort was on STIMULATED cells), and varied the capitalization between runs,
+    which would have made the join key nondeterministic. Both errors are schema-VALID and therefore
+    invisible to the validator.
+
+    So the field is not policed, it is removed. The model answers only what the file can answer.
+    """
     import json
     schema = {
         "gene_col": "str",
-        "cytokine_col": "str|null", "cytokine_const": "str|null",
-        "cytokine_extract": "whole|last_token|first_token",
-        "condition_col": "str|null", "condition_const": "str|null",
-        "cell_type_col": "str|null", "cell_type_const": "str|null",
-        "cell_type_extract": "whole|last_token|first_token",
+        "cytokine_col": "str|null", "cytokine_extract": "whole|last_token|first_token",
+        "condition_col": "str|null",
+        "cell_type_col": "str|null", "cell_type_extract": "whole|last_token|first_token",
         "effect_col": "str",
         "signif_cols": ["..."], "signif_combine": "single|min_of",
         "signif_regime": "deseq2_adjp|benjamini_fdr|mash_lfsr|zscore|log2fc",
@@ -411,13 +428,23 @@ def user_prompt(profiles: Sequence[ColumnProfile], screen_id: str, modality: Mod
     }
     return (f"Screen id: {screen_id}. Modality: {modality.value}.\n"
             f"Column profile:\n{_profile_text(profiles)}\n\n"
+            "Map only what these columns can tell you. If an axis has no column in this file, set "
+            "it to null -- do NOT invent a value for it; a human supplies those separately.\n\n"
             "Return ONLY a JSON object with exactly these keys (no prose, no code fence):\n"
             + json.dumps(schema, indent=2))
 
 
-def _parse_mapping(raw: str, screen_id: str, modality: Modality) -> ColumnMapping:
-    """Parse the model's JSON into a typed proposal. Pure, so it is unit-testable without a key."""
+def _parse_mapping(raw: str, screen_id: str, modality: Modality,
+                   axes: dict[str, Any] | None = None) -> ColumnMapping:
+    """Parse the model's JSON into a typed proposal. Pure, so it is unit-testable without a key.
+
+    `axes` are the EXPERIMENT constants, supplied by the caller (a human), never by the model. Any
+    `*_const` the model volunteers is DISCARDED and noted in the rationale -- silently accepting it
+    would let a confabulated experimental fact ("unstimulated") become a join key, and no schema
+    check could tell it from a correct one.
+    """
     import json
+    axes = dict(axes or {})
     text = raw.strip()
     start, end = text.find("{"), text.rfind("}")
     if start < 0 or end < 0:
@@ -426,6 +453,10 @@ def _parse_mapping(raw: str, screen_id: str, modality: Modality) -> ColumnMappin
         d: dict[str, Any] = json.loads(text[start:end + 1])
     except json.JSONDecodeError as e:
         raise SchemaViolation(f"[{screen_id}] unparseable mapping JSON: {e}") from e
+
+    volunteered = [k for k in EXPERIMENT_CONSTANTS if d.get(k)]
+    for k in volunteered:
+        d.pop(k, None)                       # the model does not get to state an experiment fact
 
     for required in ("gene_col", "effect_col", "signif_cols", "signif_regime"):
         if not d.get(required):
@@ -453,15 +484,22 @@ def _parse_mapping(raw: str, screen_id: str, modality: Modality) -> ColumnMappin
     signif_cols = tuple(d["signif_cols"]) if isinstance(d["signif_cols"], list) \
         else (d["signif_cols"],)
 
+    rationale = str(d.get("rationale", ""))
+    if volunteered:
+        rationale += (f" [discarded model-supplied experiment constants: "
+                      f"{', '.join(volunteered)} -- these come from the caller, not the profile]")
+
+    # Column-vs-constant: the model owns the columns, the caller owns the constants. An axis with a
+    # column needs no constant; an axis with neither is unmapped and `validate` rejects the screen.
     return ColumnMapping(
         screen_id=screen_id, gene_col=d["gene_col"], effect_col=d["effect_col"],
         signif_cols=signif_cols, signif_combine=combine, signif_regime=regime, modality=modality,
-        cytokine_col=d.get("cytokine_col"), cytokine_const=d.get("cytokine_const"),
+        cytokine_col=d.get("cytokine_col"), cytokine_const=axes.get("cytokine_const"),
         cytokine_extract=cyt_x,
-        condition_col=d.get("condition_col"), condition_const=d.get("condition_const"),
-        cell_type_col=d.get("cell_type_col"), cell_type_const=d.get("cell_type_const"),
+        condition_col=d.get("condition_col"), condition_const=axes.get("condition_const"),
+        cell_type_col=d.get("cell_type_col"), cell_type_const=axes.get("cell_type_const"),
         cell_type_extract=cell_x,
-        confidence=float(d.get("confidence", 0.0)), rationale=str(d.get("rationale", "")),
+        confidence=float(d.get("confidence", 0.0)), rationale=rationale,
         unmapped_columns=tuple(d.get("unmapped_columns", ())),
         regimes_found=found or (regime,),
         regimes_discarded=tuple(r for r in found if r != regime),
@@ -470,8 +508,13 @@ def _parse_mapping(raw: str, screen_id: str, modality: Modality) -> ColumnMappin
 
 
 async def propose_with_claude(profiles: Sequence[ColumnProfile], screen_id: str, *,
-                              modality: Modality) -> ColumnMapping:
-    """Ask Claude to propose the mapping. Single-turn, no tools -- it cannot read the file.
+                              modality: Modality,
+                              axes: dict[str, Any] | None = None) -> ColumnMapping:
+    """Ask Claude to propose the COLUMN mapping. Single-turn, no tools -- it cannot read the file.
+
+    `axes` carries the experiment constants (condition_const, cell_type_const, ...) from the human
+    who knows how the screen was run. The model is not asked for them and cannot supply them: see
+    `user_prompt` for the measured reason, and `_parse_mapping` for the enforcement.
 
     Whatever it returns is still gated: the caller feeds the mapping to `ingest_csv`, whose rows go
     through `core.canonical.validate`. This function's only job is profile -> typed proposal.
@@ -489,7 +532,7 @@ async def propose_with_claude(profiles: Sequence[ColumnProfile], screen_id: str,
                 for block in message.content:
                     if isinstance(block, TextBlock):
                         chunks.append(block.text)
-    return _parse_mapping("".join(chunks), screen_id, modality)
+    return _parse_mapping("".join(chunks), screen_id, modality, axes)
 
 
 # ---------------------------------------------------------------------------------------

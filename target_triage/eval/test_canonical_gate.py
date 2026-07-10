@@ -42,6 +42,7 @@ Run under pytest: pytest target_triage/eval/test_canonical_gate.py
 from __future__ import annotations
 
 import csv
+import json
 import os
 import sys
 import tempfile
@@ -59,8 +60,8 @@ from target_triage.core.concordance import (  # noqa: E402
 from target_triage.rim.adapters import (  # noqa: E402
     FREIMER_CSV, SCHMIDT_CSV, freimer_rows, schmidt_rows, zhu_rows)
 from target_triage.rim.ingest import (  # noqa: E402
-    AxisExtract, NeedsConfirmation, SignifCombine, ingest_csv, profile_csv, propose_heuristic,
-    regimes_in)
+    EXPERIMENT_CONSTANTS, AxisExtract, NeedsConfirmation, SignifCombine, _parse_mapping,
+    ingest_csv, profile_csv, propose_heuristic, regimes_in, user_prompt)
 
 _APP = os.path.join(os.path.dirname(__file__), "..", "..")
 _MRNA = os.path.join(_APP, "target_triage", "data", "artifacts", "cytokine_mrna_effects.parquet")
@@ -388,6 +389,76 @@ def test_unmapped_columns_are_reported_not_dropped():
     assert "pos|lfc" in result.report.unmapped_columns
     assert "" in result.report.unmapped_columns, (
         "Schmidt's unnamed leading index column must be reported as unmapped, not ignored")
+
+
+# ---- (g) what a live model actually does — pinned so the findings cannot rot ---------------
+#
+# These encode behaviour observed from real Claude proposals while building Node A. Each is a
+# property of the SYSTEM (prompt + parser + gate), so it is testable without calling the model.
+
+
+def test_the_model_may_not_supply_an_experiment_constant():
+    """Asked to map Schmidt, Claude proposed condition_const="unstimulated" -- three runs, varying
+    the capitalization. The sort was on STIMULATED cells, and a varying constant would silently make
+    the join key nondeterministic. Both errors are schema-VALID, so no validator can catch them.
+
+    The defence is therefore structural, not a check: a constant is a claim about the EXPERIMENT,
+    not about the columns, so the model is never asked for one and any it volunteers is discarded in
+    favour of the caller's. The discard is recorded in the rationale, which lands in the manifest.
+    """
+    payload = json.dumps({
+        "gene_col": "id", "effect_col": "neg|lfc", "signif_cols": ["neg|fdr", "pos|fdr"],
+        "signif_combine": "min_of", "signif_regime": "benjamini_fdr",
+        "cytokine_col": "phenotype", "cytokine_extract": "last_token",
+        "cell_type_col": "phenotype", "cell_type_extract": "first_token",
+        "condition_const": "unstimulated",          # confabulated: not in any column
+        "cell_type_const": "CD8",                   # confabulated: contradicts the phenotype column
+        "confidence": 0.9, "rationale": "looks like MAGeCK",
+    })
+    m = _parse_mapping(payload, "schmidt2022", Modality.PROTEIN,
+                       {"condition_const": "Stimulated"})
+    assert m.condition_const == "Stimulated", "the model's experiment constant overrode the human's"
+    assert m.cell_type_const is None, "a volunteered constant leaked in for a column-backed axis"
+    assert "discarded model-supplied experiment constants" in m.rationale, (
+        "the manifest must record that the model tried to state an experiment fact")
+
+    # ...and the prompt must not even ask for them, or the model will keep answering.
+    prompt = user_prompt(profile_csv(SCHMIDT_CSV), "schmidt2022", Modality.PROTEIN)
+    for field in EXPERIMENT_CONSTANTS:
+        assert field not in prompt, f"the prompt still solicits {field!r} from the model"
+
+
+def test_mageck_lfc_columns_are_interchangeable_so_either_choice_is_equivalent():
+    """A live Claude proposal chose `pos|lfc` where the heuristic chose `neg|lfc`, with the correct
+    rationale ("identical values"). That is only safe if it is TRUE of the data -- a different
+    choice producing the same answer by luck is exactly what this project refuses to accept.
+
+    Verified here on both bundled MAGeCK screens: the two columns never differ, in any row. If a
+    future screen breaks this, the mapping choice starts to matter and this test says so first.
+    """
+    for path, key, want in ((SCHMIDT_CSV, "phenotype", "CD4+ IL2"), (FREIMER_CSV, "screen", "IL2")):
+        with open(path, newline="", encoding="utf-8-sig") as fh:
+            rows = [r for r in csv.DictReader(fh) if (r.get(key) or "").strip() == want]
+        assert rows, f"no rows for {want} in {os.path.basename(path)}"
+        differing = [r for r in rows if r["neg|lfc"] != r["pos|lfc"]]
+        assert not differing, (
+            f"{os.path.basename(path)}: {len(differing)} rows where neg|lfc != pos|lfc -- the "
+            "effect-column choice is no longer arbitrary and the mapping must pin it")
+
+
+def test_a_low_confidence_live_proposal_stops_the_run_rather_than_guessing():
+    """Observed live: Claude returned confidence 0.72 on Schmidt because choosing `neg|lfc` over
+    `pos|lfc` "assumes the biological direction of interest is depletion" -- a real ambiguity it
+    could not resolve from a column profile. Escalating was correct. The run must stop, and only an
+    explicit human override may let it through."""
+    m = replace(_schmidt_mapping(), confidence=0.72, proposer="claude",
+                rationale="effect_col choice assumes the direction of interest is depletion")
+    with pytest.raises(NeedsConfirmation):
+        ingest_csv(SCHMIDT_CSV, m, row_filter=_il2_only)
+    accepted = ingest_csv(SCHMIDT_CSV, m, row_filter=_il2_only, require_confirmation=False)
+    assert accepted.report.n_rows > 0
+    # the low confidence stays on the record even once a human accepts it
+    assert accepted.mapping.confidence == 0.72
 
 
 # ---- gate runner -------------------------------------------------------------------------
