@@ -32,7 +32,7 @@ import shutil
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from collections import Counter
@@ -680,6 +680,15 @@ def _extract_view_update(content) -> dict | None:
         return None
 
 
-# Static frontend last, so /api/* wins routing.
+# Concord is the default landing page. An explicit "/" route is matched BEFORE the catch-all
+# StaticFiles mount below, so the bare root redirects to Concord instead of serving Target
+# Triage's index.html. Both apps still coexist: Target Triage remains reachable at /index.html,
+# and every /api/* route and /concord-app.html is unchanged.
+@app.get("/", include_in_schema=False)
+def root() -> RedirectResponse:
+    return RedirectResponse(url="/concord-app.html")
+
+
+# Static frontend last, so /api/* and the explicit "/" route above win routing.
 if os.path.isdir(_WEB_DIR):
     app.mount("/", StaticFiles(directory=_WEB_DIR, html=True), name="web")
