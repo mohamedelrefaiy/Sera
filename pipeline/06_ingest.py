@@ -178,10 +178,16 @@ def mrna_note(progress=print) -> dict:
 
 
 def cited_claims(genes: list[str], *, resolve_citations: bool, progress=print) -> list[dict]:
-    """Node B, opt-in. One provenance record per cited claim. Reads the verdict; never writes it."""
+    """Node B, opt-in. One provenance record per cited claim. Reads the verdict; never writes it.
+
+    Every citation here was RETRIEVED from PubMed for that gene and selected by the model from that
+    set -- it cannot author a PMID. `--resolve-citations` additionally confirms each one exists.
+    Neither check proves the paper SUPPORTS the claim; the title travels with the citation and the
+    entry is labelled HYPOTHESIS, so a human decides in one glance.
+    """
     import pandas as pd
 
-    from target_triage.rim.interpret import build_record, interpret, resolve
+    from target_triage.rim.interpret import UncitedClaim, build_record, interpret, resolve
 
     if not os.path.exists(_CONC):
         progress("[interpret] concordance.parquet absent — skipping Node B")
@@ -200,6 +206,12 @@ def cited_claims(genes: list[str], *, resolve_citations: bool, progress=print) -
         record = build_record(clean)
         try:
             entry = asyncio.run(interpret(record))
+        except UncitedClaim as e:
+            # Both refusals are correct outcomes, not errors: a `replicated` gene has nothing to
+            # explain, and a gene with no retrieved papers has nothing to cite. Recording NOTHING
+            # is the honest result; the alternative is the fabricated-citation failure.
+            progress(f"[interpret] {gene}: declined — {str(e).split('] ', 1)[-1][:88]}")
+            continue
         except Exception as e:  # noqa: BLE001 — one failed gene must not sink the provenance log
             progress(f"[interpret] {gene}: FAILED ({e}) — no hypothesis recorded")
             continue
@@ -209,9 +221,12 @@ def cited_claims(genes: list[str], *, resolve_citations: bool, progress=print) -
             out.append({"gene": entry.gene, "cytokine": entry.cytokine,
                         "condition": entry.condition, "verdict": entry.verdict,
                         "label": entry.label, "claim": h.claim,
+                        "distinguishing_experiment": entry.distinguishing_experiment,
                         "citation": {"db": citation.db.value, "accession": citation.accession,
-                                     "status": citation.status.value, "url": citation.url}})
-        progress(f"[interpret] {gene}: {len(entry.hypotheses)} cited hypotheses ({entry.verdict})")
+                                     "status": citation.status.value, "title": h.source_title,
+                                     "url": citation.url}})
+        progress(f"[interpret] {gene}: {len(entry.hypotheses)} retrieval-grounded hypotheses "
+                 f"({entry.verdict})")
     return out
 
 

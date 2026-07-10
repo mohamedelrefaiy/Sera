@@ -18,11 +18,14 @@ Three gates, in the brief's order of importance.
       dynamic check with a change that only fires on data we do not test. The static check catches
       that. Together they are hard to route around by accident, which is the point.
 
-  (b) CITATION DISCIPLINE. "No uncited claims. Ever." A malformed accession drops its claim; an
-      entry with no surviving claim is refused entirely -- better an absent hypothesis than an
-      unsourced one. Format-checking is offline and always runs; existence-checking is network,
-      opt-in, and reported as its OWN status, so a well-formed hallucination is never presented as
-      a verified source.
+  (b) CITATION DISCIPLINE. "No uncited claims. Ever." -- enforced by removing the model's ability
+      to author an identifier at all. Measured while building this node: asked for a PubMed ID,
+      Claude returned 8 of 8 citations that were well-formed, resolvable, and irrelevant (a
+      geophysics paper for ESCRT trafficking; acupuncture for IL-2). Existence is not relevance,
+      and the brief's stated gate -- format check plus resolution -- passes on every one of them.
+      So the model now cites by INDEX into papers actually retrieved from PubMed for that gene.
+      Writing an accession is a hard failure. An index that grounds nothing drops its claim, and an
+      entry with no surviving claim is refused: better an absent hypothesis than an unsourced one.
 
   (c) NO NUMBER INVENTION. Node B inherits the grounding contract from core/explanation.py: every
       figure in the prose must trace to the record it was handed.
@@ -47,8 +50,8 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from target_triage.rim.interpret import (  # noqa: E402
-    HYPOTHESIS_LABEL, Citation, CitationDB, CitationStatus, Hypothesis, UncitedClaim,
-    ValidationEntry, build_record, parse_entry, validate_entry, write_plan)
+    HYPOTHESIS_LABEL, INTERPRETABLE_VERDICTS, Citation, CitationDB, CitationStatus, Hypothesis,
+    Paper, UncitedClaim, ValidationEntry, build_record, parse_entry, validate_entry, write_plan)
 
 _APP = os.path.join(os.path.dirname(__file__), "..", "..")
 _CORE = os.path.join(_APP, "target_triage", "core")
@@ -62,15 +65,24 @@ RECORD_ROW = {
     "lfc_prot": -1.20, "q_prot": 0.002, "hit_prot": True, "prot_promotes": True,
 }
 
-# A well-formed model response. P60568 is IL-2's real UniProt accession; 12345678 is a well-formed
-# PMID (its EXISTENCE is deliberately not asserted here -- that is what `resolve()` is for).
+# The papers a PubMed search returned for this gene. The model sees ONLY these, and cites by index.
+# (Real PMIDs and titles, retrieved for VPS37B/ESCRT while building this node.)
+PAPERS = (
+    Paper("31492760", "SH3YL1 cooperates with ESCRT-I in the sorting and degradation of the EGF "
+                      "receptor."),
+    Paper("23882125", "Disruption of TSC1/2 signaling complex reveals a checkpoint governing "
+                      "thymic CD4+ CD25+ Foxp3+ regulatory T-cell development."),
+)
+
+# A well-formed model response under the retrieval design: it selects `paper_index`, and there is
+# no field in which it could write an accession at all.
 GOOD_JSON = json.dumps({
     "hypotheses": [
         {"claim": "ESCRT-I mediated trafficking may alter surface IL-2 without changing "
                   "transcript abundance.",
-         "citation": {"db": "uniprot", "accession": "P60568"}},
+         "paper_index": 0},
         {"claim": "Reduced protein turnover could lower steady-state IL-2 protein alone.",
-         "citation": {"db": "pubmed", "accession": "12345678"}},
+         "paper_index": 1},
     ],
     "distinguishing_experiment":
         "Run a cycloheximide chase on VPS37B-KD cells with matched qPCR: if IL-2 protein half-life "
@@ -193,7 +205,7 @@ def test_verdict_table_is_hash_identical_with_node_b_on_and_off():
 
     with tempfile.TemporaryDirectory() as d:
         # Node B runs, in full, and writes its artifact to disk.
-        entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW))
+        entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW), PAPERS)
         plan = write_plan([entry], os.path.join(d, "artifacts", "validation_plan.json"))
         assert os.path.exists(plan), "Node B produced no plan; the test would prove nothing"
 
@@ -242,48 +254,119 @@ def test_wellformed_citations_pass_and_malformed_ones_do_not():
         assert not Citation(CitationDB.PUBMED, pmid).check_format(), pmid
 
 
-def test_an_uncited_claim_never_reaches_disk():
-    """A claim with a malformed accession is dropped. If nothing survives, the ENTRY is refused --
-    better an absent hypothesis than an unsourced one."""
-    bad = json.dumps({
-        "hypotheses": [{"claim": "IL-2 is regulated post-transcriptionally.",
-                        "citation": {"db": "pubmed", "accession": "not-a-pmid"}}],
-        "distinguishing_experiment": "cycloheximide chase",
-    })
-    with pytest.raises(UncitedClaim, match="no hypotheses survived"):
-        parse_entry(bad, build_record(RECORD_ROW))
+def test_the_model_may_not_author_an_accession_at_all():
+    """THE finding that reshaped this node. Asked for a PubMed ID, Claude emitted well-formed,
+    RESOLVABLE, and wholly irrelevant ones -- 8 of 8 across two samples:
+
+        VPS37B / ESCRT trafficking  -> PMID 28289289, lower-mantle geophysics
+        ITK / IL-2 production       -> PMID 12421994, acupuncture for chronic neck pain
+        TSC1 / mTORC1               -> PMID 25941405, cytoplasmic dynein
+        TSC1 (UniProt)              -> Q16558 = KCNMB1, a potassium channel (TSC1 is Q92574)
+
+    Every one passes a format check. Every one passes a resolvability check. The brief's stated
+    gate passes on all of them, and the output is fabricated scholarship: existence is not
+    relevance. So the field was deleted, not policed. The model cites by index into a retrieved
+    set, and writing an accession is a HARD failure -- not a dropped claim -- because a silent drop
+    would let a prompt regression reintroduce the behaviour unnoticed.
+    """
+    for forbidden_key in ("accession", "pmid", "citation"):
+        payload = json.dumps({
+            "hypotheses": [{"claim": "ESCRT trafficking alters surface IL-2.",
+                            "paper_index": 0, forbidden_key: "28289289"}],
+            "distinguishing_experiment": "cycloheximide chase",
+        })
+        with pytest.raises(UncitedClaim, match="may only cite by paper_index"):
+            parse_entry(payload, build_record(RECORD_ROW), PAPERS)
 
 
-def test_a_claim_with_no_citation_field_is_dropped_not_kept():
-    """An agent that simply OMITS the citation must not get its claim through by omission."""
-    partial = json.dumps({
+def test_a_citation_can_only_come_from_the_retrieved_set():
+    """A `Citation` is unforgeable by construction: it is built from a `Paper` that came back from a
+    real search. The emitted accession and title must both match that paper exactly."""
+    entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW), PAPERS)
+    by_pmid = {p.pmid: p.title for p in PAPERS}
+    for h in entry.hypotheses:
+        assert h.citation.accession in by_pmid, (
+            f"emitted PMID {h.citation.accession} was never retrieved")
+        assert h.source_title == by_pmid[h.citation.accession], "title does not match the paper"
+        assert h.citation.status is CitationStatus.RETRIEVED
+
+
+def test_an_out_of_range_or_missing_index_drops_its_claim():
+    """An index outside the retrieved set grounds nothing. The claim is dropped; if that leaves the
+    entry empty, the entry is refused -- better an absent hypothesis than an unsourced one."""
+    entry = parse_entry(json.dumps({
         "hypotheses": [
-            {"claim": "Uncited plausible-sounding mechanism."},                      # dropped
-            {"claim": "Cited mechanism.",
-             "citation": {"db": "uniprot", "accession": "P60568"}},                  # kept
+            {"claim": "Ungrounded: index past the end.", "paper_index": 99},   # dropped
+            {"claim": "Ungrounded: no index at all."},                          # dropped
+            {"claim": "Grounded mechanism.", "paper_index": 1},                 # kept
         ],
         "distinguishing_experiment": "surface vs permeabilized stain",
-    })
-    entry = parse_entry(partial, build_record(RECORD_ROW))
+    }), build_record(RECORD_ROW), PAPERS)
     assert len(entry.hypotheses) == 1
-    assert entry.hypotheses[0].claim == "Cited mechanism."
+    assert entry.hypotheses[0].claim == "Grounded mechanism."
+
+    with pytest.raises(UncitedClaim, match="no hypotheses survived"):
+        parse_entry(json.dumps({
+            "hypotheses": [{"claim": "All ungrounded.", "paper_index": 42}],
+            "distinguishing_experiment": "cycloheximide chase",
+        }), build_record(RECORD_ROW), PAPERS)
+
+
+def test_a_boolean_index_is_not_an_integer_index():
+    """`True` is an int in Python and would silently select papers[1]. A model that emits a boolean
+    has not selected a paper, so its claim must be dropped."""
+    with pytest.raises(UncitedClaim, match="no hypotheses survived"):
+        parse_entry(json.dumps({
+            "hypotheses": [{"claim": "Sneaky.", "paper_index": True}],
+            "distinguishing_experiment": "chase",
+        }), build_record(RECORD_ROW), PAPERS)
+
+
+def test_dangling_reference_markers_are_stripped_from_the_prose():
+    """Observed live: the model wrote "...translation initiation [2, 3]." -- bracketed markers left
+    over from wanting to cite several papers where the schema allows one index. They point at
+    nothing (the citation travels in its own field), so a reader would chase a phantom reference."""
+    entry = parse_entry(json.dumps({
+        "hypotheses": [{"claim": "TSC1 loss disinhibits mTORC1 [2, 3].", "paper_index": 0},
+                       {"claim": "Anabolic shift raises synthesis capacity [3].", "paper_index": 1}],
+        "distinguishing_experiment": "cycloheximide chase",
+    }), build_record(RECORD_ROW), PAPERS)
+    for h in entry.hypotheses:
+        assert "[" not in h.claim, f"dangling reference marker survived: {h.claim!r}"
+    assert entry.hypotheses[0].claim == "TSC1 loss disinhibits mTORC1."
 
 
 def test_entry_without_a_distinguishing_experiment_is_refused():
     """A mechanism nobody can test apart from its rival is a story, not a hypothesis."""
     no_exp = json.dumps({
-        "hypotheses": [{"claim": "Trafficking.",
-                        "citation": {"db": "uniprot", "accession": "P60568"}}],
+        "hypotheses": [{"claim": "Trafficking.", "paper_index": 0}],
         "distinguishing_experiment": "",
     })
     with pytest.raises(UncitedClaim, match="no distinguishing experiment"):
-        parse_entry(no_exp, build_record(RECORD_ROW))
+        parse_entry(no_exp, build_record(RECORD_ROW), PAPERS)
+
+
+def test_node_b_refuses_a_verdict_it_has_nothing_to_explain():
+    """Node B speaks only where the two screens DISAGREE. A `replicated` gene has no discordance to
+    explain and a `neither` gene has no signal; a mechanism offered for either is decoration, and
+    decoration attached to a verdict is how a hypothesis starts being read as a finding.
+
+    (Caught live: the first retrieval-grounded run happily interpreted ITK, which is `replicated`.)
+    """
+    assert set(INTERPRETABLE_VERDICTS) == {"protein_only", "mrna_only", "discordant"}
+    import asyncio
+
+    from target_triage.rim.interpret import interpret
+    for verdict in ("replicated", "neither"):
+        rec = build_record({**RECORD_ROW, "verdict": verdict})
+        with pytest.raises(UncitedClaim, match="not interpretable"):
+            asyncio.run(interpret(rec, papers=PAPERS))
 
 
 def test_every_entry_carries_the_hypothesis_label():
     """A hypothesis that can be mistaken for a finding is worse than no hypothesis. The label
     travels with the DATA, not just the template."""
-    entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW))
+    entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW), PAPERS)
     assert entry.label == HYPOTHESIS_LABEL
     assert entry.to_json()["label"] == HYPOTHESIS_LABEL
     assert "not used in verdict" in HYPOTHESIS_LABEL
@@ -295,16 +378,31 @@ def test_every_entry_carries_the_hypothesis_label():
             distinguishing_experiment="e", grounded_from={}, label="Findings"))
 
 
-def test_format_check_is_not_reported_as_verification():
-    """The distinction the doctrine demands: a well-formed accession is FORMAT_OK, never RESOLVED.
-    Only a live lookup may claim RESOLVED. Conflating them would sell a hallucination as a source."""
-    c = Citation(CitationDB.UNIPROT, "P60568")
-    assert c.check_format() is True
-    assert c.status is CitationStatus.FORMAT_OK, (
+def test_the_three_statuses_are_never_conflated():
+    """Three different claims, in increasing order of evidence, and only the last is about topic:
+
+        FORMAT_OK   well-formed. May not exist.
+        RESOLVED    exists. May be about the lower mantle.  <- the 8-of-8 failure lived here
+        RETRIEVED   came back from a query for THIS gene, and the model chose it from that set.
+
+    A bare Citation defaults to FORMAT_OK: something never looked up must not claim to be resolved.
+    Everything Node B emits is RETRIEVED, because that is the only status carrying relevance.
+    """
+    bare = Citation(CitationDB.UNIPROT, "P60568")
+    assert bare.check_format() is True
+    assert bare.status is CitationStatus.FORMAT_OK, (
         "a citation that was never looked up must not claim to be resolved")
-    entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW))
+
+    entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW), PAPERS)
     statuses = {h["citation"]["status"] for h in entry.to_json()["hypotheses"]}
-    assert statuses == {"format_ok"}, f"an offline run claimed {statuses}"
+    assert statuses == {"retrieved"}, f"Node B emitted {statuses}, expected only 'retrieved'"
+
+    # ...and RETRIEVED still is not proof the paper SUPPORTS the claim. The label says so, and the
+    # title travels with the citation so a human can judge in one glance.
+    for h in entry.to_json()["hypotheses"]:
+        assert h["citation"]["title"], "a retrieved citation must carry its title for review"
+        assert h["citation"]["url"].startswith("https://pubmed.ncbi.nlm.nih.gov/")
+    assert entry.label == HYPOTHESIS_LABEL
 
 
 # ---- (c) NO NUMBER INVENTION ---------------------------------------------------------------
@@ -326,7 +424,7 @@ def test_record_carries_only_measured_values():
 def test_grounding_record_is_stored_with_every_entry():
     """Provenance is stored, not asserted: the grounding gate re-reads `grounded_from` to check
     that every number in the prose traces to a measurement."""
-    entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW))
+    entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW), PAPERS)
     assert entry.grounded_from["verdict"] == "protein_only"
     assert entry.to_json()["grounded_from"]["protein_facs"]["log_fold_change"] == -1.20
 
@@ -335,7 +433,7 @@ def test_written_plan_is_an_attachment_not_an_edit():
     """The plan is keyed like the explanation cache and lives in its own file. It never touches the
     verdict table, and it carries the verdict through unaltered."""
     with tempfile.TemporaryDirectory() as d:
-        entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW))
+        entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW), PAPERS)
         path = write_plan([entry], os.path.join(d, "artifacts", "validation_plan.json"))
         with open(path) as fh:
             doc = json.load(fh)
@@ -369,7 +467,7 @@ def _run_gate() -> bool:
     if os.path.exists(_CONC):
         before = _sha256(_CONC)
         with tempfile.TemporaryDirectory() as d:
-            entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW))
+            entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW), PAPERS)
             write_plan([entry], os.path.join(d, "artifacts", "validation_plan.json"))
         after = _sha256(_CONC)
         c = after == before
@@ -379,20 +477,35 @@ def _run_gate() -> bool:
     else:
         print("  [SKIP] dynamic: concordance.parquet not built")
 
-    try:
-        parse_entry(json.dumps({"hypotheses": [{"claim": "x",
-                                                "citation": {"db": "pubmed", "accession": "bad"}}],
-                                "distinguishing_experiment": "y"}), build_record(RECORD_ROW))
+    try:   # a model-authored accession is a hard failure, not a dropped claim
+        parse_entry(json.dumps({"hypotheses": [{"claim": "x", "paper_index": 0,
+                                                "accession": "28289289"}],
+                                "distinguishing_experiment": "y"}),
+                    build_record(RECORD_ROW), PAPERS)
         d_ok = False
     except UncitedClaim:
         d_ok = True
-    print(f"  [{'PASS' if d_ok else 'FAIL'}] an uncited claim never reaches disk")
+    print(f"  [{'PASS' if d_ok else 'FAIL'}] the model may not author an accession (it cites by "
+          "index into a retrieved set)")
     ok = ok and d_ok
 
-    entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW))
-    e = all(h.citation.status is CitationStatus.FORMAT_OK for h in entry.hypotheses)
-    print(f"  [{'PASS' if e else 'FAIL'}] offline citations report format_ok, never 'resolved'")
-    ok = ok and e
+    try:   # an index grounding nothing drops its claim; an empty entry is refused
+        parse_entry(json.dumps({"hypotheses": [{"claim": "x", "paper_index": 99}],
+                                "distinguishing_experiment": "y"}),
+                    build_record(RECORD_ROW), PAPERS)
+        e_ok = False
+    except UncitedClaim:
+        e_ok = True
+    print(f"  [{'PASS' if e_ok else 'FAIL'}] an ungrounded claim never reaches disk")
+    ok = ok and e_ok
+
+    entry = parse_entry(GOOD_JSON, build_record(RECORD_ROW), PAPERS)
+    retrieved = {p.pmid for p in PAPERS}
+    f_ok = all(h.citation.status is CitationStatus.RETRIEVED
+               and h.citation.accession in retrieved for h in entry.hypotheses)
+    print(f"  [{'PASS' if f_ok else 'FAIL'}] every emitted citation came from the retrieved set "
+          "(status='retrieved')")
+    ok = ok and f_ok
 
     print(f"\n{'PASS' if ok else 'FAIL'} — Node B gate")
     return ok
