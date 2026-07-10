@@ -32,40 +32,14 @@ if _APP not in sys.path:
 
 import pandas as pd  # noqa: E402
 
+from target_triage.core.explanation import (  # noqa: E402 — the ONE grounded-prompt source
+    MODEL, SYSTEM_PROMPT, build_record, user_prompt)
+
 _CONC = os.path.join(_APP, "target_triage", "data", "artifacts", "concordance.parquet")
 _OUT = os.path.join(_APP, "target_triage", "data", "artifacts", "explanations_cache.json")
 
-MODEL = "claude-haiku-4-5-20251001"   # cheap, grounded, high-volume interpretation
-
-# One-line role annotations for the demo genes. Claude may use these for MECHANISM only, never
-# to state a number. Kept short and factual; a gene without one gets an empty annotation.
-ANNOTATIONS = {
-    "ITK": "IL2-inducible T-cell kinase; TCR signaling.",
-    "BCL10": "CARD11-BCL10-MALT1 signalosome; NF-kB activation.",
-    "VAV1": "guanine-nucleotide exchange factor; proximal TCR signaling.",
-    "TSC1": "TSC complex; restrains mTOR (a brake on activation).",
-    "LCP2": "SLP-76 adaptor; relays the TCR signal.",
-    "VPS37B": "ESCRT-I component; membrane trafficking.",
-    "ZNF250": "zinc-finger protein; uncharacterized in this context.",
-    "IL2RA": "IL-2 receptor alpha (CD25); surface receptor.",
-}
-
 # The genes worth caching for the demo (chips + a couple of extra discordant/protein-only cases).
 DEFAULT_GENES = ("ITK", "BCL10", "VAV1", "TSC1", "LCP2", "VPS37B", "ZNF250", "IL2RA")
-
-SYSTEM_PROMPT = (
-    "You explain CRISPR-screen concordance to a bench immunologist. You are given a JSON record "
-    "of MEASURED values plus a one-line gene annotation.\n"
-    "Rules:\n"
-    "- Use ONLY the numbers in the record. NEVER invent a p-value, q-value, effect size, or any "
-    "figure not present. If a value is absent or null, say that side is untested — do not guess.\n"
-    "- 2-3 sentences, plain language, no hedging boilerplate.\n"
-    "- For a discordant verdict, note the two screens disagree on DIRECTION and, using the "
-    "annotation for mechanism only, suggest why (e.g. a brake that lowers transcript but raises "
-    "protein). For protein_only, suggest a post-transcriptional mechanism.\n"
-    "- Do NOT claim novelty; this is a reconciliation, not a discovery.\n"
-    "- Refer to the mRNA side as the Perturb-seq screen and the protein side as the FACS screen."
-)
 
 
 def _has_credentials() -> bool:
@@ -77,27 +51,6 @@ def _has_credentials() -> bool:
     return shutil.which("claude") is not None
 
 
-def _record(row: dict, gene: str) -> dict:
-    """The exact numeric record Claude is allowed to interpret — nothing more."""
-    return {
-        "gene": gene,
-        "cytokine": row["cytokine"],
-        "condition": row["condition"],
-        "verdict": row["verdict"],
-        "mrna_perturbseq": {
-            "z_score": row["z_rna"], "adj_p_value": row["q_rna"], "is_hit": row["hit_rna"],
-            "direction": (None if row["rna_promotes"] is None
-                          else ("lowers_cytokine" if row["rna_promotes"] else "raises_cytokine")),
-        },
-        "protein_facs": {
-            "log_fold_change": row["lfc_prot"], "fdr": row["q_prot"], "is_hit": row["hit_prot"],
-            "direction": (None if row["prot_promotes"] is None
-                          else ("lowers_cytokine" if row["prot_promotes"] else "raises_cytokine")),
-        },
-        "gene_annotation": ANNOTATIONS.get(gene, ""),
-    }
-
-
 async def _explain(record: dict) -> str:
     """One grounded explanation via a single-turn, no-tools Claude call."""
     from claude_agent_sdk import (
@@ -105,11 +58,9 @@ async def _explain(record: dict) -> str:
 
     options = ClaudeAgentOptions(system_prompt=SYSTEM_PROMPT, model=MODEL,
                                  max_turns=1, allowed_tools=[])
-    prompt = ("Explain this concordance record in 2-3 sentences for a bench immunologist. "
-              "Use ONLY the numbers given:\n" + json.dumps(record, indent=2))
     text = []
     async with ClaudeSDKClient(options=options) as client:
-        await client.query(prompt)
+        await client.query(user_prompt(record))
         async for message in client.receive_response():
             if isinstance(message, AssistantMessage):
                 for block in message.content:
@@ -131,7 +82,7 @@ async def build(genes: list[str], progress=print) -> dict:
             clean = {k: (None if (isinstance(v, float) and pd.isna(v))
                          else (v.item() if hasattr(v, "item") else v))
                      for k, v in row.items()}
-            rec = _record(clean, gene)
+            rec = build_record(clean, gene)
             key = f"{gene}|{rec['cytokine']}|{rec['condition']}"
             try:
                 cache[key] = {"explanation": await _explain(rec), "grounded_from": rec}

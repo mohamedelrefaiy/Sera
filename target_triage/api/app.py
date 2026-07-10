@@ -325,6 +325,93 @@ def concordance_gene(gene: str, cytokine: str | None = None) -> dict:
             "enrichment": _ENRICHMENT.get(g)}
 
 
+# How long a single grounded explanation may stream before we give up and fall back to cache.
+EXPLANATION_TIMEOUT_S = 45
+
+
+@app.get("/api/explanation/{gene}/{cytokine}/{condition}")
+async def explanation(gene: str, cytokine: str, condition: str) -> StreamingResponse:
+    """Stream a GROUNDED Claude explanation for one (gene, cytokine, condition) live, as SSE.
+
+    Events are one JSON line each: {type: "token", text} while generating, then {type: "done"};
+    or {type: "error", detail, fallback} if the live call can't run. Per the demo contract the
+    call is LIVE every time (nothing new is written to the cache), and if the live call is
+    impossible or fails, the payload carries `fallback` = the EXISTING cached paragraph (or null
+    if none was precomputed) so the frontend can show real prior text rather than a blank panel.
+
+    The prompt + record shape come from core.explanation — the SAME source of truth the offline
+    precompute uses, so the grounding contract (numbers-only) holds identically on this path."""
+    g, cyt, cond = gene.upper(), cytokine.upper(), condition
+    rows = _require_concordance()
+    match = next((r for r in rows if r["gene"] == g and r["cytokine"] == cyt
+                  and r["condition"] == cond), None)
+    if match is None:
+        raise HTTPException(status_code=404,
+                            detail=f"{g}/{cyt}/{cond} not in the concordance table")
+
+    cached = _EXPLANATIONS.get(f"{g}|{cyt}|{cond}")
+    cached_text = cached.get("explanation") if cached else None
+
+    from ..core.explanation import MODEL, SYSTEM_PROMPT, build_record, user_prompt
+    record = build_record(match, g)
+
+    def fail(detail: str):
+        async def one():
+            yield _sse({"type": "error", "detail": detail, "fallback": cached_text})
+            yield _sse({"type": "done"})
+        return StreamingResponse(one(), media_type="text/event-stream")
+
+    if not _has_credentials():
+        return fail("No Anthropic credentials configured — serving the cached explanation.")
+
+    async def event_stream():
+        try:
+            from claude_agent_sdk import (
+                AssistantMessage, ClaudeAgentOptions, ClaudeSDKClient, TextBlock)
+        except Exception as e:  # noqa: BLE001 — SDK missing in a keyless clone
+            yield _sse({"type": "error", "detail": f"SDK unavailable: {e}",
+                        "fallback": cached_text})
+            yield _sse({"type": "done"})
+            return
+
+        options = ClaudeAgentOptions(system_prompt=SYSTEM_PROMPT, model=MODEL,
+                                     max_turns=1, allowed_tools=[])
+        emitted = False
+        try:
+            async def run():
+                nonlocal emitted
+                async with ClaudeSDKClient(options=options) as client:
+                    await client.query(user_prompt(record))
+                    async for message in client.receive_response():
+                        if isinstance(message, AssistantMessage):
+                            for block in message.content:
+                                if isinstance(block, TextBlock) and block.text:
+                                    emitted = True
+                                    yield {"type": "token", "text": block.text}
+
+            agen = run()
+            while True:
+                try:
+                    ev = await asyncio.wait_for(agen.__anext__(), timeout=EXPLANATION_TIMEOUT_S)
+                except StopAsyncIteration:
+                    break
+                except asyncio.TimeoutError:
+                    yield _sse({"type": "error", "detail": "explanation timed out",
+                                "fallback": cached_text})
+                    break
+                yield _sse(ev)
+            # If the model produced nothing at all, hand back the cache rather than a blank panel.
+            if not emitted:
+                yield _sse({"type": "error", "detail": "empty response",
+                            "fallback": cached_text})
+        except Exception as e:  # noqa: BLE001 — any live failure degrades to the cached text
+            yield _sse({"type": "error", "detail": str(e), "fallback": cached_text})
+        finally:
+            yield _sse({"type": "done"})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
 @app.get("/api/enrichr")
 def enrichr(genes: str = "", library: str = "Reactome_2022") -> dict:
     """Pathway enrichment over a comma-separated gene list (the Hit-list's replicated subset).
