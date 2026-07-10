@@ -165,3 +165,37 @@ def test_marson_zero_breadth_is_a_measurement_not_an_absence(client):
     assert all(p["impact"] is not None for p in pts), "Marson reports breadth for every hit"
     assert any(p["impact"] == 0.0 for p in pts), "genes with zero breadth exist"
     assert marson["y_scale"] == "log1p", "0 breadth is real; log(0) is not"
+
+
+# ---- Agent Activity rail + Sources: the peripheral-agent layer surfaced in the UI -------------
+
+
+def test_agent_activity_is_a_view_of_the_real_receipt(client):
+    """The rail's timeline must be derived from the provenance artifact, not scripted. Every event
+    ties back to a screen mapping or a cited claim, and the Freimer sign-correction — a real event
+    on real data — must be present when the receipt is built."""
+    d = client.get("/api/agent_activity").json()
+    if not d["built"]:
+        pytest.skip("provenance.json not built — run pipeline/06_ingest.py")
+    assert d["events"], "a built receipt must yield events"
+    assert all(e["node"] in ("A", "B") for e in d["events"]), "every event is Node A or Node B"
+    titles = [e["title"] for e in d["events"]]
+    assert any("sign corrected" in t for t in titles), (
+        "the Freimer sign-correction is a real event and must appear in the rail")
+    assert any(e["node"] == "B" for e in d["events"]), "Node B citations must appear too"
+
+
+def test_sources_only_returns_cited_claims_and_is_honest_when_empty(client):
+    """The Sources section shows Node B's cited hypotheses for a gene. A gene Node B interpreted
+    (TSC1, discordant) returns cited claims with resolvable PMIDs; a replicated gene (ITK) returns
+    an empty list — never a fabricated mechanism to fill the space."""
+    if not client.get("/api/agent_activity").json()["built"]:
+        pytest.skip("provenance.json not built — run pipeline/06_ingest.py")
+
+    for c in client.get("/api/sources/TSC1").json()["claims"]:
+        assert c["citation"]["accession"], "a cited claim must carry an accession"
+        assert c["citation"]["url"].startswith("https://pubmed."), "citation must link out"
+        assert "not used in verdict" in c["label"], "every hypothesis is labelled"
+
+    itk = client.get("/api/sources/ITK").json()
+    assert itk["claims"] == [], "a replicated gene has no hypotheses — the section must be empty"

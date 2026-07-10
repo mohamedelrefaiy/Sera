@@ -108,6 +108,22 @@ def _load_ground_truth() -> dict:
         return json.load(fh)
 
 
+# The peripheral-agent layer's receipt: how each screen was read (Node A) and every cited
+# hypothesis (Node B). Serves the Agent Activity rail and the Sources section. Optional artifact —
+# absent on a clone that never ran pipeline/06_ingest.py, in which case the rail shows an honest
+# empty state rather than fabricated activity.
+_PROVENANCE: dict = {}
+_PROVENANCE_JSON = os.path.join(_ARTIFACTS, "provenance.json")
+
+
+def _load_provenance() -> dict:
+    if not os.path.exists(_PROVENANCE_JSON):
+        return {}
+    import json
+    with open(_PROVENANCE_JSON) as fh:
+        return json.load(fh)
+
+
 def _load_concordance() -> list[dict]:
     """Read the concordance artifact into plain JSON-able dicts, or [] if absent.
 
@@ -144,6 +160,7 @@ async def _lifespan(app: FastAPI):
     _ENRICHMENT.update(_load_enrichment())
     _EXPLANATIONS.update(_load_explanations())
     _GROUND_TRUTH.update(_load_ground_truth())
+    _PROVENANCE.update(_load_provenance())
     yield
 
 
@@ -438,6 +455,82 @@ def ground_truth() -> dict:
             status_code=503,
             detail="ground-truth artifact not built — run `python pipeline/05_ground_truth.py`.")
     return _GROUND_TRUTH
+
+
+def _agent_activity() -> list[dict]:
+    """Derive the Agent Activity timeline from the provenance receipt — one event per real
+    decision the peripheral agents made, never a scripted animation.
+
+    Node A (ingestion) contributes, per screen: profiled -> mapping validated -> (if the source
+    was sign-inverted) sign corrected. Node B (interpretation) contributes one event per cited
+    hypothesis. Every event is backed by a field in provenance.json, so the rail is a view of the
+    receipt, not a decoration. Empty list when the artifact isn't built.
+    """
+    if not _PROVENANCE:
+        return []
+    events: list[dict] = []
+    for s in _PROVENANCE.get("screens", []):
+        sid = s.get("screen_id", "screen")
+        m = s.get("mapping", {})
+        sig = m.get("significance", {})
+        n_rows = s.get("validation", {}).get("n_rows")
+        events.append({
+            "node": "A", "kind": "ingest", "screen": sid,
+            "title": f"{sid} · mapped",
+            "detail": (f"gene={m.get('gene')} · effect={m.get('effect_size')} · "
+                       f"{'+'.join(sig.get('columns', [])) or '—'} ({sig.get('combine','')})"),
+            "proposer": s.get("proposer", ""),
+        })
+        haz = s.get("hazards", {})
+        if haz.get("h3_sign_corrected"):
+            events.append({
+                "node": "A", "kind": "sign", "screen": sid,
+                "title": f"{sid} · sign corrected",
+                "detail": haz.get("h3_source_evidence", "effect column was inverted"),
+                "proposer": s.get("proposer", ""),
+            })
+        events.append({
+            "node": "A", "kind": "validate", "screen": sid,
+            "title": f"{sid} · validated" + (f" · {n_rows:,} rows" if n_rows else ""),
+            "detail": (f"{len(s.get('unmapped_columns', []))} columns unmapped (recorded) · "
+                       f"regime {sig.get('regime', s.get('validation', {}).get('regime',''))}"),
+            "proposer": s.get("proposer", ""),
+        })
+    for c in _PROVENANCE.get("claims", []):
+        cit = c.get("citation", {})
+        events.append({
+            "node": "B", "kind": "cite", "screen": None, "gene": c.get("gene"),
+            "title": f"{c.get('gene')} · hypothesis cited",
+            "detail": f"PMID {cit.get('accession')} [{cit.get('status')}] · {cit.get('title','')}",
+            "url": cit.get("url"),
+        })
+    return events
+
+
+@app.get("/api/agent_activity")
+def agent_activity() -> dict:
+    """The Agent Activity rail: a timeline of the peripheral agents' real decisions, plus the
+    provenance the rail links to. Honest empty state when the receipt isn't built (200 with an
+    empty list, so the rail renders 'no run yet' rather than erroring)."""
+    return {
+        "built": bool(_PROVENANCE),
+        "sign_convention": _PROVENANCE.get("sign_convention"),
+        "n_screens": len(_PROVENANCE.get("screens", [])),
+        "n_claims": len(_PROVENANCE.get("claims", [])),
+        "events": _agent_activity(),
+    }
+
+
+@app.get("/api/sources/{gene}")
+def sources(gene: str) -> dict:
+    """Node B's cited hypotheses for one gene — what the Sources section under the verdict shows.
+
+    Returns only RETRIEVAL-grounded, cited claims (the interpretation agent emits nothing else).
+    Empty list when the gene has no hypotheses (a replicated gene, or one with no retrieved
+    papers) — the section then shows why, never a fabricated mechanism."""
+    g = gene.upper()
+    claims = [c for c in _PROVENANCE.get("claims", []) if str(c.get("gene", "")).upper() == g]
+    return {"gene": g, "claims": claims}
 
 
 @app.get("/api/funnel")
