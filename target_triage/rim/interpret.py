@@ -309,7 +309,12 @@ SYSTEM_PROMPT = (
     "make.\n"
     "- Only cite a paper whose TITLE is plausibly about the mechanism you are claiming. Do not "
     "stretch. Returning ONE well-grounded hypothesis is better than three loosely-grounded ones.\n"
-    "- Give 1-3 hypotheses, each one sentence, each citing a paper index.\n"
+    "- Each hypothesis must propose a DISTINCT mechanism and cite a DISTINCT paper. Do not restate "
+    "one mechanism twice, and do not cite the same paper for two hypotheses -- if only one paper "
+    "supports one mechanism, return exactly one hypothesis. The whole point is that the "
+    "distinguishing experiment can tell your hypotheses apart, which is impossible if they are the "
+    "same idea or rest on the same evidence.\n"
+    "- Give 1-3 hypotheses, each one sentence, each citing a DIFFERENT paper index.\n"
     "- Then give exactly ONE distinguishing experiment: a specific wet-lab test whose outcome "
     "would tell your hypotheses APART. Not a summary, not 'validate in vivo' -- name the assay "
     "and say which result favours which hypothesis.\n"
@@ -389,6 +394,7 @@ def parse_entry(raw: str, record: dict[str, Any],
         raise UncitedClaim(f"[{record['gene']}] unparseable hypothesis JSON: {e}") from e
 
     kept: list[Hypothesis] = []
+    used_papers: set[int] = set()
     for h in d.get("hypotheses", ()):
         for forbidden in ("accession", "pmid", "citation"):
             if forbidden in h:
@@ -399,13 +405,22 @@ def parse_entry(raw: str, record: dict[str, Any],
         idx = h.get("paper_index")
         if not isinstance(idx, int) or isinstance(idx, bool) or not (0 <= idx < len(papers)):
             continue                                   # un-groundable claim -> dropped
+        if idx in used_papers:
+            # One paper backs at most one hypothesis. Two claims resting on the same source are not
+            # two hypotheses -- a distinguishing experiment cannot separate what the same evidence
+            # supports (observed live: two TSC1 claims both cited the one TSC2/mTOR paper). Keeping
+            # the first makes the citation the KEY: a hypothesis is defined by the evidence that
+            # motivates it, so identical evidence was never a second hypothesis.
+            continue
         candidate = Hypothesis(claim=_strip_ref_markers(str(h.get("claim", ""))),
                                citation=papers[idx].as_citation(),
                                source_title=papers[idx].title)
         try:
-            kept.append(candidate.validate())
+            validated = candidate.validate()
         except UncitedClaim:
             continue
+        kept.append(validated)
+        used_papers.add(idx)
 
     return validate_entry(ValidationEntry(
         gene=record["gene"], cytokine=record["cytokine"], condition=record["condition"],

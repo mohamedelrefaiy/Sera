@@ -179,14 +179,14 @@
    "condition": "Stim48hr",
    "verdict": "discordant",
    "label": "HYPOTHESIS \u2014 not used in verdict",
-   "claim": "TSC1 loss disinhibits mTORC1 signaling, which enhances IL-2 protein translation despite reduced mRNA, via post-transcriptional upregulation of translation initiation [2, 3].",
-   "distinguishing_experiment": "Measure IL-2 protein half-life (pulse-chase with radiolabel or cycloheximide block) in TSC1-depleted T cells: if protein is stabilized (longer half-life), hypothesis 1 (post-transcriptional buffering) is favored; if half-life is unchanged or shortened but translation rate (ribosome density on IL2 mRNA by polysome profiling) is elevated, hypothesis 2 (enhanced translation per mRNA) is favored.",
+   "claim": "TSC1 knockdown inhibits mTORC1 signalling (lowering IL-2 mRNA production), but the resulting reduction in protein synthesis feedback relieves translational repression of IL-2 protein, allowing existing mRNA to be translated more efficiently and raising surface IL-2.",
+   "distinguishing_experiment": "Pulse-chase assay: label newly synthesized IL-2 protein with 35S-methionine for 30 min (pulse), then chase in non-radioactive medium for 2\u20134 hr in TSC1 KD and control cells. Measure half-life by immunoprecipitation and scintillation counting. If IL-2 protein half-life is substantially extended in TSC1 KD (supporting hypothesis 2), the mRNA\u2013protein discordance is driven by stabilization. If half-life is similar but newly synthesized IL-2 accumulates faster during the pulse phase (supporting hypothesis 1), the discordance is driven by translational efficiency relief.",
    "citation": {
     "db": "pubmed",
-    "accession": "14651849",
+    "accession": "12172553",
     "status": "resolved",
-    "title": "TSC2 mediates cellular energy response to control cell growth and survival.",
-    "url": "https://pubmed.ncbi.nlm.nih.gov/14651849/"
+    "title": "TSC2 is phosphorylated and inhibited by Akt and suppresses mTOR signalling.",
+    "url": "https://pubmed.ncbi.nlm.nih.gov/12172553/"
    }
   },
   {
@@ -195,8 +195,8 @@
    "condition": "Stim48hr",
    "verdict": "discordant",
    "label": "HYPOTHESIS \u2014 not used in verdict",
-   "claim": "TSC1 depletion shifts cellular metabolism toward anabolic pathways via mTOR, increasing protein synthesis capacity that compensates for lower mRNA availability to maintain or elevate IL-2 protein output [3].",
-   "distinguishing_experiment": "Measure IL-2 protein half-life (pulse-chase with radiolabel or cycloheximide block) in TSC1-depleted T cells: if protein is stabilized (longer half-life), hypothesis 1 (post-transcriptional buffering) is favored; if half-life is unchanged or shortened but translation rate (ribosome density on IL2 mRNA by polysome profiling) is elevated, hypothesis 2 (enhanced translation per mRNA) is favored.",
+   "claim": "TSC1 knockdown suppresses mTOR-dependent cell growth and shifts cellular energy allocation away from cytokine production at the transcriptional level, but simultaneously triggers compensatory protein stabilization of IL-2 through altered ubiquitin-proteasome turnover.",
+   "distinguishing_experiment": "Pulse-chase assay: label newly synthesized IL-2 protein with 35S-methionine for 30 min (pulse), then chase in non-radioactive medium for 2\u20134 hr in TSC1 KD and control cells. Measure half-life by immunoprecipitation and scintillation counting. If IL-2 protein half-life is substantially extended in TSC1 KD (supporting hypothesis 2), the mRNA\u2013protein discordance is driven by stabilization. If half-life is similar but newly synthesized IL-2 accumulates faster during the pulse phase (supporting hypothesis 1), the discordance is driven by translational efficiency relief.",
    "citation": {
     "db": "pubmed",
     "accession": "14651849",

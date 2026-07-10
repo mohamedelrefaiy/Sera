@@ -291,6 +291,41 @@ def test_a_citation_can_only_come_from_the_retrieved_set():
         assert h.citation.status is CitationStatus.RETRIEVED
 
 
+def test_two_hypotheses_may_not_rest_on_the_same_paper():
+    """One paper backs at most one hypothesis. Observed live on TSC1: the model returned two claims
+    both citing the single TSC2/mTOR paper -- and a distinguishing experiment cannot separate what
+    the same evidence supports, so they were never two hypotheses. The first survives; the duplicate
+    is dropped. The citation is the key: a hypothesis is defined by the evidence that motivates it.
+    """
+    entry = parse_entry(json.dumps({
+        "hypotheses": [
+            {"claim": "mTOR disinhibition raises translation.", "paper_index": 0},   # kept
+            {"claim": "Anabolic shift raises synthesis capacity.", "paper_index": 0},  # same paper
+            {"claim": "Distinct mechanism, distinct source.", "paper_index": 1},      # kept
+        ],
+        "distinguishing_experiment": "cycloheximide chase vs qPCR",
+    }), build_record(RECORD_ROW), PAPERS)
+    assert len(entry.hypotheses) == 2, "a duplicate-citation hypothesis was not dropped"
+    pmids = [h.citation.accession for h in entry.hypotheses]
+    assert len(set(pmids)) == len(pmids), f"two hypotheses share a citation: {pmids}"
+    assert entry.hypotheses[0].claim == "mTOR disinhibition raises translation.", (
+        "the FIRST hypothesis on a paper must be the one kept")
+
+
+def test_all_hypotheses_sharing_one_paper_collapses_to_one():
+    """The degenerate case: every claim cites the same paper. It collapses to a single hypothesis
+    rather than being refused -- one grounded hypothesis is a valid, honest entry."""
+    entry = parse_entry(json.dumps({
+        "hypotheses": [
+            {"claim": "First framing of the one mechanism.", "paper_index": 0},
+            {"claim": "Second framing of the same mechanism.", "paper_index": 0},
+        ],
+        "distinguishing_experiment": "cycloheximide chase",
+    }), build_record(RECORD_ROW), PAPERS)
+    assert len(entry.hypotheses) == 1
+    assert entry.hypotheses[0].claim == "First framing of the one mechanism."
+
+
 def test_an_out_of_range_or_missing_index_drops_its_claim():
     """An index outside the retrieved set grounds nothing. The claim is dropped; if that leaves the
     entry empty, the entry is refused -- better an absent hypothesis than an unsourced one."""
