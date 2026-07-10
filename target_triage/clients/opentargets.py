@@ -41,6 +41,14 @@ _SM_KEY_LABELS = (
     "Approved Drug", "Advanced Clinical", "Phase 1 Clinical",
     "High-Quality Ligand", "Structure with Ligand", "Druggable Family",
 )
+# Antibody-modality tractability. The clinical rungs mirror SM; the discovery rungs are the
+# "is this protein surface-accessible to an antibody" signals OT reports. A gene like IL2RA
+# has an approved ANTIBODY but no small-molecule tractability — the SM-only view would call it
+# undruggable, so Concord's Druggability card needs this second modality broken out.
+_AB_KEY_LABELS = (
+    "Approved Drug", "Advanced Clinical", "Phase 1 Clinical",
+    "GO CC high conf", "UniProt loc high conf", "UniProt SigP or TMHMM",
+)
 
 _BATCH_FIELDS = (
     "approvedSymbol tractability{modality value label} "
@@ -52,10 +60,17 @@ _BATCH_FIELDS = (
 @dataclass(frozen=True)
 class OpenTargetsAnnotation:
     symbol: str | None
-    druggable_score: float
+    druggable_score: float          # small-molecule tractability, 0..1
     disease_score: float
     top_disease: str | None
-    clinical_stage: str | None
+    clinical_stage: str | None      # best SM/AB clinical rung (either modality)
+    # Modality-specific fields — defaulted so entries deserialised from an OLD cache (written
+    # before these existed) still load; they report no signal until re-fetched. sm_stage is the
+    # SM-ONLY clinical rung (distinct from clinical_stage, which is the best across modalities —
+    # so an antibody-only approval never shows up as a small-molecule "Approved").
+    sm_stage: str | None = None
+    antibody_score: float = 0.0     # antibody tractability, 0..1
+    antibody_stage: str | None = None
 
 
 def _is_immune(disease: dict) -> bool:
@@ -68,15 +83,35 @@ def _is_immune(disease: dict) -> bool:
     return any(t in name for t in IMMUNE_TERMS)
 
 
+def _modality_stage(tract: list, modality: str) -> str | None:
+    """Best clinical rung for one modality (SM or AB), or None. The clinical ladder is the
+    same for both; we just filter to the modality's rows."""
+    rows = [t for t in tract if t.get("modality") == modality]
+    for rung in CLINICAL_LADDER:
+        if any(t["label"] == rung and t["value"] for t in rows):
+            return rung.replace(" Clinical", "").replace(" Drug", "")
+    return None
+
+
+def _modality_score(tract: list, modality: str, key_labels: tuple) -> float:
+    """Fraction of a modality's key tractability buckets that are True (0..1)."""
+    rows = [t for t in tract if t.get("modality") == modality]
+    hits = [t for t in rows if t["label"] in key_labels and t["value"]]
+    return round(len(hits) / len(key_labels), 3)
+
+
 def _parse(target: dict | None, symbol: str | None) -> OpenTargetsAnnotation:
     if target is None:
         return OpenTargetsAnnotation(symbol, 0.0, 0.0, None, None)
 
     tract = target.get("tractability") or []
-    sm = [t for t in tract if t["modality"] == "SM"]
-    hits = [t for t in sm if t["label"] in _SM_KEY_LABELS and t["value"]]
-    druggable = round(len(hits) / len(_SM_KEY_LABELS), 3)
+    druggable = _modality_score(tract, "SM", _SM_KEY_LABELS)
+    antibody = _modality_score(tract, "AB", _AB_KEY_LABELS)
+    sm_stage = _modality_stage(tract, "SM")
+    ab_stage = _modality_stage(tract, "AB")
 
+    # clinical_stage keeps its original meaning: the best clinical rung across EITHER modality
+    # (so existing Target Triage callers see the same "is anything in the clinic" signal).
     clinical = None
     for rung in CLINICAL_LADDER:
         if any(t["label"] == rung and t["value"] for t in tract):
@@ -96,7 +131,10 @@ def _parse(target: dict | None, symbol: str | None) -> OpenTargetsAnnotation:
         druggable_score=druggable,
         disease_score=round(best_ga, 3),
         top_disease=best_dis,
-        clinical_stage=clinical,
+        clinical_stage=clinical or sm_stage,
+        sm_stage=sm_stage,
+        antibody_score=antibody,
+        antibody_stage=ab_stage,
     )
 
 
@@ -122,23 +160,35 @@ def _post_batch(id_map: dict[str, str]) -> dict:
 def _ann_to_dict(a: OpenTargetsAnnotation) -> dict:
     return {"symbol": a.symbol, "druggable_score": a.druggable_score,
             "disease_score": a.disease_score, "top_disease": a.top_disease,
-            "clinical_stage": a.clinical_stage}
+            "clinical_stage": a.clinical_stage, "sm_stage": a.sm_stage,
+            "antibody_score": a.antibody_score, "antibody_stage": a.antibody_stage}
 
 
 def _dict_to_ann(d: dict) -> OpenTargetsAnnotation:
+    # modality fields default when reading a pre-widening cache entry — those genes report no
+    # per-modality signal until re-fetched, rather than crashing on a missing key.
     return OpenTargetsAnnotation(
         d.get("symbol"), d.get("druggable_score", 0.0), d.get("disease_score", 0.0),
-        d.get("top_disease"), d.get("clinical_stage"))
+        d.get("top_disease"), d.get("clinical_stage"), d.get("sm_stage"),
+        d.get("antibody_score", 0.0), d.get("antibody_stage"))
+
+
+def _cache_is_fresh(entry: dict) -> bool:
+    """A cache entry is stale if it predates the modality-specific fields (antibody_score and
+    the SM-only sm_stage). Stale entries are re-fetched so the Druggability card gets the real
+    per-modality signal — never a defaulted zero or a cross-modality stage mislabelled as SM.
+    Bump the required keys here whenever a new modality field is added."""
+    return "antibody_score" in entry and "sm_stage" in entry
 
 
 def annotate_many(pairs, chunk: int = 40, progress=None) -> dict[str, OpenTargetsAnnotation]:
     """Annotate many genes. pairs = [(symbol, ensembl_id), ...]. Cached + batched.
-    Returns {symbol: OpenTargetsAnnotation}. Only un-cached genes hit the API."""
+    Returns {symbol: OpenTargetsAnnotation}. Un-cached OR stale (pre-antibody) genes hit the API."""
     cache = _load_cache()
     out: dict[str, OpenTargetsAnnotation] = {}
     todo = []
     for sym, eid in pairs:
-        if eid in cache:
+        if eid in cache and _cache_is_fresh(cache[eid]):
             out[sym] = _dict_to_ann(cache[eid])
         else:
             todo.append((sym, eid))

@@ -63,10 +63,23 @@ _SHORTLISTS: dict[str, list[dict]] = {}
 # cache stays empty (and its routes 503) if the artifact hasn't been built — the
 # deterministic Target Triage paths never depend on it.
 _CONCORDANCE: list[dict] = []
-_CONCORDANCE_PARQUET = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "data", "artifacts", "concordance.parquet",
-)
+_ARTIFACTS = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "artifacts")
+_CONCORDANCE_PARQUET = os.path.join(_ARTIFACTS, "concordance.parquet")
+_ENRICHMENT_JSON = os.path.join(_ARTIFACTS, "enrichment.json")
+
+# Per-gene dossier enrichment (quality QC + druggability + disease), loaded once. Empty if the
+# enrichment artifact hasn't been built — the dossier cards then show "not available", never a
+# fabricated value.
+_ENRICHMENT: dict[str, dict] = {}
+
+
+def _load_enrichment() -> dict[str, dict]:
+    if not os.path.exists(_ENRICHMENT_JSON):
+        return {}
+    import json
+    with open(_ENRICHMENT_JSON) as fh:
+        return json.load(fh)
 
 
 def _load_concordance() -> list[dict]:
@@ -102,6 +115,7 @@ async def _lifespan(app: FastAPI):
     for name, schema in REGISTRY.items():
         _SHORTLISTS[name] = compute_shortlist(schema)
     _CONCORDANCE.extend(_load_concordance())
+    _ENRICHMENT.update(_load_enrichment())
     yield
 
 
@@ -259,7 +273,9 @@ def concordance(condition: str | None = None, cytokine: str | None = None,
 
 @app.get("/api/concordance/{gene}")
 def concordance_gene(gene: str, cytokine: str | None = None) -> dict:
-    """One gene's verdict across all conditions (for the Single-gene view's condition tabs)."""
+    """One gene's verdict across all conditions (for the Single-gene view's condition tabs),
+    plus its dossier enrichment (quality / druggability / disease). `enrichment` is null when
+    the enrichment artifact isn't built — the frontend then shows 'not available', not a fake."""
     rows = _require_concordance()
     g = gene.upper()
     hits = [r for r in rows if r["gene"] == g]
@@ -268,7 +284,8 @@ def concordance_gene(gene: str, cytokine: str | None = None) -> dict:
     if not hits:
         raise HTTPException(status_code=404, detail=f"{gene} not in the concordance table")
     by_condition = {r["condition"]: r for r in hits}
-    return {"gene": g, "cytokine": hits[0]["cytokine"], "by_condition": by_condition}
+    return {"gene": g, "cytokine": hits[0]["cytokine"], "by_condition": by_condition,
+            "enrichment": _ENRICHMENT.get(g)}
 
 
 @app.get("/api/funnel")

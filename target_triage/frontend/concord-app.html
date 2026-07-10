@@ -324,37 +324,27 @@
       <div id="batchView" class="hidden">
         <div class="btop" style="margin-top:22px">
           <div>
-            <div class="ct" style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px">Your hit list · 6 genes</div>
-            <div class="paste">ITK<br>BCL10<br>VPS37B<br>SRC<br>LCP2<br>ZNF250<span class="cur">&nbsp;</span></div>
+            <div class="ct" style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px" id="batchCount">Your hit list</div>
+            <div class="paste" id="batchPaste" contenteditable="true" spellcheck="false">ITK
+BCL10
+TSC1
+LCP2
+VPS37B
+ZNF250</div>
+            <button class="go" id="batchGo" style="margin-top:10px;width:100%">Reconcile list</button>
           </div>
           <div>
-            <div class="sumrow">
-              <span class="sumpill sp rep"><span class="n">2</span> replicated</span>
-              <span class="sumpill sp mo"><span class="n">2</span> mRNA-only</span>
-              <span class="sumpill sp po"><span class="n">1</span> protein-only</span>
-              <span class="sumpill sp no"><span class="n">1</span> neither</span>
-            </div>
+            <div class="sumrow" id="batchSum"></div>
             <div class="enrich">
-              <div class="et">Pathways your replicated hits share · Enrichr</div>
-              <div class="echips">
-                <span class="echip">TCR signaling <b>q=3e-6</b></span>
-                <span class="echip">NF-κB activation <b>q=8e-5</b></span>
-                <span class="echip">IL-2 / STAT5 <b>q=2e-4</b></span>
-              </div>
+              <div class="et">Ranked by verdict × confidence × druggability</div>
+              <div class="echips"><span class="echip">Prioritise <b>replicated</b> and druggable hits; drop concordant negatives.</span></div>
             </div>
           </div>
         </div>
 
         <table class="shortlist">
           <thead><tr><th>Prio</th><th>Gene</th><th>Verdict</th><th>Confidence</th><th>Druggable</th><th>Why chase it</th></tr></thead>
-          <tbody>
-            <tr><td class="prio">1</td><td class="gname">ITK</td><td><span class="vtag rep">Replicated</span></td><td><span class="ctag High">High</span></td><td class="drugcell">SM · Phase II</td><td class="chase">Robust across modalities + drug precedent</td></tr>
-            <tr><td class="prio">2</td><td class="gname">BCL10</td><td><span class="vtag rep">Replicated</span></td><td><span class="ctag High">High</span></td><td class="drugcell">SM · discovery</td><td class="chase">Both screens agree; core NF-κB node</td></tr>
-            <tr><td class="prio">3</td><td class="gname">SRC</td><td><span class="vtag mo">mRNA-only</span></td><td><span class="ctag Medium">Medium</span></td><td class="drugcell">SM · approved</td><td class="chase">Druggable already — worth confirming at protein level</td></tr>
-            <tr><td class="prio">4</td><td class="gname">LCP2</td><td><span class="vtag po">Protein-only</span></td><td><span class="ctag High">High</span></td><td class="drugcell">PROTAC candidate</td><td class="chase">Post-transcriptional; a transcriptome-only search misses it</td></tr>
-            <tr><td class="prio">5</td><td class="gname">VPS37B</td><td><span class="vtag mo">mRNA-only</span></td><td><span class="ctag Medium">Medium</span></td><td class="drugcell">limited</td><td class="chase">Lead only — mixed guide agreement, no protein support</td></tr>
-            <tr><td class="prio">6</td><td class="gname">ZNF250</td><td><span class="vtag no">Neither</span></td><td><span class="ctag Low">Low</span></td><td class="drugcell">—</td><td class="chase">Concordant negative — safe to drop</td></tr>
-          </tbody>
+          <tbody id="batchRows"></tbody>
         </table>
       </div>
 
@@ -397,7 +387,7 @@
         <div class="srcline">plan built from · verdict + context-dependence + QC columns (Zhu 2025) · guide-library metadata · Open Targets · GWAS Catalog</div>
       </div>
 
-      <div class="demo-flag">Illustrative values for design — final numbers come from the released screen data + live APIs.</div>
+      <div class="demo-flag" id="demoFlag">All three views run on real data · Zhu 2025 Perturb-seq (mRNA) × Schmidt 2022 FACS (protein) × Open Targets. Pathway enrichment (Enrichr) is the remaining stub.</div>
     </div>
   </div>
 
@@ -466,17 +456,17 @@
   // API condition keys -> UI tab keys (backend uses Stim8hr/Stim48hr; tabs use Stim8h/Stim48h).
   var COND_API={Rest:"Rest",Stim8h:"Stim8hr",Stim48h:"Stim48hr"};
   var COND_LABEL={Rest:"Rest",Stim8h:"Stim 8h",Stim48h:"Stim 48h"};
-  var state={gene:"ITK",cond:"Stim48h",byCondition:null};
+  var state={gene:"ITK",cond:"Stim48h",byCondition:null,enrichment:null};
   function $(id){return document.getElementById(id);}
   function fmt(x){return (x===null||x===undefined)?"—":(x>=0?"+":"")+Number(x).toFixed(2);}
 
-  // Fetch one gene's concordance across conditions, then render the active tab.
+  // Fetch one gene's concordance across conditions + its dossier enrichment, then render.
   async function loadGene(gene){
     try{
       var r=await fetch("api/concordance/"+encodeURIComponent(gene));
       if(!r.ok){ $("geneInput").value=state.gene; return false; }
       var d=await r.json();
-      state.gene=d.gene; state.byCondition=d.by_condition||{};
+      state.gene=d.gene; state.byCondition=d.by_condition||{}; state.enrichment=d.enrichment||null;
       render();
       if(!$("planView").classList.contains("hidden")) renderPlan();
       return true;
@@ -524,8 +514,54 @@
 
     var dot=$("plotDot"); dot.setAttribute("cx",vm.x); dot.setAttribute("cy",vm.y); dot.setAttribute("fill",vm.fill);
 
+    renderDossier();
+
     document.querySelectorAll("#tabs .tab").forEach(function(t){t.setAttribute("aria-selected",t.dataset.cond===state.cond?"true":"false");});
     document.querySelectorAll("#chips .chip").forEach(function(ch){ch.setAttribute("aria-pressed",ch.dataset.gene===state.gene?"true":"false");});
+  }
+
+  // strength bucket for a correlation dot (matches the mockup's s-strong/s-mix/s-weak).
+  function corrDot(v){ if(v===null||v===undefined) return "s-weak ring"; if(v>=0.5) return "s-strong"; if(v>=0.2) return "s-mix"; return "s-weak ring"; }
+  function corrTxt(v){ return v===null||v===undefined ? "n/a" : "ρ "+Number(v).toFixed(2); }
+  // OT tractability score (0..1) -> a clinical/discovery pill label + class.
+  function drugPill(score, stage){
+    if(stage) return [stage, "p-clin"];              // has a clinical rung -> strongest
+    if(score>=0.34) return ["Discovery", "p-disc"];  // some tractability buckets true
+    if(score>0) return ["Limited", "p-disc"];
+    return ["—", "p-none"];
+  }
+
+  function renderDossier(){
+    var e=state.enrichment;
+    // --- Evidence & quality ---
+    var q=e&&e.quality?e.quality:null;
+    var tier=q&&q.confidence?q.confidence:"—";
+    $("confTier").textContent=tier; $("confTier").className="tier "+(tier==="—"?"Low":tier);
+    var barPct=tier==="High"?88:tier==="Medium"?52:tier==="Low"?22:0;
+    var barColor=tier==="High"?"var(--lock)":tier==="Medium"?"var(--warn)":"var(--absent)";
+    $("confBar").style.width=barPct+"%"; $("confBar").style.background=barColor;
+    $("vDonor").textContent=corrTxt(q?q.donor_corr:null); $("dDonor").className="sdot "+corrDot(q?q.donor_corr:null);
+    $("vGuide").textContent=corrTxt(q?q.guide_corr:null); $("dGuide").className="sdot "+corrDot(q?q.guide_corr:null);
+    $("vKd").textContent=q?(q.ontarget_significant?"significant":"n.s."):"—"; $("dKd").className="sdot "+(q&&q.ontarget_significant?"s-strong":"s-weak ring");
+    $("vOff").textContent=q?(q.offtarget_flag?"flagged":"clean"):"—"; $("dOff").className="sdot "+(q&&!q.offtarget_flag?"s-strong":"s-mix");
+
+    // --- Druggability (Open Targets: SM + AB modalities) ---
+    var dr=e&&e.druggability?e.druggability:null;
+    var sm=dr?drugPill(dr.sm_score, dr.sm_stage):["—","p-none"];
+    var ab=dr?drugPill(dr.ab_score, dr.ab_stage):["—","p-none"];
+    $("dSm").textContent=sm[0]; $("dSm").className="pill "+sm[1];
+    $("dAb").textContent=ab[0]; $("dAb").className="pill "+ab[1];
+    var clin=dr&&(dr.sm_stage||dr.ab_stage)?(dr.sm_stage||dr.ab_stage):"None";
+    $("dClin").textContent=clin; $("dClin").className="pill "+(clin==="None"?"p-none":"p-clin");
+    $("dNote").textContent=dr?("Small-molecule tractability "+(dr.sm_score||0).toFixed(2)+" · antibody "+(dr.ab_score||0).toFixed(2)+" (Open Targets)."):"Open Targets tractability unavailable for this gene.";
+
+    // --- Disease genetics (OT immune genetic-association) ---
+    var dis=e&&e.disease?e.disease:null;
+    var linked=dis&&dis.score>0&&dis.top_disease;
+    $("gwasTag").textContent=linked?"◆ Immune-linked":"○ No immune association";
+    $("gwasTag").className="gtag "+(linked?"yes":"no");
+    $("gwasList").innerHTML='<span class="dis">'+(linked?dis.top_disease:"None reported")+'</span>';
+    $("gwasNote").textContent=linked?("Best immune genetic-association score "+dis.score.toFixed(2)+" (Open Targets)."):"No colocalizing immune-disease signal in Open Targets.";
   }
 
   document.querySelectorAll("#chips .chip").forEach(function(ch){ch.addEventListener("click",function(){loadGene(ch.dataset.gene);});});
@@ -602,6 +638,71 @@
     $("pCorrob").textContent="Genetics + druggability corroboration lands with the dossier cards (Phase 3).";
   }
 
+  // ---- hit-list (batch) reconciliation ----
+  // Priority = verdict rank × confidence × druggability. replicated+druggable floats to the top;
+  // concordant negatives sink. Uses IL2/Stim48hr as the anchor condition (the brief's default).
+  var VERDICT_RANK={replicated:5,discordant:4,protein_only:3,mrna_only:2,neither:0};
+  var CONF_W={High:1.0,Medium:0.6,Low:0.3};
+  var VTAG={replicated:["rep","Replicated"],discordant:["disc","Discordant"],mrna_only:["mo","mRNA-only"],protein_only:["po","Protein-only"],neither:["no","Neither"]};
+  var CHASE={
+    replicated:"Both screens agree — the strongest kind of hit.",
+    discordant:"Both hit but directions disagree — resolve which endpoint matters.",
+    mrna_only:"mRNA lead — confirm it reaches the protein.",
+    protein_only:"Post-transcriptional; a transcriptome-only search misses it.",
+    neither:"Concordant negative — safe to drop."
+  };
+
+  async function renderBatch(){
+    var raw=$("batchPaste").innerText||"";
+    var genes=raw.split(/[\s,]+/).map(function(s){return s.trim().toUpperCase();}).filter(Boolean);
+    genes=genes.filter(function(g,i){return genes.indexOf(g)===i;});   // dedupe
+    $("batchCount").textContent="Your hit list · "+genes.length+" gene"+(genes.length===1?"":"s");
+    var results=[];
+    for(var i=0;i<genes.length;i++){
+      try{
+        var r=await fetch("api/concordance/"+encodeURIComponent(genes[i]));
+        if(!r.ok){ results.push({gene:genes[i],missing:true}); continue; }
+        var d=await r.json();
+        var row=(d.by_condition||{}).Stim48hr||(d.by_condition||{}).Stim8hr||(d.by_condition||{}).Rest||null;
+        var e=d.enrichment||{};
+        results.push({gene:d.gene,verdict:row?row.verdict:"neither",
+          conf:(e.quality&&e.quality.confidence)||"Low",
+          sm:(e.druggability&&e.druggability.sm_score)||0, smStage:(e.druggability&&e.druggability.sm_stage)||null,
+          ab:(e.druggability&&e.druggability.ab_score)||0, abStage:(e.druggability&&e.druggability.ab_stage)||null});
+      }catch(err){ results.push({gene:genes[i],missing:true}); }
+    }
+    // score + sort
+    results.forEach(function(x){
+      if(x.missing){x.score=-1;return;}
+      var drug=Math.max(x.sm,x.ab)+(x.smStage||x.abStage?0.5:0);
+      x.score=(VERDICT_RANK[x.verdict]||0)*(CONF_W[x.conf]||0.3)*(1+drug);
+    });
+    results.sort(function(a,b){return b.score-a.score;});
+
+    // summary pills
+    var tally={};
+    results.forEach(function(x){ if(!x.missing) tally[x.verdict]=(tally[x.verdict]||0)+1; });
+    var pills="";
+    [["replicated","rep"],["discordant","disc"],["protein_only","po"],["mrna_only","mo"],["neither","no"]].forEach(function(p){
+      if(tally[p[0]]) pills+='<span class="sumpill sp '+p[1]+'"><span class="n">'+tally[p[0]]+'</span> '+VTAG[p[0]][1]+'</span>';
+    });
+    $("batchSum").innerHTML=pills||'<span class="sumpill sp no">no genes found</span>';
+
+    // rows
+    var html="";
+    results.forEach(function(x,i){
+      if(x.missing){ html+='<tr><td class="prio">—</td><td class="gname">'+x.gene+'</td><td colspan="4" class="chase">not in the concordance table</td></tr>'; return; }
+      var vt=VTAG[x.verdict]||VTAG.neither;
+      var drugCell=x.smStage?("SM · "+x.smStage):x.abStage?("AB · "+x.abStage):x.sm>=0.34?"SM · discovery":x.ab>=0.34?"AB · discovery":"—";
+      html+='<tr><td class="prio">'+(i+1)+'</td><td class="gname">'+x.gene+'</td>'+
+            '<td><span class="vtag '+vt[0]+'">'+vt[1]+'</span></td>'+
+            '<td><span class="ctag '+x.conf+'">'+x.conf+'</span></td>'+
+            '<td class="drugcell">'+drugCell+'</td>'+
+            '<td class="chase">'+(CHASE[x.verdict]||"")+'</td></tr>';
+    });
+    $("batchRows").innerHTML=html;
+  }
+
   // ---- mode toggle (3 modes) ----
   function setMode(m){
     var isSingle=m==="single", isBatch=m==="batch", isPlan=m==="plan";
@@ -614,11 +715,13 @@
     document.querySelector(".search").style.display=isSingle?"":"none";
     document.getElementById("chips").style.display=isBatch?"none":"";
     if(isPlan){renderPlan();}
-    else{$("urlPath").textContent=isBatch?"list":("gene/"+state.gene);}
+    else if(isBatch){ $("urlPath").textContent="list"; if(!$("batchRows").children.length) renderBatch(); }
+    else{$("urlPath").textContent="gene/"+state.gene;}
   }
   $("mSingle").addEventListener("click",function(){setMode("single");});
   $("mBatch").addEventListener("click",function(){setMode("batch");});
   $("mPlan").addEventListener("click",function(){setMode("plan");});
+  $("batchGo").addEventListener("click",renderBatch);
 
   document.querySelectorAll(".xbtn").forEach(function(b){
     b.addEventListener("click",function(){
