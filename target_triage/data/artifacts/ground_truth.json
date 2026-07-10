@@ -1,0 +1,145 @@
+{
+ "condition": "Stim48hr",
+ "cytokine": "IL2",
+ "positive_regulators": [
+  {
+   "gene": "ITK",
+   "role": "positive_regulator",
+   "verdict": "replicated",
+   "z_rna": -2.42,
+   "lfc_prot": -1.45,
+   "recovered": true
+  },
+  {
+   "gene": "BCL10",
+   "role": "positive_regulator",
+   "verdict": "replicated",
+   "z_rna": -2.45,
+   "lfc_prot": -0.47,
+   "recovered": true
+  },
+  {
+   "gene": "VAV1",
+   "role": "positive_regulator",
+   "verdict": "replicated",
+   "z_rna": -3.28,
+   "lfc_prot": -2.92,
+   "recovered": true
+  },
+  {
+   "gene": "PLCG1",
+   "role": "positive_regulator",
+   "verdict": "replicated",
+   "z_rna": -2.93,
+   "lfc_prot": -1.03,
+   "recovered": true
+  },
+  {
+   "gene": "LCP2",
+   "role": "positive_regulator",
+   "verdict": "protein_only",
+   "z_rna": -0.66,
+   "lfc_prot": -1.88,
+   "recovered": true
+  },
+  {
+   "gene": "ZAP70",
+   "role": "positive_regulator",
+   "verdict": "protein_only",
+   "z_rna": -0.49,
+   "lfc_prot": -2.78,
+   "recovered": true
+  },
+  {
+   "gene": "LAT",
+   "role": "positive_regulator",
+   "verdict": "protein_only",
+   "z_rna": 0.15,
+   "lfc_prot": -0.89,
+   "recovered": true
+  },
+  {
+   "gene": "CD3D",
+   "role": "positive_regulator",
+   "verdict": "protein_only",
+   "z_rna": -1.81,
+   "lfc_prot": -2.49,
+   "recovered": true
+  },
+  {
+   "gene": "CD3E",
+   "role": "positive_regulator",
+   "verdict": "protein_only",
+   "z_rna": -2.19,
+   "lfc_prot": -1.96,
+   "recovered": true
+  },
+  {
+   "gene": "CD28",
+   "role": "positive_regulator",
+   "verdict": "protein_only",
+   "z_rna": -2.25,
+   "lfc_prot": -1.73,
+   "recovered": true
+  },
+  {
+   "gene": "LCK",
+   "role": "positive_regulator",
+   "verdict": "neither",
+   "z_rna": -2.31,
+   "lfc_prot": 0.13,
+   "recovered": false
+  }
+ ],
+ "brakes": [
+  {
+   "gene": "TSC1",
+   "role": "brake",
+   "verdict": "discordant",
+   "z_rna": -2.52,
+   "lfc_prot": 0.81,
+   "recovered": true
+  },
+  {
+   "gene": "CBLB",
+   "role": "brake",
+   "verdict": "protein_only",
+   "z_rna": 0.78,
+   "lfc_prot": 1.2,
+   "recovered": true
+  },
+  {
+   "gene": "PTPN2",
+   "role": "brake",
+   "verdict": "mrna_only",
+   "z_rna": -3.36,
+   "lfc_prot": -0.19,
+   "recovered": true
+  },
+  {
+   "gene": "SOCS1",
+   "role": "brake",
+   "verdict": "neither",
+   "z_rna": -1.62,
+   "lfc_prot": -0.03,
+   "recovered": false
+  },
+  {
+   "gene": "TNFAIP3",
+   "role": "brake",
+   "verdict": "neither",
+   "z_rna": -2.42,
+   "lfc_prot": -0.06,
+   "recovered": false
+  }
+ ],
+ "summary": {
+  "n_positive": 11,
+  "n_recovered": 10,
+  "n_replicated": 4,
+  "n_protein_only": 6
+ },
+ "aggregate_spearman": -0.015,
+ "n_shared_genes": 10740,
+ "claim": "10/11 canonical IL-2 positive regulators are recovered as hits; the 6 protein-only ones are the post-transcriptional regulators a transcriptome-only search would miss. The known brake TSC1 comes out discordant. Yet the aggregate Spearman is -0.015 \u2014 the average that hides this structure."
+}

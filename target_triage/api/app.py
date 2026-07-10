@@ -95,6 +95,19 @@ def _load_explanations() -> dict[str, dict]:
         return json.load(fh)
 
 
+# The ground-truth panel: canonical IL-2 regulators recovered by Concord + the aggregate Spearman.
+_GROUND_TRUTH: dict = {}
+_GROUND_TRUTH_JSON = os.path.join(_ARTIFACTS, "ground_truth.json")
+
+
+def _load_ground_truth() -> dict:
+    if not os.path.exists(_GROUND_TRUTH_JSON):
+        return {}
+    import json
+    with open(_GROUND_TRUTH_JSON) as fh:
+        return json.load(fh)
+
+
 def _load_concordance() -> list[dict]:
     """Read the concordance artifact into plain JSON-able dicts, or [] if absent.
 
@@ -130,6 +143,7 @@ async def _lifespan(app: FastAPI):
     _CONCORDANCE.extend(_load_concordance())
     _ENRICHMENT.update(_load_enrichment())
     _EXPLANATIONS.update(_load_explanations())
+    _GROUND_TRUTH.update(_load_ground_truth())
     yield
 
 
@@ -326,6 +340,17 @@ def enrichr(genes: str = "", library: str = "Reactome_2022") -> dict:
         "library": library,
         "pathways": [{"term": p.term, "adj_p": p.adj_p, "n_genes": p.n_genes} for p in paths],
     }
+
+
+@app.get("/api/ground_truth")
+def ground_truth() -> dict:
+    """The ground-truth panel: how Concord recovers canonical IL-2 regulators + the aggregate
+    Spearman. 503 if the artifact isn't built (never a fabricated claim)."""
+    if not _GROUND_TRUTH:
+        raise HTTPException(
+            status_code=503,
+            detail="ground-truth artifact not built — run `python pipeline/05_ground_truth.py`.")
+    return _GROUND_TRUTH
 
 
 @app.get("/api/funnel")

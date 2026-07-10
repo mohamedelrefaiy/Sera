@@ -171,6 +171,22 @@
   .prio{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);text-align:center}
 
   .demo-flag{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);text-align:center;margin-top:16px;letter-spacing:.03em}
+
+  /* ground-truth (known biology) view */
+  .gt-claim{border:1px solid var(--line);border-left:4px solid var(--lock);border-radius:12px;background:var(--surface-2);padding:18px 20px;margin-top:22px}
+  .gt-claim .gt-h{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:9px}
+  .gt-claim p{margin:0;font-size:15px;line-height:1.6;max-width:82ch}
+  .gt-stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+  .gt-stat{border:1px solid var(--line);border-radius:11px;background:var(--surface);padding:12px 16px;min-width:120px}
+  .gt-stat .n{font-family:var(--font-display);font-weight:600;font-size:24px;color:var(--ink)}
+  .gt-stat .l{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px}
+  .gt-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  @media(max-width:780px){.gt-grid{grid-template-columns:1fr}}
+  .gt-col .gt-ct{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
+  .gtrow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px}
+  .gtrow:first-of-type{border-top:none}
+  .gtrow .gg{font-family:var(--font-mono);font-weight:600}
+  .gtrow .gz{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
   .note{max-width:1080px;margin:20px auto 0;font-size:13px;color:var(--ink-soft);text-align:center}
 
   /* validation plan view */
@@ -207,6 +223,18 @@
   .hidden{display:none}
   :focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* print: a clean one-page validation plan (the ELN/PDF export). Hide chrome, nav, other
+     views, and the paste/export controls; print only the recommendation + the four cards. */
+  @media print{
+    body{background:#fff;padding:0}
+    .app-chrome,.bar,.search,#chips,.exports,.demo-flag,
+    #singleView,#batchView,#truthView{display:none!important}
+    .app{border:none;box-shadow:none;border-radius:0}
+    .planbar{margin-top:0}
+    .rec,.pcard,.decision{break-inside:avoid}
+    a[href]:after{content:""}
+  }
 </style>
 </head>
 <body>
@@ -223,6 +251,7 @@
         <button class="mode" id="mSingle" aria-selected="true">Single gene</button>
         <button class="mode" id="mBatch" aria-selected="false">Hit list</button>
         <button class="mode" id="mPlan" aria-selected="false">Validation plan</button>
+        <button class="mode" id="mTruth" aria-selected="false">Known biology</button>
       </div>
     </div>
 
@@ -387,7 +416,27 @@ ZNF250</div>
         <div class="srcline">plan built from · verdict + context-dependence + QC columns (Zhu 2025) · guide-library metadata · Open Targets · GWAS Catalog</div>
       </div>
 
-      <div class="demo-flag" id="demoFlag">All three views run on real data · Zhu 2025 Perturb-seq (mRNA) × Schmidt 2022 FACS (protein) × Open Targets. Pathway enrichment (Enrichr) is the remaining stub.</div>
+      <!-- GROUND-TRUTH (KNOWN BIOLOGY) VIEW -->
+      <div id="truthView" class="hidden">
+        <div class="gt-claim">
+          <div class="gt-h">Does Concord recover known biology?</div>
+          <p id="gtClaim">—</p>
+          <div class="gt-stats" id="gtStats"></div>
+        </div>
+        <div class="gt-grid">
+          <div class="gt-col">
+            <div class="gt-ct">Canonical IL-2 positive regulators · KO lowers IL-2</div>
+            <div id="gtPositives"></div>
+          </div>
+          <div class="gt-col">
+            <div class="gt-ct">Known brakes · KO raises IL-2</div>
+            <div id="gtBrakes"></div>
+          </div>
+        </div>
+        <div class="srcline">recovered independently from · Zhu 2025 Perturb-seq (mRNA) × Schmidt 2022 FACS (protein) · no wet-lab table fetched (would be a different phenotype)</div>
+      </div>
+
+      <div class="demo-flag" id="demoFlag">Every view runs on real data · Zhu 2025 Perturb-seq (mRNA) × Schmidt 2022 FACS (protein) × Open Targets · Enrichr · grounded explanations (Claude, numbers-only).</div>
     </div>
   </div>
 
@@ -475,6 +524,8 @@ ZNF250</div>
       state.gene=d.gene; state.byCondition=d.by_condition||{}; state.enrichment=d.enrichment||null;
       render();
       if(!$("planView").classList.contains("hidden")) renderPlan();
+      // shareable deep-link: reflect the focused gene in ?gene= without reloading.
+      try{ var u=new URL(window.location); u.searchParams.set("gene",state.gene); history.replaceState(null,"",u); }catch(e){}
       return true;
     }catch(e){ return false; }
   }
@@ -735,34 +786,82 @@ ZNF250</div>
     }catch(e){ box.innerHTML='<span class="echip">Pathway enrichment unavailable.</span>'; }
   }
 
-  // ---- mode toggle (3 modes) ----
+  // ---- ground-truth (known biology) panel ----
+  var _truthLoaded=false;
+  async function renderTruth(){
+    if(_truthLoaded) return; _truthLoaded=true;
+    try{
+      var r=await fetch("api/ground_truth");
+      if(!r.ok){ $("gtClaim").textContent="Ground-truth artifact not built."; return; }
+      var d=await r.json();
+      $("gtClaim").textContent=d.claim;
+      var s=d.summary;
+      $("gtStats").innerHTML=
+        stat(s.n_recovered+"/"+s.n_positive,"regulators recovered")+
+        stat(s.n_replicated,"replicated")+
+        stat(s.n_protein_only,"protein-only")+
+        stat(d.aggregate_spearman,"aggregate ρ (mRNA vs protein)");
+      $("gtPositives").innerHTML=d.positive_regulators.map(gtRow).join("");
+      $("gtBrakes").innerHTML=d.brakes.map(gtRow).join("");
+    }catch(e){ $("gtClaim").textContent="Ground-truth panel unavailable."; }
+  }
+  function stat(n,l){ return '<div class="gt-stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+  function gtRow(x){
+    var vt=VTAG[x.verdict]||VTAG.neither;
+    return '<div class="gtrow"><span class="gg">'+x.gene+'</span>'+
+           '<span class="gz">z '+fmt(x.z_rna)+' · lfc '+fmt(x.lfc_prot)+'</span>'+
+           '<span class="vtag '+vt[0]+'">'+vt[1]+'</span></div>';
+  }
+
+  // ---- mode toggle (4 modes) ----
   function setMode(m){
-    var isSingle=m==="single", isBatch=m==="batch", isPlan=m==="plan";
+    var isSingle=m==="single", isBatch=m==="batch", isPlan=m==="plan", isTruth=m==="truth";
     $("mSingle").setAttribute("aria-selected",String(isSingle));
     $("mBatch").setAttribute("aria-selected",String(isBatch));
     $("mPlan").setAttribute("aria-selected",String(isPlan));
+    $("mTruth").setAttribute("aria-selected",String(isTruth));
     $("singleView").classList.toggle("hidden",!isSingle);
     $("batchView").classList.toggle("hidden",!isBatch);
     $("planView").classList.toggle("hidden",!isPlan);
+    $("truthView").classList.toggle("hidden",!isTruth);
     document.querySelector(".search").style.display=isSingle?"":"none";
-    document.getElementById("chips").style.display=isBatch?"none":"";
+    document.getElementById("chips").style.display=(isBatch||isTruth)?"none":"";
     if(isPlan){renderPlan();}
     else if(isBatch){ $("urlPath").textContent="list"; if(!$("batchRows").children.length) renderBatch(); }
+    else if(isTruth){ $("urlPath").textContent="known-biology"; renderTruth(); }
     else{$("urlPath").textContent="gene/"+state.gene;}
   }
   $("mSingle").addEventListener("click",function(){setMode("single");});
   $("mBatch").addEventListener("click",function(){setMode("batch");});
   $("mPlan").addEventListener("click",function(){setMode("plan");});
+  $("mTruth").addEventListener("click",function(){setMode("truth");});
   $("batchGo").addEventListener("click",renderBatch);
 
   document.querySelectorAll(".xbtn").forEach(function(b){
     b.addEventListener("click",function(){
+      // Export PDF actually prints (the @media print stylesheet renders a clean one-page plan);
+      // Copy protocol puts the plan text on the clipboard. Others flash a confirmation for now.
+      if(/Export PDF/.test(b.textContent)){ window.print(); return; }
+      if(/Copy protocol/.test(b.textContent)){ copyProtocol(); }
       var o=b.textContent; b.textContent=b.dataset.x; b.disabled=true;
       setTimeout(function(){b.textContent=o;b.disabled=false;},1400);
     });
   });
+  function copyProtocol(){
+    var parts=["Concord validation plan · "+$("planGene").textContent,
+      $("recAction").textContent+" ("+$("planVerdictTxt").textContent+")",
+      "Why: "+$("recWhy").textContent,
+      "01 Perturbation & controls: "+$("pPert").textContent,
+      "02 Condition: "+$("pCond").textContent,
+      "03 Readout: "+$("pRead").textContent.replace(/\s+/g," ").trim(),
+      "04 QC & caveats: "+$("pQc").textContent,
+      "Go / no-go: "+$("pDecision").textContent];
+    try{ navigator.clipboard.writeText(parts.join("\n\n")); }catch(e){}
+  }
 
-  loadGene(state.gene);   // fetch the default gene, then render
+  // deep-link: a ?gene=SYMBOL in the URL opens that gene directly (shareable link).
+  try{ var qg=new URL(window.location).searchParams.get("gene"); if(qg) state.gene=qg.toUpperCase(); }catch(e){}
+  loadGene(state.gene);   // fetch the (deep-linked or default) gene, then render
 })();
 </script>
 </body>

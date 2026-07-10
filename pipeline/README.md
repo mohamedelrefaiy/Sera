@@ -39,6 +39,36 @@ Writes `target_triage/data/artifacts/cytokine_mrna_effects.parquet` with one row
 (gene × cytokine × condition): `gene, cytokine, condition, z_rna, q_rna, log_fc, p_value`.
 On-target self-perturbation rows (`gene == cytokine`) are excluded (brief §3.4 hazard 1).
 
+### 02 — build the concordance verdicts
+```bash
+python pipeline/02_build_concordance.py
+```
+Crosses the mRNA parquet with the Schmidt protein screen → `concordance.parquet` (the 2×2(+1)
+verdict per gene × condition). Prints the canonical-gene check (ITK/BCL10/TSC1).
+
+### 03 — enrich the dossier cards
+```bash
+python pipeline/03_enrich.py
+```
+Per-gene quality QC + druggability (SM + antibody, Open Targets) + disease → `enrichment.json`.
+Re-fetches Open Targets for genes whose cache entry predates the antibody modality.
+
+### 04 — precompute grounded explanations (needs Anthropic credentials)
+```bash
+python pipeline/04_explanations.py
+```
+Cached Claude (Haiku 4.5) "why this verdict" for the demo genes → `explanations_cache.json`.
+No-ops cleanly without credentials (the frontend template fallback covers every gene).
+
+### 05 — build the ground-truth panel
+```bash
+python pipeline/05_ground_truth.py
+```
+How Concord recovers canonical IL-2 regulators + the aggregate Spearman → `ground_truth.json`.
+
+**Full rebuild:** `00 → 01 → 02 → 03 → 04 → 05`. Steps 02–05 need only the parquet from 01, so a
+keyless offline build (skipping 04) still produces a fully working app.
+
 ## Notes / verified facts (2026-07-09)
 
 - **The h5ad is range-capable**, so `01` slices columns over plain HTTPS without downloading
