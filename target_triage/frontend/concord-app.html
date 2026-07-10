@@ -336,8 +336,8 @@ ZNF250</div>
           <div>
             <div class="sumrow" id="batchSum"></div>
             <div class="enrich">
-              <div class="et">Ranked by verdict × confidence × druggability</div>
-              <div class="echips"><span class="echip">Prioritise <b>replicated</b> and druggable hits; drop concordant negatives.</span></div>
+              <div class="et">Pathways your replicated hits share · Enrichr / Reactome</div>
+              <div class="echips" id="batchPathways"><span class="echip">—</span></div>
             </div>
           </div>
         </div>
@@ -459,6 +459,12 @@ ZNF250</div>
   var state={gene:"ITK",cond:"Stim48h",byCondition:null,enrichment:null};
   function $(id){return document.getElementById(id);}
   function fmt(x){return (x===null||x===undefined)?"—":(x>=0?"+":"")+Number(x).toFixed(2);}
+  // Strip the light markdown the grounded explanations use, and drop a leading bold title line
+  // so the panel reads as one clean paragraph.
+  function stripMd(s){
+    return s.replace(/\*\*(.+?)\*\*/g,"$1").replace(/\*(.+?)\*/g,"$1")
+            .replace(/^\s*[^.\n]{0,80}:\s*\n+/,"").replace(/\s*\n+\s*/g," ").trim();
+  }
 
   // Fetch one gene's concordance across conditions + its dossier enrichment, then render.
   async function loadGene(gene){
@@ -508,7 +514,10 @@ ZNF250</div>
     $("zProt").textContent=fmt(zP); $("zRna").textContent=fmt(zR);
     $("qProt").innerHTML="q="+(qP===null?"—":Number(qP).toPrecision(2))+" "+(hP?'<span class="hit-y">hit</span>':'<span class="hit-n">n.s.</span>');
     $("qRna").innerHTML="q="+(qR===null?"—":Number(qR).toPrecision(2))+" "+(hR?'<span class="hit-y">hit</span>':'<span class="hit-n">n.s.</span>');
-    $("explainText").textContent=whyText(row);
+    // Prefer the grounded (cached Claude) explanation; fall back to the deterministic template.
+    // Strip light markdown (**bold**, *italic*, a leading title line) so it reads as clean prose.
+    var why=(row&&row.explanation)?stripMd(row.explanation):whyText(row);
+    $("explainText").textContent=why;
     var mt=$("mechTag"), mech=mechText(row);
     if(mech){mt.textContent="⌥ "+mech; mt.classList.remove("hidden");} else {mt.classList.add("hidden");}
 
@@ -701,6 +710,29 @@ ZNF250</div>
             '<td class="chase">'+(CHASE[x.verdict]||"")+'</td></tr>';
     });
     $("batchRows").innerHTML=html;
+
+    // pathway enrichment over the REPLICATED subset (Enrichr / Reactome, cached server-side)
+    var repl=results.filter(function(x){return !x.missing&&x.verdict==="replicated";}).map(function(x){return x.gene;});
+    renderPathways(repl);
+  }
+
+  async function renderPathways(genes){
+    var box=$("batchPathways");
+    if(!genes.length){ box.innerHTML='<span class="echip">Need ≥1 replicated hit for pathway enrichment.</span>'; return; }
+    box.innerHTML='<span class="echip">enriching…</span>';
+    try{
+      var r=await fetch("api/enrichr?genes="+encodeURIComponent(genes.join(",")));
+      var d=await r.json();
+      var p=(d.pathways||[]).slice(0,4);
+      if(!p.length){ box.innerHTML='<span class="echip">No significant pathway enrichment.</span>'; return; }
+      box.innerHTML=p.map(function(x){
+        // strip the Reactome id suffix for a cleaner chip label
+        var name=x.term.replace(/\s+R-HSA-\d+.*$/,"");
+        // Enrichr clamps tiny adj-p to 0 — show "<1e-10", not "0.000" (which reads as n.s.).
+        var q=x.adj_p<=0?"<1e-10":x.adj_p<1e-3?x.adj_p.toExponential(0):x.adj_p.toFixed(3);
+        return '<span class="echip">'+name+' <b>q='+q+'</b></span>';
+      }).join("");
+    }catch(e){ box.innerHTML='<span class="echip">Pathway enrichment unavailable.</span>'; }
   }
 
   // ---- mode toggle (3 modes) ----

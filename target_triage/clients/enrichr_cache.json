@@ -1,0 +1,78 @@
+{
+"0c16421695ae98c1": [
+{
+"term": "Generation Of Second Messenger Molecules R-HSA-202433",
+"adj_p": 0.0,
+"n_genes": 5,
+"library": "Reactome_2022"
+},
+{
+"term": "TCR Signaling R-HSA-202403",
+"adj_p": 0.0,
+"n_genes": 6,
+"library": "Reactome_2022"
+},
+{
+"term": "FCERI Mediated Ca+2 Mobilization R-HSA-2871809",
+"adj_p": 1e-08,
+"n_genes": 4,
+"library": "Reactome_2022"
+},
+{
+"term": "Fc Epsilon Receptor (FCERI) Signaling R-HSA-2454202",
+"adj_p": 2e-08,
+"n_genes": 5,
+"library": "Reactome_2022"
+},
+{
+"term": "Adaptive Immune System R-HSA-1280218",
+"adj_p": 2e-08,
+"n_genes": 7,
+"library": "Reactome_2022"
+},
+{
+"term": "FCERI Mediated MAPK Activation R-HSA-2871796",
+"adj_p": 3.46e-06,
+"n_genes": 3,
+"library": "Reactome_2022"
+}
+],
+"0b86cc5d52368aab": [
+{
+"term": "TCR Signaling R-HSA-202403",
+"adj_p": 0.00037733,
+"n_genes": 2,
+"library": "Reactome_2022"
+},
+{
+"term": "Fc Epsilon Receptor (FCERI) Signaling R-HSA-2454202",
+"adj_p": 0.00037733,
+"n_genes": 2,
+"library": "Reactome_2022"
+},
+{
+"term": "Adaptive Immune System R-HSA-1280218",
+"adj_p": 0.00804857,
+"n_genes": 2,
+"library": "Reactome_2022"
+},
+{
+"term": "Innate Immune System R-HSA-168249",
+"adj_p": 0.00959241,
+"n_genes": 2,
+"library": "Reactome_2022"
+},
+{
+"term": "FCERI Mediated Ca+2 Mobilization R-HSA-2871809",
+"adj_p": 0.00959241,
+"n_genes": 1,
+"library": "Reactome_2022"
+},
+{
+"term": "Generation Of Second Messenger Molecules R-HSA-202433",
+"adj_p": 0.00959241,
+"n_genes": 1,
+"library": "Reactome_2022"
+}
+]
+}

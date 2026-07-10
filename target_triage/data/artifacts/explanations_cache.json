@@ -1,0 +1,530 @@
+{
+ "ITK|IL2|Rest": {
+  "explanation": "**ITK** (IL2-inducible T-cell kinase) shows a striking post-transcriptional effect: the Perturb-seq screen saw no significant mRNA change (z = \u22121.33, adj *p* = 0.987), but the FACS screen detected a strong protein-level drop in IL-2 (log-FC = \u22121.45, FDR = 0.00015). This suggests ITK's effect on IL-2 production is mediated primarily through translational or protein-stability mechanisms rather than transcriptional control\u2014consistent with its known role as a kinase that gates TCR signaling at the post-receptor level.",
+  "grounded_from": {
+   "gene": "ITK",
+   "cytokine": "IL2",
+   "condition": "Rest",
+   "verdict": "protein_only",
+   "mrna_perturbseq": {
+    "z_score": -1.326,
+    "adj_p_value": 0.986659,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": -1.451,
+    "fdr": 0.00015,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "gene_annotation": "IL2-inducible T-cell kinase; TCR signaling."
+  }
+ },
+ "ITK|IL2|Stim48hr": {
+  "explanation": "Knocking out **ITK** lowers IL-2 production in both screens after 48 hr stimulation, with consistent direction (mRNA z = \u22122.42, protein log-fold = \u22121.45). The protein hit is highly significant (FDR 0.00015) while the mRNA hit is marginal (adj p = 0.066), but both agree ITK is required for IL-2 output\u2014fitting its role as a TCR-signaling kinase that directly drives IL-2 transcription.",
+  "grounded_from": {
+   "gene": "ITK",
+   "cytokine": "IL2",
+   "condition": "Stim48hr",
+   "verdict": "replicated",
+   "mrna_perturbseq": {
+    "z_score": -2.417,
+    "adj_p_value": 0.065765,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "protein_facs": {
+    "log_fold_change": -1.451,
+    "fdr": 0.00015,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "gene_annotation": "IL2-inducible T-cell kinase; TCR signaling."
+  }
+ },
+ "ITK|IL2|Stim8hr": {
+  "explanation": "**ITK knocks down IL2 protein but not its transcript.** The Perturb-seq screen found no mRNA effect (z = \u22121.459, adj p = 0.295), while the FACS screen detected a strong protein-lowering hit (log FC = \u22121.451, FDR = 0.00015). Since ITK is a TCR signaling kinase, the discordance likely reflects post-transcriptional control\u2014either rapid mRNA decay, translational suppression, or protein degradation downstream of the kinase activity.",
+  "grounded_from": {
+   "gene": "ITK",
+   "cytokine": "IL2",
+   "condition": "Stim8hr",
+   "verdict": "protein_only",
+   "mrna_perturbseq": {
+    "z_score": -1.459,
+    "adj_p_value": 0.2952,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": -1.451,
+    "fdr": 0.00015,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "gene_annotation": "IL2-inducible T-cell kinase; TCR signaling."
+  }
+ },
+ "BCL10|IL2|Rest": {
+  "explanation": "**BCL10 on IL-2 (Rest condition):**\n\nThe Perturb-seq screen did not detect BCL10 as a hit (z = \u22120.391, adj p = 0.999998), but the FACS screen shows knocking down BCL10 robustly lowers IL-2 protein (LFC = \u22120.474, FDR = 0.00015). This protein-only signal likely reflects a post-transcriptional mechanism\u2014perhaps BCL10 loss destabilizes the signalosome needed to translate or stabilize IL-2 transcripts, even when mRNA levels don't shift.",
+  "grounded_from": {
+   "gene": "BCL10",
+   "cytokine": "IL2",
+   "condition": "Rest",
+   "verdict": "protein_only",
+   "mrna_perturbseq": {
+    "z_score": -0.391,
+    "adj_p_value": 0.999998,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": -0.474,
+    "fdr": 0.00015,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "gene_annotation": "CARD11-BCL10-MALT1 signalosome; NF-kB activation."
+  }
+ },
+ "BCL10|IL2|Stim48hr": {
+  "explanation": "BCL10 knockdown lowers IL-2 output in both screens after 48 h stimulation: the Perturb-seq screen shows a z-score of \u22122.45 (adj. p = 0.055) and the FACS screen confirms with a log fold-change of \u22120.47 (FDR = 0.00015). This concordance fits the annotation\u2014BCL10 is a scaffold in the CBM signalosome, so its loss impairs NF-\u03baB activation and downstream IL-2 production.",
+  "grounded_from": {
+   "gene": "BCL10",
+   "cytokine": "IL2",
+   "condition": "Stim48hr",
+   "verdict": "replicated",
+   "mrna_perturbseq": {
+    "z_score": -2.447,
+    "adj_p_value": 0.055252,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "protein_facs": {
+    "log_fold_change": -0.474,
+    "fdr": 0.00015,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "gene_annotation": "CARD11-BCL10-MALT1 signalosome; NF-kB activation."
+  }
+ },
+ "BCL10|IL2|Stim8hr": {
+  "explanation": "\u2605 Insight \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nThis record shows **concordant data**: both screens agree on direction (lowers) and hit status (true), so the gene's causal role is robustly supported. The z-score (\u22123.1, p=0.0096) and log-fold-change (\u22120.47, FDR=0.00015) are both modest in effect size but highly significant\u2014typical of a real but modest regulator in a multi-step pathway like NF-\u03baB signaling.\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n\n**BCL10 knockdown suppresses IL-2 output at 8 hours stimulation in both mRNA (Perturb-seq, z=\u22123.1, adj-p=0.0096) and protein (FACS, log-FC=\u22120.47, FDR=0.00015).** Both screens hit with the same direction\u2014lowered cytokine\u2014confirming BCL10's role as a positive regulator of IL-2 in early T-cell activation, consistent with its position in the CARD11\u2013BCL10\u2013MALT1 signalosome upstream of NF-\u03baB. The modest protein fold-change despite a larger transcriptional signal may reflect post-transcriptional buffering or protein half-life, but direction replication rules out technical artifact.",
+  "grounded_from": {
+   "gene": "BCL10",
+   "cytokine": "IL2",
+   "condition": "Stim8hr",
+   "verdict": "replicated",
+   "mrna_perturbseq": {
+    "z_score": -3.101,
+    "adj_p_value": 0.009628,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "protein_facs": {
+    "log_fold_change": -0.474,
+    "fdr": 0.00015,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "gene_annotation": "CARD11-BCL10-MALT1 signalosome; NF-kB activation."
+  }
+ },
+ "VAV1|IL2|Rest": {
+  "explanation": "VAV1 knockdown **lowers IL-2 protein** in resting T cells (FACS screen, log-fold change \u22122.916, FDR 0.00015), but **does not detectably shift IL-2 mRNA** (Perturb-seq z-score \u22120.18, untested for significance). This post-transcriptional effect is consistent with VAV1's role as a guanine-nucleotide exchange factor in proximal TCR signaling\u2014the protein likely stabilizes IL-2 transcript or enhances translation rather than driving IL-2 transcription itself.",
+  "grounded_from": {
+   "gene": "VAV1",
+   "cytokine": "IL2",
+   "condition": "Rest",
+   "verdict": "protein_only",
+   "mrna_perturbseq": {
+    "z_score": -0.18,
+    "adj_p_value": null,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": -2.916,
+    "fdr": 0.00015,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "gene_annotation": "guanine-nucleotide exchange factor; proximal TCR signaling."
+  }
+ },
+ "VAV1|IL2|Stim48hr": {
+  "explanation": "VAV1 knockdown consistently lowers IL-2 in both the Perturb-seq screen (z = \u22123.28, adj p = 0.006) and FACS screen (log FC = \u22122.92, FDR = 0.00015), concordant on direction and magnitude. This fits its role as a guanine-nucleotide exchange factor in proximal TCR signaling\u2014blocking VAV1 disrupts the early signal transduction needed for IL-2 production.",
+  "grounded_from": {
+   "gene": "VAV1",
+   "cytokine": "IL2",
+   "condition": "Stim48hr",
+   "verdict": "replicated",
+   "mrna_perturbseq": {
+    "z_score": -3.281,
+    "adj_p_value": 0.005915,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "protein_facs": {
+    "log_fold_change": -2.916,
+    "fdr": 0.00015,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "gene_annotation": "guanine-nucleotide exchange factor; proximal TCR signaling."
+  }
+ },
+ "VAV1|IL2|Stim8hr": {
+  "explanation": "**Concordant hit \u2014 both screens agree VAV1 suppresses IL2 at 8 hours.**\n\nThe Perturb-seq screen shows VAV1 knockdown lowers IL2 transcript (z = \u22124.6, p = 2.6e\u221205), and the FACS screen confirms the protein drop is even steeper (log FC = \u22122.9, FDR = 1.5e\u221204). The direction match is consistent with VAV1's known role as a GEF in early TCR signaling\u2014knocking it out dampens the cytokine response across both levels of gene expression.",
+  "grounded_from": {
+   "gene": "VAV1",
+   "cytokine": "IL2",
+   "condition": "Stim8hr",
+   "verdict": "replicated",
+   "mrna_perturbseq": {
+    "z_score": -4.599,
+    "adj_p_value": 2.6e-05,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "protein_facs": {
+    "log_fold_change": -2.916,
+    "fdr": 0.00015,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "gene_annotation": "guanine-nucleotide exchange factor; proximal TCR signaling."
+  }
+ },
+ "TSC1|IL2|Rest": {
+  "explanation": "TSC1 shows a **protein-only effect** on IL-2 at rest: mRNA changes are undetected (z = \u22121.19, adj p = 0.45), but protein increases robustly (log FC = 0.81, FDR = 4.8\u00d710\u207b\u2075) and raises IL-2 production. This suggests **post-transcriptional stabilization or translation enhancement** of TSC1 protein\u2014perhaps via phosphorylation or 5\u2032 UTR regulation\u2014that bypasses mRNA upregulation. The annotation hints TSC1 is a brake on mTOR; a protein-level increase paradoxically *raises* IL-2, implying TSC1 may have context-dependent or non-canonical roles in resting T-cell cytokine readiness that differ from its classical mTOR-inhibitory function.",
+  "grounded_from": {
+   "gene": "TSC1",
+   "cytokine": "IL2",
+   "condition": "Rest",
+   "verdict": "protein_only",
+   "mrna_perturbseq": {
+    "z_score": -1.194,
+    "adj_p_value": 0.454034,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": 0.809,
+    "fdr": 4.8e-05,
+    "is_hit": true,
+    "direction": "raises_cytokine"
+   },
+   "gene_annotation": "TSC complex; restrains mTOR (a brake on activation)."
+  }
+ },
+ "TSC1|IL2|Stim48hr": {
+  "explanation": "**TSC1 in IL-2 production (48-hour stimulus):**\n\nThe Perturb-seq screen shows TSC1 knockdown *lowers* IL-2 (z = \u22122.525, p = 0.09), consistent with its role as an mTOR brake\u2014loss of brake should boost activation and cytokine. However, the FACS screen finds the opposite: TSC1 knockdown *raises* IL-2 protein (log-FC = 0.809, FDR = 4.8e-5). This discordance suggests TSC1 restrains IL-2 at the *post-transcriptional level* (e.g., via mTOR-dependent translation, protein stability, or secretion), decoupled from its transcript effect.",
+  "grounded_from": {
+   "gene": "TSC1",
+   "cytokine": "IL2",
+   "condition": "Stim48hr",
+   "verdict": "discordant",
+   "mrna_perturbseq": {
+    "z_score": -2.525,
+    "adj_p_value": 0.089958,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "protein_facs": {
+    "log_fold_change": 0.809,
+    "fdr": 4.8e-05,
+    "is_hit": true,
+    "direction": "raises_cytokine"
+   },
+   "gene_annotation": "TSC complex; restrains mTOR (a brake on activation)."
+  }
+ },
+ "TSC1|IL2|Stim8hr": {
+  "explanation": "The two screens disagree on TSC1's role in IL-2 production under 8-hour stimulation: Perturb-seq finds that lowering TSC1 mRNA reduces IL-2 (z = \u22123.79, adj p = 0.021), but FACS shows that reducing TSC1 protein *increases* IL-2 at the cell surface (log-FC = +0.81, FDR = 4.8e\u221205). Since TSC1 is a brake on mTOR activation, the mRNA result suggests TSC1 transcript is required for IL-2 synthesis, while the protein result points to post-transcriptional regulation\u2014perhaps TSC1 protein depletion paradoxically stabilizes or enhances translation of existing IL-2 transcripts or accelerates cell-surface trafficking of the cytokine.",
+  "grounded_from": {
+   "gene": "TSC1",
+   "cytokine": "IL2",
+   "condition": "Stim8hr",
+   "verdict": "discordant",
+   "mrna_perturbseq": {
+    "z_score": -3.789,
+    "adj_p_value": 0.021201,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "protein_facs": {
+    "log_fold_change": 0.809,
+    "fdr": 4.8e-05,
+    "is_hit": true,
+    "direction": "raises_cytokine"
+   },
+   "gene_annotation": "TSC complex; restrains mTOR (a brake on activation)."
+  }
+ },
+ "LCP2|IL2|Rest": {
+  "explanation": "LCP2 (SLP-76) does not show a signal in the Perturb-seq screen (z = \u22120.54, adj. p = 0.9999) but strongly lowers IL-2 at the protein level in the FACS screen (log-fold change \u22121.88, FDR = 0.00015). This protein-only hit suggests LCP2's role in TCR signaling is post-transcriptionally gated\u2014the transcript is unaffected by perturbation, but the protein product itself is essential for IL-2 production, possibly through protein stability, localization, or phosphorylation-dependent activity that Perturb-seq cannot resolve.",
+  "grounded_from": {
+   "gene": "LCP2",
+   "cytokine": "IL2",
+   "condition": "Rest",
+   "verdict": "protein_only",
+   "mrna_perturbseq": {
+    "z_score": -0.542,
+    "adj_p_value": 0.999958,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": -1.881,
+    "fdr": 0.00015,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "gene_annotation": "SLP-76 adaptor; relays the TCR signal."
+  }
+ },
+ "LCP2|IL2|Stim48hr": {
+  "explanation": "**LCP2 in IL2 at 48h stimulation shows protein-level suppression without transcript change.**\n\nThe Perturb-seq screen detected no mRNA effect (z = \u22120.66, adj_p = 0.77, not a hit), but the FACS screen found a strong protein-level hit (log-FC = \u22121.88, FDR = 0.00015) that lowers IL-2 output. This disconnect suggests **post-transcriptional control**: SLP-76 protein may be stabilized or localized by the stimulus in a way that suppresses signaling, even though knocking it down doesn't change its own transcript level\u2014a pattern consistent with signal-adaptor proteins whose activity depends on phosphorylation or complex assembly rather than abundance.",
+  "grounded_from": {
+   "gene": "LCP2",
+   "cytokine": "IL2",
+   "condition": "Stim48hr",
+   "verdict": "protein_only",
+   "mrna_perturbseq": {
+    "z_score": -0.66,
+    "adj_p_value": 0.7709,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": -1.881,
+    "fdr": 0.00015,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "gene_annotation": "SLP-76 adaptor; relays the TCR signal."
+  }
+ },
+ "LCP2|IL2|Stim8hr": {
+  "explanation": "**LCP2 (SLP-76) lowers IL-2 production at 8 hours post-stimulation, and both screens agree on direction.** The Perturb-seq screen shows a strong knockdown effect (z = \u22126.123, adjusted p = 0), while the FACS screen confirms reduced IL-2 protein (log-FC = \u22121.88, FDR = 0.00015). This concordance is expected mechanistically: as a TCR-signal adaptor, LCP2 disruption blocks proximal T-cell signaling, dampening the IL-2 response.",
+  "grounded_from": {
+   "gene": "LCP2",
+   "cytokine": "IL2",
+   "condition": "Stim8hr",
+   "verdict": "replicated",
+   "mrna_perturbseq": {
+    "z_score": -6.123,
+    "adj_p_value": 0.0,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "protein_facs": {
+    "log_fold_change": -1.881,
+    "fdr": 0.00015,
+    "is_hit": true,
+    "direction": "lowers_cytokine"
+   },
+   "gene_annotation": "SLP-76 adaptor; relays the TCR signal."
+  }
+ },
+ "VPS37B|IL2|Rest": {
+  "explanation": "**VPS37B and IL2 at Rest: Neither screen detects an effect.**\n\nThe Perturb-seq screen shows no signal (z = \u22121.07, adj p = 0.9997), and the FACS screen shows no signal (log-FC = 0.14, FDR = 0.45)\u2014both screens agree there is no reproducible link between VPS37B perturbation and IL2 output under resting conditions. Given VPS37B's role in membrane trafficking, any effect on cytokine secretion would likely require an active stimulus; the \"Rest\" condition may simply be too permissive to reveal a trafficking bottleneck.",
+  "grounded_from": {
+   "gene": "VPS37B",
+   "cytokine": "IL2",
+   "condition": "Rest",
+   "verdict": "neither",
+   "mrna_perturbseq": {
+    "z_score": -1.068,
+    "adj_p_value": 0.999711,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": 0.143,
+    "fdr": 0.445614,
+    "is_hit": false,
+    "direction": null
+   },
+   "gene_annotation": "ESCRT-I component; membrane trafficking."
+  }
+ },
+ "VPS37B|IL2|Stim48hr": {
+  "explanation": "**VPS37B raises IL-2 mRNA (z=7.87, adj_p=0.0) but not the secreted protein (log_FC=0.143, FDR=0.45).** Since VPS37B traffics membrane cargo, it likely boosts IL-2 *transcription* or *mRNA stability* without affecting protein secretion or accumulation\u2014possibly because ESCRT-I function is rate-limiting elsewhere in the secretory pathway, or the protein is efficiently degraded despite higher transcript levels.",
+  "grounded_from": {
+   "gene": "VPS37B",
+   "cytokine": "IL2",
+   "condition": "Stim48hr",
+   "verdict": "mrna_only",
+   "mrna_perturbseq": {
+    "z_score": 7.871,
+    "adj_p_value": 0.0,
+    "is_hit": true,
+    "direction": "raises_cytokine"
+   },
+   "protein_facs": {
+    "log_fold_change": 0.143,
+    "fdr": 0.445614,
+    "is_hit": false,
+    "direction": null
+   },
+   "gene_annotation": "ESCRT-I component; membrane trafficking."
+  }
+ },
+ "VPS37B|IL2|Stim8hr": {
+  "explanation": "**VPS37B shows no effect on IL-2 production at 8-hour stimulation.** The Perturb-seq screen detected no mRNA change (z = \u22120.32, adj. p = 0.9998), and the FACS screen found no protein change (log FC = 0.14, FDR = 0.45)\u2014both sides null. Despite its role in ESCRT-mediated membrane trafficking, VPS37B perturbation does not modulate IL-2 in this acute timeframe.",
+  "grounded_from": {
+   "gene": "VPS37B",
+   "cytokine": "IL2",
+   "condition": "Stim8hr",
+   "verdict": "neither",
+   "mrna_perturbseq": {
+    "z_score": -0.32,
+    "adj_p_value": 0.999755,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": 0.143,
+    "fdr": 0.445614,
+    "is_hit": false,
+    "direction": null
+   },
+   "gene_annotation": "ESCRT-I component; membrane trafficking."
+  }
+ },
+ "ZNF250|IL2|Rest": {
+  "explanation": "**ZNF250 shows no effect on IL-2 in resting conditions.** The Perturb-seq screen found no mRNA change (z = \u22120.37, adj *p* = 0.99995), and the FACS screen was not run for protein (untested). With both sides silent or absent, there's no signal to reconcile\u2014this gene doesn't appear to regulate IL-2 output under rest.",
+  "grounded_from": {
+   "gene": "ZNF250",
+   "cytokine": "IL2",
+   "condition": "Rest",
+   "verdict": "neither",
+   "mrna_perturbseq": {
+    "z_score": -0.369,
+    "adj_p_value": 0.99995,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": null,
+    "fdr": null,
+    "is_hit": false,
+    "direction": null
+   },
+   "gene_annotation": "zinc-finger protein; uncharacterized in this context."
+  }
+ },
+ "ZNF250|IL2|Stim48hr": {
+  "explanation": "**ZNF250 shows no signal in either screen for IL-2 production under 48-hour stimulation.** The Perturb-seq screen is negative (z = \u22122.03, adj. p = 0.9996), and the FACS screen is untested (no protein measurement). This zinc-finger protein does not emerge as a regulator of IL-2 in this condition.",
+  "grounded_from": {
+   "gene": "ZNF250",
+   "cytokine": "IL2",
+   "condition": "Stim48hr",
+   "verdict": "neither",
+   "mrna_perturbseq": {
+    "z_score": -2.027,
+    "adj_p_value": 0.99964,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": null,
+    "fdr": null,
+    "is_hit": false,
+    "direction": null
+   },
+   "gene_annotation": "zinc-finger protein; uncharacterized in this context."
+  }
+ },
+ "ZNF250|IL2|Stim8hr": {
+  "explanation": "**ZNF250 shows no effect on IL-2 in either screen at 8-hour stimulation.** The Perturb-seq screen detected no mRNA hit (z = \u22122.01, adj p = 0.999999), and the FACS screen was not run for protein (both values null). Since both screens are either negative or untested, there is no discordance to explain\u2014this gene simply doesn't appear to regulate IL-2 production under these conditions.",
+  "grounded_from": {
+   "gene": "ZNF250",
+   "cytokine": "IL2",
+   "condition": "Stim8hr",
+   "verdict": "neither",
+   "mrna_perturbseq": {
+    "z_score": -2.005,
+    "adj_p_value": 0.999999,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": null,
+    "fdr": null,
+    "is_hit": false,
+    "direction": null
+   },
+   "gene_annotation": "zinc-finger protein; uncharacterized in this context."
+  }
+ },
+ "IL2RA|IL2|Rest": {
+  "explanation": "IL2RA knockdown has no effect on IL-2 mRNA (Perturb-seq z = \u22120.505, adj p = 0.999) but **raises** IL-2 protein production at rest (FACS log-FC = 0.573, FDR = 4.8e-05). This post-transcriptional effect likely reflects CD25's role as a decoy receptor: removing the high-affinity IL-2 sink permits more cytokine to accumulate in the medium rather than being sequestered by surface-bound receptor.",
+  "grounded_from": {
+   "gene": "IL2RA",
+   "cytokine": "IL2",
+   "condition": "Rest",
+   "verdict": "protein_only",
+   "mrna_perturbseq": {
+    "z_score": -0.505,
+    "adj_p_value": 0.999107,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": 0.573,
+    "fdr": 4.8e-05,
+    "is_hit": true,
+    "direction": "raises_cytokine"
+   },
+   "gene_annotation": "IL-2 receptor alpha (CD25); surface receptor."
+  }
+ },
+ "IL2RA|IL2|Stim48hr": {
+  "explanation": "The Perturb-seq screen found no mRNA effect (z = \u22120.435, adj p = 0.98), but the FACS screen detected a robust protein increase (log\u2082FC = 0.573, FDR = 4.8\u00d710\u207b\u2075) that raises IL-2 signaling. This protein-only signal suggests IL2RA undergoes post-transcriptional stabilization or enhanced translation under IL-2 stimulation\u2014the mRNA level stays flat while CD25 protein accumulates on the cell surface.",
+  "grounded_from": {
+   "gene": "IL2RA",
+   "cytokine": "IL2",
+   "condition": "Stim48hr",
+   "verdict": "protein_only",
+   "mrna_perturbseq": {
+    "z_score": -0.435,
+    "adj_p_value": 0.98277,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": 0.573,
+    "fdr": 4.8e-05,
+    "is_hit": true,
+    "direction": "raises_cytokine"
+   },
+   "gene_annotation": "IL-2 receptor alpha (CD25); surface receptor."
+  }
+ },
+ "IL2RA|IL2|Stim8hr": {
+  "explanation": "**IL2RA protein-only concordance (Stim8hr):**\n\nThe Perturb-seq screen shows no mRNA signal (z = \u22122.148, adj_p = 0.817), but the FACS screen detects a strong protein hit (log-FC = 0.573, FDR = 4.8\u00d710\u207b\u2075) that raises IL-2 signaling. As a surface receptor, IL2RA likely undergoes post-transcriptional regulation\u2014mRNA levels stay constant while protein synthesis, trafficking, or stability shifts under stimulation, explaining why only the protein layer responds to perturbation.",
+  "grounded_from": {
+   "gene": "IL2RA",
+   "cytokine": "IL2",
+   "condition": "Stim8hr",
+   "verdict": "protein_only",
+   "mrna_perturbseq": {
+    "z_score": -2.148,
+    "adj_p_value": 0.817418,
+    "is_hit": false,
+    "direction": null
+   },
+   "protein_facs": {
+    "log_fold_change": 0.573,
+    "fdr": 4.8e-05,
+    "is_hit": true,
+    "direction": "raises_cytokine"
+   },
+   "gene_annotation": "IL-2 receptor alpha (CD25); surface receptor."
+  }
+ }
+}

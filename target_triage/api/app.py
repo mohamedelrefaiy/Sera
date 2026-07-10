@@ -73,12 +73,25 @@ _ENRICHMENT_JSON = os.path.join(_ARTIFACTS, "enrichment.json")
 # fabricated value.
 _ENRICHMENT: dict[str, dict] = {}
 
+# Precomputed grounded Claude explanations, keyed "GENE|CYTOKINE|CONDITION". Empty if not built;
+# the frontend then uses its deterministic template — so the demo never depends on a live call.
+_EXPLANATIONS: dict[str, dict] = {}
+_EXPLANATIONS_JSON = os.path.join(_ARTIFACTS, "explanations_cache.json")
+
 
 def _load_enrichment() -> dict[str, dict]:
     if not os.path.exists(_ENRICHMENT_JSON):
         return {}
     import json
     with open(_ENRICHMENT_JSON) as fh:
+        return json.load(fh)
+
+
+def _load_explanations() -> dict[str, dict]:
+    if not os.path.exists(_EXPLANATIONS_JSON):
+        return {}
+    import json
+    with open(_EXPLANATIONS_JSON) as fh:
         return json.load(fh)
 
 
@@ -116,6 +129,7 @@ async def _lifespan(app: FastAPI):
         _SHORTLISTS[name] = compute_shortlist(schema)
     _CONCORDANCE.extend(_load_concordance())
     _ENRICHMENT.update(_load_enrichment())
+    _EXPLANATIONS.update(_load_explanations())
     yield
 
 
@@ -283,9 +297,35 @@ def concordance_gene(gene: str, cytokine: str | None = None) -> dict:
         hits = [r for r in hits if r["cytokine"] == cytokine.upper()]
     if not hits:
         raise HTTPException(status_code=404, detail=f"{gene} not in the concordance table")
-    by_condition = {r["condition"]: r for r in hits}
+    # Attach the grounded explanation (if precomputed) to each condition's row. The frontend
+    # prefers it and falls back to its deterministic template when absent.
+    by_condition = {}
+    for r in hits:
+        row = dict(r)
+        key = f"{g}|{r['cytokine']}|{r['condition']}"
+        exp = _EXPLANATIONS.get(key)
+        if exp:
+            row["explanation"] = exp["explanation"]
+        by_condition[r["condition"]] = row
     return {"gene": g, "cytokine": hits[0]["cytokine"], "by_condition": by_condition,
             "enrichment": _ENRICHMENT.get(g)}
+
+
+@app.get("/api/enrichr")
+def enrichr(genes: str = "", library: str = "Reactome_2022") -> dict:
+    """Pathway enrichment over a comma-separated gene list (the Hit-list's replicated subset).
+    Live Enrichr, cached by gene set — returns [] on failure so the view degrades to no chips,
+    never an error. Imported lazily so the deterministic paths don't depend on the client."""
+    gene_list = [g.strip().upper() for g in genes.split(",") if g.strip()]
+    if not gene_list:
+        return {"genes": [], "pathways": []}
+    from ..clients import enrichr as enrichr_client
+    paths = enrichr_client.enrich(gene_list, library=library)
+    return {
+        "genes": gene_list,
+        "library": library,
+        "pathways": [{"term": p.term, "adj_p": p.adj_p, "n_genes": p.n_genes} for p in paths],
+    }
 
 
 @app.get("/api/funnel")
