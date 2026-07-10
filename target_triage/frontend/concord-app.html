@@ -26,59 +26,68 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);
     font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding:28px 20px 60px}
-  .shell{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:280px minmax(0,1fr);gap:20px;align-items:start}
-  @media(max-width:820px){.shell{grid-template-columns:1fr}}
+  .shell{max-width:820px;margin:0 auto}
   .mono{font-family:var(--font-mono)}
   h1,h2,h3{font-family:var(--font-display);letter-spacing:-.01em;margin:0}
 
-  /* Agent Activity rail — the peripheral agents' real decisions, read from the provenance receipt.
-     Sticky so it stays in view while the verdict scrolls. Light palette, matching the app frame. */
-  .rail{position:sticky;top:14px;background:var(--surface);border:1px solid var(--line-strong);
-    border-radius:16px;box-shadow:var(--shadow);overflow:hidden;align-self:start}
-  @media(max-width:1080px){.rail{position:static}}
-  .rail-head{padding:15px 16px 13px;border-bottom:1px solid var(--line)}
-  .rail-head h3{font-size:13px;text-transform:none;letter-spacing:.01em}
-  .rail-head .sub{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);margin-top:5px;
-    display:flex;align-items:center;gap:6px}
-  .rail-live{width:6px;height:6px;border-radius:50%;background:var(--mrna);box-shadow:0 0 0 3px var(--mrna-soft)}
-  .rail-body{padding:8px 6px 12px;max-height:calc(100dvh - 120px);overflow-y:auto}
-  .ev{position:relative;padding:9px 12px 9px 30px;border-radius:9px;transition:background .15s}
-  .ev:hover{background:var(--surface-2)}
-  .ev::before{content:"";position:absolute;left:14px;top:15px;width:7px;height:7px;border-radius:50%;
-    background:var(--line-strong)}
-  .ev::after{content:"";position:absolute;left:17px;top:24px;bottom:-4px;width:1.5px;background:var(--line)}
-  .ev:last-child::after{display:none}
-  .ev.node-a::before{background:var(--protein)}      /* ingestion  */
-  .ev.node-b::before{background:var(--mrna)}          /* interpretation */
-  .ev.sign::before{background:var(--warn)}            /* sign correction */
-  .ev .et{font-size:12.5px;font-weight:500;color:var(--ink);letter-spacing:-.005em}
-  .ev .ed{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-soft);margin-top:3px;line-height:1.5;
-    word-break:break-word}
-  .ev .etag{display:inline-block;font-family:var(--font-mono);font-size:9px;text-transform:uppercase;
-    letter-spacing:.05em;color:var(--ink-faint);border:1px solid var(--line);border-radius:5px;
-    padding:1px 5px;margin-top:5px}
-  .ev a{color:var(--lock);text-decoration:none;border-bottom:1px solid var(--lock-soft)}
-  .rail-empty{padding:26px 18px;text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.6}
-  .rail-empty code{font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);background:var(--surface-2);
-    padding:1px 5px;border-radius:5px}
+  /* ── Conversational thread ────────────────────────────────────────────────────────────
+     The single-gene view IS a reasoning transcript. Two agents narrate their real steps
+     (from the provenance receipt) around a locked deterministic verdict they cannot edit.
+     Editorial monochrome + the existing pastel accents; no dashboard panels. */
+  .thread{max-width:720px;margin:6px auto 0;display:flex;flex-direction:column;gap:2px}
+  .turn{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:16px 4px;position:relative}
+  .turn+.turn{border-top:1px solid var(--line)}
+  .turn.enter{animation:rise .5s cubic-bezier(.16,1,.3,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .av svg{width:17px;height:17px}
+  .av.a{background:var(--protein-soft)} .av.a svg{stroke:var(--protein)}
+  .av.b{background:var(--mrna-soft)} .av.b svg{stroke:var(--mrna)}
+  .av.hub{background:var(--lock-soft)} .av.hub svg{stroke:var(--lock)}
+  .who{font-size:12px;color:var(--ink-soft);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+  .who .n{font-weight:500;color:var(--ink)}
+  .who .defers{font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)}
+  .say{font-size:14.5px;line-height:1.6;color:var(--ink)}
+  .say b{font-weight:500}
+  .meta{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);margin-top:6px;line-height:1.6}
+  .flag{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;
+    padding:1px 7px;border-radius:5px;background:var(--warn-soft);color:var(--warn);white-space:nowrap}
+  .steps{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+  .step{display:flex;align-items:baseline;gap:9px;font-size:12.5px;color:var(--ink-soft)}
+  .step .tick{color:var(--mrna);font-size:11px;flex-shrink:0}
+  .step .sd{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint)}
 
-  /* Sources — Node B's cited hypotheses, under WHY THIS VERDICT. Never confusable with the verdict. */
-  .sources{margin-top:16px;border-top:1px dashed var(--line-strong);padding-top:15px}
-  .sources .sh{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10.5px;
-    text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint)}
-  .hyp-flag{font-family:var(--font-mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;
-    color:var(--warn);background:var(--warn-soft);border-radius:5px;padding:2px 7px}
-  .hyp{margin-top:12px;padding:13px 15px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px}
-  .hyp p{margin:0 0 8px;font-size:13.5px;line-height:1.55;color:var(--ink)}
-  .hyp .cite{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--font-mono);font-size:11px}
-  .hyp .cite a{color:var(--lock);text-decoration:none;border-bottom:1px solid var(--lock-soft)}
-  .hyp .cstat{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--mrna);
-    background:var(--mrna-soft);border-radius:5px;padding:1px 6px}
-  .hyp .ctitle{color:var(--ink-soft)}
-  .exp-box{margin-top:13px;padding:12px 15px;background:var(--lock-soft);border-radius:11px;font-size:12.5px;
-    line-height:1.55;color:var(--lock)}
-  .exp-box b{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px}
-  .sources-empty{margin-top:12px;font-size:12.5px;color:var(--ink-faint);line-height:1.55}
+  /* the locked verdict, dropped into the thread as a document-style block */
+  .verdict-drop{grid-column:1 / -1;margin:2px 0 2px;border:1px solid var(--line-strong);border-radius:14px;
+    background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
+  .vd-lock{display:flex;align-items:center;gap:8px;padding:9px 16px;background:var(--surface-2);
+    border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:10px;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--ink-faint)}
+  .vd-lock svg{width:13px;height:13px;stroke:var(--ink-faint)}
+  .vd-body{padding:16px 18px}
+  .vd-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .vd-top .g{font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-.01em}
+  .vd-nums{display:flex;gap:22px;margin-top:13px;font-family:var(--font-mono);font-size:13px}
+  .vd-nums .lab{color:var(--ink-soft)} .vd-nums .lab b{color:var(--ink);font-weight:600;margin-left:5px}
+  .vd-nums .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:1px}
+  .vd-plot{margin-top:14px}
+  .vd-why{margin-top:14px;padding-top:13px;border-top:1px solid var(--line);font-size:13.5px;line-height:1.6;color:var(--ink-soft)}
+
+  /* Node B hypotheses as replies in the thread */
+  .hyp-list{margin-top:10px;display:flex;flex-direction:column;gap:9px}
+  .hcard{border-left:2px solid var(--line-strong);padding:2px 0 2px 13px}
+  .hcard p{margin:0;font-size:13.5px;line-height:1.55}
+  .hcard .src{margin-top:5px;font-family:var(--font-mono);font-size:11px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+  .hcard .src a{color:var(--lock);text-decoration:none;border-bottom:1px solid var(--lock-soft)}
+  .hcard .src .st{font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:var(--mrna);background:var(--mrna-soft);padding:1px 6px;border-radius:5px}
+  .hcard .src .tt{color:var(--ink-faint)}
+  .exp{margin-top:11px;padding:11px 14px;background:var(--lock-soft);border-radius:11px;font-size:12.5px;line-height:1.55;color:var(--lock)}
+  .exp b{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px}
+  .say-empty{font-size:13.5px;line-height:1.55;color:var(--ink-faint)}
+  /* condition switch, restyled inline for the thread header */
+  .cond-inline{display:flex;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px}
+  .cond-inline button{font-family:var(--font-mono);font-size:11.5px;border:none;background:transparent;color:var(--ink-soft);padding:5px 11px;border-radius:6px;cursor:pointer;transition:.15s}
+  .cond-inline button[aria-selected="true"]{background:var(--ink);color:#fff}
 
   /* app frame */
   .app{background:var(--surface);border:1px solid var(--line-strong);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
@@ -293,14 +302,6 @@
 </head>
 <body>
 <div class="shell">
-  <aside class="rail" aria-label="Agent activity">
-    <div class="rail-head">
-      <h3>Agent activity</h3>
-      <div class="sub"><span class="rail-live" id="railLive"></span><span id="railSub">reading receipt…</span></div>
-    </div>
-    <div class="rail-body" id="railBody"></div>
-  </aside>
-
   <div class="app">
     <div class="app-chrome">
       <span class="tl"></span><span class="tl"></span><span class="tl"></span>
@@ -331,53 +332,81 @@
         <button class="chip" data-gene="ZNF250" aria-pressed="false">ZNF250</button>
       </div>
 
-      <!-- SINGLE GENE VIEW -->
+      <!-- SINGLE GENE VIEW — a reasoning transcript (Direction 1) -->
       <div id="singleView">
-        <div class="core">
-          <!-- gate plot -->
-          <div class="card">
-            <div class="ct">Gate · <span id="plotGene">ITK</span> · <span id="plotCond">Stim 48h</span></div>
-            <svg class="gate-svg" viewBox="0 0 300 300" role="img" aria-label="Gate plot">
-              <rect x="40" y="20" width="120" height="120" fill="#F7E1EF"/>
-              <rect x="160" y="20" width="120" height="120" fill="#DDE7F0"/>
-              <rect x="40" y="140" width="120" height="120" fill="#EEF2F5"/>
-              <rect x="160" y="140" width="120" height="120" fill="#DCF1EB"/>
-              <line x1="40" y1="140" x2="280" y2="140" stroke="#B9C4CF" stroke-width="1.4"/>
-              <line x1="160" y1="20" x2="160" y2="260" stroke="#B9C4CF" stroke-width="1.4"/>
-              <text x="100" y="86" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#8f2568">protein-only</text>
-              <text x="220" y="86" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" font-weight="600" fill="#173049">replicated</text>
-              <text x="100" y="206" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#59636f">neither</text>
-              <text x="220" y="206" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#0a6a55">mRNA-only</text>
-              <text x="160" y="284" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#0f9b7c">mRNA →</text>
-              <text x="20" y="140" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#c0398b" transform="rotate(-90 20 140)">protein →</text>
-              <circle id="plotDot" cx="220" cy="60" r="9" fill="#173049" stroke="#fff" stroke-width="2.5"/>
-            </svg>
+        <div class="thread" id="thread">
+
+          <!-- TURN 1 · Ingestion agent (Node A) narrates how it read the screens -->
+          <div class="turn enter" style="animation-delay:0ms">
+            <div class="av a" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 5h18M3 12h18M3 19h18"/><path d="M8 5v14"/></svg></div>
+            <div>
+              <div class="who"><span class="n">Ingestion agent</span><span class="defers">· Node A on the rim</span></div>
+              <div class="say" id="ingestSay">Reading the screens onto the shared schema…</div>
+              <div class="steps" id="ingestSteps"></div>
+            </div>
           </div>
 
-          <!-- verdict + metrics + explanation -->
-          <div class="card">
-            <div class="rhead"><span class="g" id="resGene">ITK</span><span class="role" id="resRole">TCR signaling kinase</span></div>
-            <div class="tabs" id="tabs" role="tablist">
-              <button class="tab" data-cond="Rest" role="tab" aria-selected="false">Rest</button>
-              <button class="tab" data-cond="Stim8h" role="tab" aria-selected="false">Stim 8h</button>
-              <button class="tab" data-cond="Stim48h" role="tab" aria-selected="true">Stim 48h</button>
+          <!-- TURN 2 · the deterministic verdict, dropped in locked -->
+          <div class="turn enter" style="animation-delay:90ms">
+            <div class="av hub" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+            <div>
+              <div class="who"><span class="n">Concord</span><span class="defers">· deterministic core</span>
+                <span class="cond-inline" id="tabs" role="tablist" style="margin-left:auto">
+                  <button data-cond="Rest" role="tab" aria-selected="false">Rest</button>
+                  <button data-cond="Stim8h" role="tab" aria-selected="false">Stim 8h</button>
+                  <button data-cond="Stim48h" role="tab" aria-selected="true">Stim 48h</button>
+                </span>
+              </div>
+              <div class="verdict-drop">
+                <div class="vd-lock"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> the verdict — agents cannot edit it</div>
+                <div class="vd-body">
+                  <div class="vd-top">
+                    <span class="g" id="resGene">ITK</span>
+                    <span class="verdict-badge vb rep" id="verdictBadge"><span class="vdot"></span><span id="verdictText">Replicated</span></span>
+                    <span class="role" id="resRole" style="margin-left:auto">IL2 concordance</span>
+                  </div>
+                  <div class="vd-nums">
+                    <span class="lab"><span class="sw" style="background:var(--protein)"></span>protein · FACS<b id="zProt">−4.2</b><span class="q mono" id="qProt" style="margin-left:6px;color:var(--ink-faint);font-size:11px"></span></span>
+                    <span class="lab"><span class="sw" style="background:var(--mrna)"></span>mRNA · Perturb-seq<b id="zRna">−5.1</b><span class="q mono" id="qRna" style="margin-left:6px;color:var(--ink-faint);font-size:11px"></span></span>
+                  </div>
+                  <div class="vd-plot">
+                    <svg class="gate-svg" viewBox="0 0 300 300" role="img" aria-label="Gate plot" style="max-width:230px">
+                      <rect x="40" y="20" width="120" height="120" fill="#F7E1EF"/>
+                      <rect x="160" y="20" width="120" height="120" fill="#DDE7F0"/>
+                      <rect x="40" y="140" width="120" height="120" fill="#EEF2F5"/>
+                      <rect x="160" y="140" width="120" height="120" fill="#DCF1EB"/>
+                      <line x1="40" y1="140" x2="280" y2="140" stroke="#B9C4CF" stroke-width="1.4"/>
+                      <line x1="160" y1="20" x2="160" y2="260" stroke="#B9C4CF" stroke-width="1.4"/>
+                      <text x="100" y="86" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#8f2568">protein-only</text>
+                      <text x="220" y="86" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" font-weight="600" fill="#173049">replicated</text>
+                      <text x="100" y="206" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#59636f">neither</text>
+                      <text x="220" y="206" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#0a6a55">mRNA-only</text>
+                      <text x="160" y="284" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#0f9b7c">mRNA →</text>
+                      <text x="20" y="140" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#c0398b" transform="rotate(-90 20 140)">protein →</text>
+                      <circle id="plotDot" cx="220" cy="60" r="9" fill="#173049" stroke="#fff" stroke-width="2.5"/>
+                    </svg>
+                    <span id="plotGene" class="hidden"></span><span id="plotCond" class="hidden"></span>
+                  </div>
+                  <div class="vd-why"><p id="explainText" style="margin:0"></p><span class="mechtag hidden" id="mechTag"></span></div>
+                </div>
+              </div>
             </div>
-            <div><span class="verdict-badge vb rep" id="verdictBadge"><span class="vdot"></span><span id="verdictText">Replicated</span></span></div>
-            <div class="metrics">
-              <div class="mrow"><span>Channel</span><span>Effect (z)</span><span>Sig (q)</span></div>
-              <div class="mrow"><span class="lab"><span class="sw m"></span>Protein · FACS</span><span class="val" id="zProt">−4.2</span><span class="q" id="qProt"></span></div>
-              <div class="mrow"><span class="lab"><span class="sw g"></span>mRNA · Perturb-seq</span><span class="val" id="zRna">−5.1</span><span class="q" id="qRna"></span></div>
-            </div>
-            <div class="explain">
-              <div class="lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F9B7C" stroke-width="2"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/></svg> Why this verdict</div>
-              <p id="explainText"></p>
-              <span class="mechtag hidden" id="mechTag"></span>
-              <div class="sources" id="sources">
-                <div class="sh">Sources <span class="hyp-flag">hypothesis — not used in verdict</span></div>
+          </div>
+
+          <!-- TURN 3 · Interpretation agent (Node B) proposes cited hypotheses -->
+          <div class="turn enter" style="animation-delay:180ms" id="interpTurn">
+            <div class="av b" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+            <div>
+              <div class="who"><span class="n">Interpretation agent</span><span class="defers">· Node B — proposes, never decides</span>
+                <span class="flag" style="margin-left:auto">hypothesis · not the verdict</span>
+              </div>
+              <div id="sources">
+                <div class="say" id="interpSay"></div>
                 <div id="sourcesBody"></div>
               </div>
             </div>
           </div>
+
         </div>
 
         <!-- dossier -->
@@ -545,6 +574,7 @@ ZNF250</div>
       state.gene=d.gene; state.byCondition=d.by_condition||{}; state.enrichment=d.enrichment||null;
       render();
       renderSources(d.gene);
+      replayTurns();
       if(!$("planView").classList.contains("hidden")) renderPlan();
       // shareable deep-link: reflect the focused gene in ?gene= without reloading.
       try{ var u=new URL(window.location); u.searchParams.set("gene",state.gene); history.replaceState(null,"",u); }catch(e){}
@@ -556,55 +586,73 @@ ZNF250</div>
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
-  // The rail is a timeline of the peripheral agents' REAL decisions, read once from the receipt.
-  async function renderRail(){
-    var body=$("railBody"), sub=$("railSub"), live=$("railLive");
-    try{
-      var r=await fetch("api/agent_activity"); var d=await r.json();
-      if(!d.built || !d.events.length){
-        live.style.background="var(--line-strong)"; live.style.boxShadow="none";
-        sub.textContent="no run yet";
-        body.innerHTML='<div class="rail-empty">No agent run recorded.<br>Build the receipt with '
-          +'<code>python pipeline/06_ingest.py</code>, then reload.</div>';
-        return;
-      }
-      sub.textContent=d.n_screens+" screens · "+d.n_claims+" cited";
-      body.innerHTML=d.events.map(function(e){
-        var cls=e.node==="A"?"node-a":"node-b"; if(e.kind==="sign") cls+=" sign";
-        var tag=e.node==="A"?"Node A · ingest":"Node B · interpret";
-        var det=esc(e.detail);
-        if(e.url) det='<a href="'+esc(e.url)+'" target="_blank" rel="noopener">'+det+'</a>';
-        return '<div class="ev '+cls+'"><div class="et">'+esc(e.title)+'</div>'
-          +'<div class="ed">'+det+'</div><span class="etag">'+esc(tag)+'</span></div>';
-      }).join("");
-    }catch(err){
-      sub.textContent="receipt unavailable";
-      body.innerHTML='<div class="rail-empty">Could not load the agent receipt.</div>';
-    }
-  }
-
-  // Sources = Node B's cited hypotheses for the focused gene. Only appears when the gene HAS them.
+  // Node B's turn in the thread: an opening line + cited hypotheses, or an honest "nothing to say".
   async function renderSources(gene){
-    var wrap=$("sources"), box=$("sourcesBody"); if(!wrap||!box) return;
+    var box=$("sourcesBody"), say=$("interpSay"); if(!box) return;
     try{
       var r=await fetch("api/sources/"+encodeURIComponent(gene)); var d=await r.json();
       var claims=(d&&d.claims)||[];
       if(!claims.length){
-        // Honest: say WHY there are none rather than hide the section or invent a mechanism.
-        box.innerHTML='<div class="sources-empty">No mechanistic hypotheses for '+esc(gene)
-          +'. Node B speaks only where the two screens disagree (protein-only, mRNA-only, '
-          +'discordant) and a supporting paper was retrieved.</div>';
+        if(say) say.className="say-empty",
+          say.textContent="Nothing to add for "+gene+". I only speak where the two screens disagree "
+            +"(protein-only, mRNA-only, or discordant) and a supporting paper turned up — this gene "
+            +"is neither, so proposing a mechanism would be narration, not evidence.";
+        box.innerHTML="";
         return;
       }
+      if(say) say.className="say",
+        say.innerHTML="Retrieved papers on "+esc(gene)+" and found "+claims.length
+          +" mechanism"+(claims.length>1?"s":"")+" that could explain why the two screens split "
+          +"&mdash; each one cited, none of it touching the verdict above:";
       var exp=claims[0].distinguishing_experiment;
-      box.innerHTML=claims.map(function(c){
+      box.innerHTML='<div class="hyp-list">'+claims.map(function(c){
         var ci=c.citation||{};
-        return '<div class="hyp"><p>'+esc(c.claim)+'</p><div class="cite">'
-          +'<a href="'+esc(ci.url)+'" target="_blank" rel="noopener">PMID '+esc(ci.accession)+'</a>'
-          +'<span class="cstat">'+esc(ci.status)+'</span>'
-          +'<span class="ctitle">'+esc(ci.title)+'</span></div></div>';
-      }).join("")+(exp?'<div class="exp-box"><b>Distinguishing experiment</b>'+esc(exp)+'</div>':"");
-    }catch(err){ box.innerHTML=""; }
+        return '<div class="hcard"><p>'+esc(c.claim)+'</p><div class="src">'
+          +'<a href="'+esc(ci.url)+'" target="_blank" rel="noopener">PMID '+esc(ci.accession)+' ↗</a>'
+          +'<span class="st">'+esc(ci.status)+'</span>'
+          +'<span class="tt">'+esc(ci.title)+'</span></div></div>';
+      }).join("")+'</div>'+(exp?'<div class="exp"><b>How to tell them apart</b>'+esc(exp)+'</div>':"");
+    }catch(err){ box.innerHTML=""; if(say) say.textContent=""; }
+  }
+
+  // Node A's turn: narrate how the screens were actually read, from the provenance receipt.
+  // One line of prose + the real ingestion steps (the sign-correction called out when it fired).
+  var _ingestCache=null;
+  async function renderIngest(){
+    var say=$("ingestSay"), steps=$("ingestSteps"); if(!say||!steps) return;
+    try{
+      if(!_ingestCache){ var r=await fetch("api/agent_activity"); _ingestCache=await r.json(); }
+      var d=_ingestCache;
+      if(!d.built || !d.events.length){
+        say.className="say-empty";
+        say.innerHTML="No screens ingested yet. Build the receipt with <span class=\"mono\">"
+          +"python pipeline/06_ingest.py</span>, then reload &mdash; I&rsquo;ll narrate how each "
+          +"screen was read.";
+        steps.innerHTML=""; return;
+      }
+      var aEvents=d.events.filter(function(e){return e.node==="A";});
+      var flipped=aEvents.some(function(e){return e.kind==="sign";});
+      say.className="say";
+      say.innerHTML="Read "+d.n_screens+" screens onto the shared schema. "
+        +(flipped?"One of them &mdash; the Freimer protein screen &mdash; was <b>sign-inverted</b> "
+          +"in the source: its on-target rows ran positive. I caught it from the data and corrected "
+          +"the signs before handing off, so the verdict below is built on the right polarity."
+          :"Each mapping was validated by code before anything reached the verdict.");
+      steps.innerHTML=aEvents.map(function(e){
+        var isSign=e.kind==="sign";
+        return '<div class="step">'+(isSign
+            ? '<span class="tick" style="color:var(--warn)">⚠</span>'
+            : '<span class="tick">✓</span>')
+          +'<span>'+esc(e.title)+(e.detail?' <span class="sd">'+esc(e.detail)+'</span>':'')+'</span></div>';
+      }).join("");
+    }catch(err){ say.textContent=""; steps.innerHTML=""; }
+  }
+
+  // Re-run the turn entry animation so switching genes reads as the thread rebuilding, not a
+  // silent value swap. Cosmetic only; the data is already in place by the time this runs.
+  function replayTurns(){
+    var turns=document.querySelectorAll("#thread .turn");
+    turns.forEach(function(t){ t.classList.remove("enter"); void t.offsetWidth; t.classList.add("enter"); });
   }
 
   // Build the plain-language "why" from the numbers only (grounded; no invented figures).
@@ -1008,8 +1056,8 @@ ZNF250</div>
 
   // deep-link: a ?gene=SYMBOL in the URL opens that gene directly (shareable link).
   try{ var qg=new URL(window.location).searchParams.get("gene"); if(qg) state.gene=qg.toUpperCase(); }catch(e){}
-  loadGene(state.gene);   // fetch the (deep-linked or default) gene, then render
-  renderRail();           // the Agent Activity rail — the peripheral agents' recorded decisions
+  loadGene(state.gene);   // fetch the (deep-linked or default) gene, then render the thread
+  renderIngest();         // Node A's turn — how the screens were read (gene-independent)
 })();
 </script>
 </body>
