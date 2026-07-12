@@ -244,6 +244,7 @@
   .js-staged > .js-proseOpen,
   .js-staged > .js-resultNarrative,
   .js-staged > figure.fig,
+  .js-staged > .js-resolution,
   .js-staged > .js-chain,
   .js-staged > .js-proseVerdict,
   .js-staged > .js-provFoot,
@@ -252,6 +253,7 @@
   .js-staged > .js-proseOpen{animation-delay:.10s}
   .js-staged > .js-resultNarrative{animation-delay:.16s}
   .js-staged > figure.fig{animation-delay:.28s}     /* the figure — the evidence — lands early */
+  .js-staged > .js-resolution{animation-delay:.44s}
   .js-staged > .js-chain{animation-delay:.52s}
   .js-staged > .js-proseVerdict{animation-delay:.70s}
   .js-staged > .js-provFoot{animation-delay:.84s}
@@ -290,6 +292,29 @@
   .figure-reference{font-family:var(--font-serif);font-size:15px;line-height:1.65;color:var(--ink-soft);margin:14px 0 0;max-width:66ch}
   .result-narrative{margin-top:12px!important;margin-bottom:8px!important;color:var(--ink)!important}
   .result-narrative.streaming::after{content:"▍";color:var(--accent);margin-left:2px;animation:caret 1s steps(1) infinite}
+  /* Signature interaction: the decisive experiment. It is a hypothetical preview, never a mutation
+     of the observed verdict. Each outcome explains how a scientist would update the interpretation. */
+  .resolution{margin-top:26px;padding:22px;border:1px solid var(--line-strong);border-radius:10px;
+    background:radial-gradient(circle at 0 0,rgba(88,188,168,.08),transparent 38%),rgba(15,21,24,.78)}
+  .resolution-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:start}
+  .resolution-k{font:500 10.5px/1.4 var(--font-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+  .resolution-h{font:600 21px/1.25 var(--font-serif);letter-spacing:-.01em;margin-top:6px;color:var(--ink)}
+  .resolution-copy{max-width:58ch;margin:8px 0 0;color:var(--ink-soft);font:14px/1.6 var(--font-ui)}
+  .resolution-tag{font:500 10px/1 var(--font-mono);color:var(--ink-faint);border:1px solid var(--line);padding:7px 9px;border-radius:5px}
+  .outcomes{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:18px}
+  .outcome{min-height:82px;text-align:left;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink-soft);
+    padding:11px 12px;cursor:pointer;transition:.2s ease}
+  .outcome:hover,.outcome[aria-pressed="true"]{border-color:var(--line-strong);background:var(--surface-2);transform:translateY(-1px)}
+  .outcome[aria-pressed="true"]{box-shadow:inset 0 2px 0 var(--accent)}
+  .outcome strong{display:block;color:var(--ink);font:600 12px/1.35 var(--font-ui);margin-bottom:5px}
+  .outcome span{display:block;font:11px/1.45 var(--font-ui);color:var(--ink-faint)}
+  .resolution-preview{min-height:54px;margin-top:10px;padding:12px 14px;border-radius:7px;background:#10171A;color:var(--ink-soft);
+    font:13px/1.55 var(--font-ui);display:flex;align-items:center;gap:10px}
+  .resolution-preview::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft);flex:none}
+  .assay-flow{stroke-dasharray:7 7;animation:flowline 1.2s linear infinite}
+  .assay-flow.protein{animation-direction:reverse}
+  @keyframes flowline{to{stroke-dashoffset:-28}}
+  @media(max-width:700px){.resolution{padding:17px}.resolution-head{grid-template-columns:1fr}.resolution-tag{display:none}.outcomes{grid-template-columns:1fr}.outcome{min-height:0}}
   @keyframes apulse{0%,100%{opacity:.4}50%{opacity:1}}
   .agent-facet{margin-top:16px;max-width:540px}
 
@@ -761,7 +786,7 @@
 </head>
 <body>
 <a class="skip-link" href="#mainContent">Skip to main content</a>
-<div class="workspace">
+<div class="workspace arts-collapsed">
 
   <!-- LEFT NAV — one primary surface (Chat) + a secondary Hit-list tool. Validation plan and
        Known biology are no longer destinations; they're produced inside the thread on request. -->
@@ -785,7 +810,7 @@
       <span class="title" id="convoTitle">Chat</span>
       <span class="crumb" id="urlPath">gene/ITK</span>
       <span class="convo-context">Evidence workspace</span>
-      <button class="arts-toggle" id="artsToggle" aria-label="Toggle artifacts" title="Show/hide artifacts" aria-pressed="true">
+      <button class="arts-toggle" id="artsToggle" aria-label="Toggle artifacts" title="Show/hide artifacts" aria-pressed="false">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M15 4v16"/></svg>
       </button>
     </div>
@@ -795,10 +820,8 @@
            turn is appended. A greeting + example prompts that teach what the tool can be asked. -->
       <div id="landing" class="landing">
         <div class="landing-mark" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
-        <h1 class="landing-h">When two screens disagree, which do you believe?</h1>
-        <p class="landing-sub">When your mRNA screen and your protein screen point different ways about a
-          gene, Concord tells you which to believe — and why. It surfaces the protein-level hits
-          a transcript-only screen throws away. Ask it to reconcile a gene.</p>
+        <h1 class="landing-h">When biology splits, see why.</h1>
+        <p class="landing-sub">Concord lets transcript and protein evidence speak independently, explains the split, and designs the experiment that resolves it.</p>
         <div class="landing-prompts" id="landingPrompts">
           <button class="lprompt lprompt-hero" data-q="Reconcile TSC1">
             <span class="lp-k">Start here · Reconcile</span><span class="lp-t">Do the two screens agree on this gene — and if not, which wins?</span>
@@ -876,6 +899,18 @@ ZNF250</div>
                 <figcaption class="cap js-figCap"></figcaption>
               </div>
             </figure>
+            <section class="resolution js-resolution" aria-label="Resolution experiment">
+              <div class="resolution-head">
+                <div>
+                  <div class="resolution-k">What would resolve this?</div>
+                  <h3 class="resolution-h js-resolutionTitle">Run one matched experiment</h3>
+                  <p class="resolution-copy js-resolutionCopy"></p>
+                </div>
+                <span class="resolution-tag">hypothesis preview</span>
+              </div>
+              <div class="outcomes js-outcomes"></div>
+              <div class="resolution-preview js-resolutionPreview">Choose a possible result to preview how the interpretation would change.</div>
+            </section>
             <div class="chain js-chain" aria-label="Chain of custody"></div>
             <p class="prose js-proseVerdict"><span class="js-verdictLead"></span><span class="js-explainText"></span></p>
             <p class="prose interp js-interpSay"></p>
@@ -1471,36 +1506,43 @@ ZNF250</div>
   // assay, direction, effect size, and significance before stating the cross-assay conclusion.
   function drawEffectFig(turn,row){
     var svg=q(turn,"js-effectFig"); if(!svg) return;
-    svg.setAttribute("viewBox","0 0 640 300");
+    svg.setAttribute("viewBox","0 0 700 320");
     svg.setAttribute("aria-label","Comparison of the IL-2 mRNA and secreted protein responses to gene knockdown");
     if(!row){ svg.innerHTML=""; return; }
     function qtxt(v){ return v==null?"not available":(Number(v)<0.001?Number(v).toExponential(1):Number(v).toFixed(3)); }
     function direction(v){ return v<0?"DECREASED":v>0?"INCREASED":"NO CHANGE"; }
     function arrow(v){ return v<0?"↓":v>0?"↑":"→"; }
-    function assayRow(y,label,assay,effectLabel,effect,qvalue,hit,color,untested){
-      if(untested) return '<rect x="18" y="'+y+'" width="604" height="92" rx="8" fill="#171F23" stroke="#334148"/>'
-        +'<text x="38" y="'+(y+29)+'" fill="#E3E9E6" font-size="17" font-weight="600">'+label+'</text>'
-        +'<text x="38" y="'+(y+52)+'" fill="#84918E" font-size="13">'+assay+'</text>'
-        +'<text x="602" y="'+(y+44)+'" text-anchor="end" fill="#9AA5A2" font-size="15">NOT MEASURED</text>'
-        +'<text x="602" y="'+(y+66)+'" text-anchor="end" fill="#72807F" font-size="12">not included in this assay library</text>';
+    function assayPanel(x,label,assay,effectLabel,effect,qvalue,hit,color,untested,align){
+      var tx=align==="right"?x+278:x+22, anchor=align==="right"?"end":"start";
+      if(untested) return '<rect x="'+x+'" y="18" width="300" height="204" rx="10" fill="#171F23" stroke="#334148"/>'
+        +'<text x="'+tx+'" y="52" text-anchor="'+anchor+'" fill="#E3E9E6" font-size="17" font-weight="600">'+label+'</text>'
+        +'<text x="'+tx+'" y="76" text-anchor="'+anchor+'" fill="#84918E" font-size="12.5">'+assay+'</text>'
+        +'<text x="'+tx+'" y="138" text-anchor="'+anchor+'" fill="#9AA5A2" font-size="18">NOT MEASURED</text>'
+        +'<text x="'+tx+'" y="164" text-anchor="'+anchor+'" fill="#72807F" font-size="11.5">not included in this assay library</text>';
       var dir=direction(effect), arr=arrow(effect), status=hit?"significant screen hit":"not statistically significant";
-      return '<rect x="18" y="'+y+'" width="604" height="92" rx="8" fill="#171F23" stroke="#334148"/>'
-        +'<rect x="18" y="'+y+'" width="4" height="92" rx="2" fill="'+color+'"/>'
-        +'<text x="38" y="'+(y+27)+'" fill="#E3E9E6" font-size="17" font-weight="600">'+label+'</text>'
-        +'<text x="38" y="'+(y+50)+'" fill="#84918E" font-size="13">'+assay+'</text>'
-        +'<text x="38" y="'+(y+74)+'" fill="#B8C3C0" font-size="13.5">'+effectLabel+' '+fmt(effect)+'  ·  q-value '+qtxt(qvalue)+'</text>'
-        +'<text x="602" y="'+(y+38)+'" text-anchor="end" fill="'+color+'" font-size="25" font-weight="600">'+arr+' '+dir+'</text>'
-        +'<text x="602" y="'+(y+66)+'" text-anchor="end" fill="'+(hit?color:'#84918E')+'" font-size="12.5">'+status+'</text>';
+      return '<rect x="'+x+'" y="18" width="300" height="204" rx="10" fill="#171F23" stroke="#334148"/>'
+        +'<rect x="'+(align==="right"?x+296:x)+'" y="18" width="4" height="204" rx="2" fill="'+color+'"/>'
+        +'<text x="'+tx+'" y="52" text-anchor="'+anchor+'" fill="#E3E9E6" font-size="17" font-weight="600">'+label+'</text>'
+        +'<text x="'+tx+'" y="76" text-anchor="'+anchor+'" fill="#84918E" font-size="12.5">'+assay+'</text>'
+        +'<text x="'+tx+'" y="128" text-anchor="'+anchor+'" fill="'+color+'" font-size="27" font-weight="600">'+arr+' '+dir+'</text>'
+        +'<text x="'+tx+'" y="160" text-anchor="'+anchor+'" fill="#B8C3C0" font-size="13">'+effectLabel+' '+fmt(effect)+'</text>'
+        +'<text x="'+tx+'" y="183" text-anchor="'+anchor+'" fill="#84918E" font-size="12">q-value '+qtxt(qvalue)+'</text>'
+        +'<text x="'+tx+'" y="207" text-anchor="'+anchor+'" fill="'+(hit?color:'#84918E')+'" font-size="11.5">'+status+'</text>';
     }
     var discord=row.prot_tested!==false && row.hit_rna && row.hit_prot && ((row.z_rna<0)!=(row.lfc_prot<0));
     var conclusion=discord?"Opposite directions across assays → DISCORDANT":
       row.verdict==="replicated"?"Same direction across assays → REPLICATED":
       "Combined screen verdict → "+String(row.verdict||"neither").replace("_"," ").toUpperCase();
-    svg.innerHTML=assayRow(14,"IL-2 mRNA abundance","Perturb-seq transcript readout","z-score",row.z_rna,row.q_rna,row.hit_rna,"#4FC7A5",false)
-      +assayRow(116,"Secreted IL-2 protein","FACS protein readout","log₂ fold change",row.lfc_prot,row.q_prot,row.hit_prot,"#E07BB6",row.prot_tested===false)
-      +'<path d="M40 230 H600" stroke="#334148"/>'
-      +'<text x="40" y="257" fill="#84918E" font-size="12.5">Cross-assay interpretation</text>'
-      +'<text x="40" y="283" fill="'+(discord?'#D8A85A':'#E3E9E6')+'" font-size="15" font-weight="600">'+conclusion+'</text>';
+    svg.innerHTML=assayPanel(12,"IL-2 mRNA","Perturb-seq · transcript","z-score",row.z_rna,row.q_rna,row.hit_rna,"#4FC7A5",false,"left")
+      +assayPanel(388,"Secreted IL-2 protein","FACS · functional readout","log₂ fold change",row.lfc_prot,row.q_prot,row.hit_prot,"#E07BB6",row.prot_tested===false,"right")
+      +'<path class="assay-flow" d="M314 111 H344" stroke="#4FC7A5" stroke-width="2"/>'
+      +'<path class="assay-flow protein" d="M386 145 H356" stroke="#E07BB6" stroke-width="2"/>'
+      +'<path d="M350 76 V181" stroke="'+(discord?'#D8A85A':'#60706D')+'" stroke-width="2"/>'
+      +'<circle cx="350" cy="128" r="18" fill="#10171A" stroke="'+(discord?'#D8A85A':'#60706D')+'"/>'
+      +'<text x="350" y="132" text-anchor="middle" fill="'+(discord?'#D8A85A':'#B8C3C0')+'" font-size="11" font-weight="600">'+(discord?'SPLIT':'READ')+'</text>'
+      +'<text x="350" y="248" text-anchor="middle" fill="#84918E" font-size="11.5">Cross-assay interpretation</text>'
+      +'<text x="350" y="278" text-anchor="middle" fill="'+(discord?'#D8A85A':'#E3E9E6')+'" font-size="15.5" font-weight="600">'+conclusion+'</text>'
+      +'<text x="350" y="304" text-anchor="middle" fill="#72807F" font-size="10.5">Independent units · shared biological question</text>';
   }
 
   // Caption + the verdict sentence, both grounded in the numbers.
@@ -1508,6 +1550,38 @@ ZNF250</div>
     if(!row) return "";
     return '<b>Figure 1.</b> Response to '+gene+' knockdown at '+COND_LABEL[cond]+'. '
       +'Direction and statistical status are shown separately for each assay. The z-score and log₂ fold change remain in their native units and should not be compared by magnitude.';
+  }
+
+  function renderResolution(turn,row){
+    var box=q(turn,"js-resolution"); if(!box||!row) return;
+    var gene=turn._gene, v=row.verdict;
+    var title=q(turn,"js-resolutionTitle"), copy=q(turn,"js-resolutionCopy"), outcomes=q(turn,"js-outcomes"), preview=q(turn,"js-resolutionPreview");
+    var items;
+    if(v==="discordant"){
+      title.textContent="Measure both layers in the same wells";
+      copy.textContent="Repeat "+gene+" perturbation with paired IL-2 transcript and secreted-protein readouts. One experiment can distinguish regulation from a screen-specific artifact.";
+      items=[
+        ["Both increase","Protein direction wins","The functional increase is supported; investigate why the original transcript screen reported the opposite direction."],
+        ["The split remains","Decoupling is real","Persistent opposite directions support post-transcriptional regulation or feedback between transcript and secretion."],
+        ["Neither reproduces","Screen artifact likely","Failure to reproduce either effect lowers confidence in the original discordant hit."]
+      ];
+    }else if(v==="replicated"){
+      title.textContent="Confirm the shared direction";
+      copy.textContent="Repeat "+gene+" perturbation with both readouts in a new donor set. The goal is confirmation, not conflict resolution.";
+      items=[["Both reproduce","Advance the target","Independent confirmation supports moving to mechanism or therapeutic follow-up."],["Only one reproduces","Re-open the verdict","The hit becomes layer-specific and needs assay-level QC."],["Neither reproduces","Do not advance","The original cross-screen agreement did not survive targeted validation."]];
+    }else{
+      title.textContent="Test the missing evidence layer";
+      copy.textContent="Run a matched transcript and protein measurement after "+gene+" perturbation to determine whether this one-sided result reaches the functional phenotype.";
+      items=[["Both change","Upgrade confidence","Agreement across layers would upgrade this result to replicated evidence."],["One layer changes","Keep it provisional","A layer-specific effect remains useful, but the biological claim must stay scoped."],["Neither changes","Deprioritize","The targeted experiment does not support the original screen signal."]];
+    }
+    outcomes.innerHTML=items.map(function(it,i){return '<button class="outcome" type="button" aria-pressed="false" data-outcome="'+i+'"><strong>'+it[0]+'</strong><span>'+it[1]+'</span></button>';}).join("");
+    preview.textContent="Choose a possible result to preview how the interpretation would change.";
+    outcomes.querySelectorAll(".outcome").forEach(function(btn){
+      btn.addEventListener("click",function(){
+        outcomes.querySelectorAll(".outcome").forEach(function(b){b.setAttribute("aria-pressed",String(b===btn));});
+        preview.textContent=items[Number(btn.dataset.outcome)][2];
+      });
+    });
   }
 
   // Chain of custody — traces, inline, how the verdict was earned: each screen READ (mRNA, protein)
@@ -1573,6 +1647,7 @@ ZNF250</div>
     q(turn,"js-figCap").innerHTML=figCaption(gene,cond,row);
     var fe=q(turn,"js-figEyebrow"); if(fe) fe.textContent="Figure 1 · "+gene+" knockdown on IL-2 · "+COND_LABEL[cond];
     renderChain(turn,row);
+    renderResolution(turn,row);
     // Just the verdict WORD as a terse machine label (no paragraph) — the coloured word IS the readout.
     var v=row?(VLABEL[row.verdict]||VLABEL.neither):VLABEL.neither;
     q(turn,"js-verdictLead").innerHTML=row?('Verdict: <b class="'+v.cls+'">'+v.w+'</b>'):"";
