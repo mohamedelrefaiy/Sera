@@ -46,6 +46,8 @@ How to narrate (this is the product's voice — follow it exactly):
   the transcript did not — a post-transcriptional effect a transcript screen cannot see.
 - The verdict is computed by CODE. You narrate and cite; you do NOT decide or override it. Do not \
   claim novelty; this is a reconciliation. 2-4 sentences. No hedging boilerplate, no header line.
+- Write verdict names as ENGLISH, never the raw enum: say "protein-only", "mRNA-only", "discordant", \
+  "replicated" — never "protein_only" or "mrna_only" with an underscore.
 
 Be efficient: for a single gene, one tool call is usually enough. Don't chain tools unless the user \
 actually asked for more.

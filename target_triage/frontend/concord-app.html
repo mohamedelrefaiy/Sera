@@ -1431,17 +1431,21 @@ ZNF250</div>
 
   // Follow-up chips on any turn: append the requested facet as a NEW turn, sourced from THIS turn's
   // gene/conditions. reconcile→full turn, plan→plan turn, truth→known-biology, druggability/…→facet.
+  // Follow-up chips route through the AGENT (handleMessage), same as any user message, so a
+  // follow-up click stays in the agentic experience — narration + activity trace — instead of
+  // re-entering the old direct-template path. Each chip becomes a natural-language message the
+  // agent reasons about and answers with the right tool.
   function wireFollowups(turn){
     var fu=q(turn,"js-followups"); if(!fu) return;
     fu.querySelectorAll(".fchip").forEach(function(chip){
       chip.addEventListener("click",function(){
         if(chip.disabled) return;
         chip.disabled=true;   // one of each follow-up per source turn
-        var f=chip.dataset.follow, g=turn._gene, bc=turn._byCondition, en=turn._enrichment;
-        if(f==="plan") appendPlanTurn(g,bc);
-        else if(f==="truth") appendTruthTurn();
-        else if(f==="reconcile") loadGene(g);
-        else appendFacetTurn(f, g, bc, en, "Show me "+g+" "+f+".");
+        var f=chip.dataset.follow, g=turn._gene;
+        if(f==="plan") handleMessage("Draft a validation plan for "+g+".");
+        else if(f==="truth") handleMessage("Does Concord recover known biology?");
+        else if(f==="reconcile") handleMessage("Reconcile "+g+".");
+        else handleMessage("Is "+g+" "+(f==="genetics"?"disease-linked":f==="quality"?"a reliable hit":f)+"?");
       });
     });
   }
@@ -1890,19 +1894,24 @@ ZNF250</div>
       q(added,"js-gtClaim").textContent=d.claim;
       var s=d.summary;
       q(added,"js-gtStats").innerHTML=
-        stat(s.n_recovered+"/"+s.n_positive,"regulators recovered")+
-        stat(s.n_replicated,"replicated")+
-        stat(s.n_protein_only,"protein-only")+
-        stat(d.aggregate_spearman,"aggregate ρ (mRNA vs protein)");
+        stat(s.n_recovered+"/"+s.n_positive,"known regulators recovered")+
+        stat(s.n_replicated,"agree in both screens")+
+        stat(s.n_protein_only,"protein-only (transcript screen misses)")+
+        // The aggregate correlation (~0) means nothing to a bench scientist as a number — say what
+        // it MEANS: overall the two screens barely track each other (the structure is per-gene).
+        stat("~none","overall screen-to-screen agreement");
       q(added,"js-gtPositives").innerHTML=d.positive_regulators.map(gtRow).join("");
       q(added,"js-gtBrakes").innerHTML=d.brakes.map(gtRow).join("");
     }catch(e){ q(added,"js-gtClaim").textContent="Ground-truth panel unavailable."; }
   }
   function stat(n,l){ return '<div class="gt-stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+  // Translate a gene's raw z (transcript) + lfc (protein) into plain up/down arrows a bench scientist
+  // reads at a glance. Negative z = knockdown lowered the transcript; negative lfc = lowered protein.
+  function dirArrow(v){ if(v==null) return "—"; return v<0?"↓":v>0?"↑":"·"; }
   function gtRow(x){
     var vt=VTAG[x.verdict]||VTAG.neither;
     return '<div class="gtrow"><span class="gg">'+x.gene+'</span>'+
-           '<span class="gz">z '+fmt(x.z_rna)+' · lfc '+fmt(x.lfc_prot)+'</span>'+
+           '<span class="gz">transcript '+dirArrow(x.z_rna)+' · protein '+dirArrow(x.lfc_prot)+'</span>'+
            '<span class="vtag '+vt[0]+'">'+vt[1]+'</span></div>';
   }
 
