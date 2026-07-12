@@ -242,6 +242,7 @@
      it never feels padded. Reduced-motion users get it instantly (rule at :532). */
   .js-staged > .cond-row,
   .js-staged > .js-proseOpen,
+  .js-staged > .js-resultNarrative,
   .js-staged > figure.fig,
   .js-staged > .js-chain,
   .js-staged > .js-proseVerdict,
@@ -249,6 +250,7 @@
   .js-staged > .dossier{opacity:0;animation:rise .45s cubic-bezier(.16,1,.3,1) both}
   .js-staged > .cond-row{animation-delay:.00s}
   .js-staged > .js-proseOpen{animation-delay:.10s}
+  .js-staged > .js-resultNarrative{animation-delay:.16s}
   .js-staged > figure.fig{animation-delay:.28s}     /* the figure — the evidence — lands early */
   .js-staged > .js-chain{animation-delay:.52s}
   .js-staged > .js-proseVerdict{animation-delay:.70s}
@@ -280,7 +282,14 @@
   .inline-evidence>.reply-turn.agent{display:block}
   .inline-evidence>.reply-turn.agent>.ava{display:none}
   .inline-evidence .reply-body{width:100%}
-  .inline-evidence .js-proseOpen{display:none}
+  .inline-evidence .js-proseOpen,.inline-evidence .js-resultNarrative,.inline-evidence .cond-row,
+  .inline-evidence .js-chain,.inline-evidence .js-proseVerdict,.inline-evidence .js-provFoot{display:none}
+  /* A reconciliation answers one scoped question. Condition comparison is a separate agent intent;
+     the figure already carries the assay sources and verdict, so do not repeat controls/provenance. */
+  .cond-row,.js-chain,.js-proseVerdict,.js-provFoot{display:none}
+  .figure-reference{font-family:var(--font-serif);font-size:15px;line-height:1.65;color:var(--ink-soft);margin:14px 0 0;max-width:66ch}
+  .result-narrative{margin-top:12px!important;margin-bottom:8px!important;color:var(--ink)!important}
+  .result-narrative.streaming::after{content:"▍";color:var(--accent);margin-left:2px;animation:caret 1s steps(1) infinite}
   @keyframes apulse{0%,100%{opacity:.4}50%{opacity:1}}
   .agent-facet{margin-top:16px;max-width:540px}
 
@@ -677,8 +686,14 @@
   .foot,.srcline{color:var(--ink-faint)}
   .dossier{gap:10px}
   .card.soft{background:var(--surface);border-color:var(--line);border-radius:8px}
-  .followups{border-top:0}
+  .followups{border-top:0;display:grid;grid-template-columns:1fr;gap:7px;margin-top:26px}
+  .followups::before{content:"Suggested next steps";font:500 12px/1.4 var(--font-ui);color:var(--ink-faint);margin-bottom:3px}
   .fchip,.cchip{border-radius:6px;background:transparent}
+  .followups .fchip{width:100%;justify-content:flex-start;padding:10px 12px;text-align:left;background:rgba(23,32,37,.48)}
+  .followups .fchip::after{content:"Add to prompt";margin-left:auto;font:500 10px/1 var(--font-mono);color:var(--ink-faint);opacity:0;transition:.18s ease}
+  .followups .fchip:hover::after,.followups .fchip:focus-visible::after{opacity:1}
+  .followups .fchip.copied{border-color:var(--accent);color:var(--ink)}
+  .followups .fchip.copied::after{content:"Added";opacity:1;color:var(--accent)}
 
   .composer{padding:12px 34px 18px;background:rgba(16,21,25,.96);border-top-color:var(--line)}
   .composer-box{min-height:50px;border-radius:8px;background:var(--surface);border-color:var(--line-strong);
@@ -707,6 +722,7 @@
   .reply-body>.prose,.js-answerText,.js-facetLead{width:100%;max-width:78ch;text-wrap:pretty}
   .agent-facet,.js-facetCard{max-width:100%!important;width:100%}
   .chain{max-width:100%}
+  .cond-row,.js-chain,.js-proseVerdict,.js-provFoot{display:none!important}
 
   @media(max-width:1280px){.workspace{grid-template-columns:220px minmax(0,1fr)}.arts{display:none}.arts-toggle{display:none}}
   @media(max-width:940px){.workspace{grid-template-columns:64px minmax(0,1fr)}.convo-context{display:none}}
@@ -852,6 +868,7 @@ ZNF250</div>
               </span>
             </div>
             <p class="prose js-proseOpen"></p>
+            <p class="prose result-narrative js-resultNarrative"></p>
             <figure class="fig">
               <div class="fig-frame">
                 <div class="fig-eyebrow js-figEyebrow">Figure 1 · paired effect on IL-2</div>
@@ -896,9 +913,9 @@ ZNF250</div>
 
             <!-- follow-up chips: ask the agent to produce the plan or the known-biology check inline -->
             <div class="followups js-followups">
-              <button class="fchip" data-follow="druggability"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z"/><path d="M8.5 8.5l7 7"/></svg>Evidence</button>
-              <button class="fchip" data-follow="plan"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Validation plan</button>
-              <button class="fchip" data-follow="truth"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>Known biology</button>
+              <button class="fchip" data-follow="druggability"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z"/><path d="M8.5 8.5l7 7"/></svg>Review druggability and evidence</button>
+              <button class="fchip" data-follow="plan"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Draft a validation plan</button>
+              <button class="fchip" data-follow="truth"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>Check against known biology</button>
             </div>
           </div>
         </div>
@@ -1433,56 +1450,64 @@ ZNF250</div>
     if(row.prot_tested===false)
       return "The Perturb-seq screen measured "+gene+", but it isn't in the FACS library, so "
         +"I only have the transcript side here. That makes this a one-sided read, not a concordance.";
-    return "Both screens measured "+gene+", so I can compare them directly. Here is the "
-      +"knockdown's effect on IL-2 on each side, on one axis.";
+    return "Both screens measured "+gene+", so I can compare them directly. The figure separates "
+      +"the two assay readouts because their effect sizes use different units.";
   }
 
-  // Draw the paired-effect figure from the REAL numbers. mRNA (z) and protein (lfc) as two rows on a
-  // shared "raises ← no effect → lowers" axis; filled marker = significant hit, open = n.s.
+  // Grounded narrative shown immediately while the live explanation streams. This preserves the
+  // scientific interpretation as the primary answer even when the model endpoint is unavailable.
+  function resultNarrative2(gene,row){
+    if(!row) return "I do not have enough data to interpret this comparison.";
+    if(row.prot_tested===false) return whyText2(gene,row)+" A matched protein assay is the next experiment needed before drawing a cross-layer conclusion.";
+    if(row.verdict==="discordant") return whyText2(gene,row)+" This means the transcript readout alone would give the wrong direction for the secreted cytokine phenotype. Treat the split as a biological result to resolve with paired transcript and protein measurements, not as clean replication.";
+    if(row.verdict==="replicated") return whyText2(gene,row)+" Because two independent assay layers agree, this is the strongest evidence tier in the screen and a good candidate for targeted validation.";
+    if(row.verdict==="mrna_only") return whyText2(gene,row)+" The key uncertainty is whether the transcriptional response propagates to the functional protein phenotype, so protein-level validation should come next.";
+    if(row.verdict==="protein_only") return whyText2(gene,row)+" The functional protein phenotype would be missed by transcript-only prioritization, making a matched protein validation especially important.";
+    return whyText2(gene,row)+" On this phenotype and condition, the current evidence does not support prioritizing the gene without a different biological rationale.";
+  }
+
+  // Draw two self-contained assay-result rows. The screens use different native effect-size units,
+  // so we do not place them on a falsely shared quantitative axis. Each row names the measurement,
+  // assay, direction, effect size, and significance before stating the cross-assay conclusion.
   function drawEffectFig(turn,row){
     var svg=q(turn,"js-effectFig"); if(!svg) return;
-    var W=560, cx=280;
-    function px(v,max){ if(v==null) return cx; var c=Math.max(-1,Math.min(1,v/max)); return cx + c*200; }
-    var zR=row?row.z_rna:null, zP=(row&&row.prot_tested!==false)?row.lfc_prot:null;
-    var xR=px(zR,8), xP=px(zP,3);
-    var hR=row&&row.hit_rna, hP=row&&row.hit_prot;
-    function marker(x,y,on,col){
-      return on ? '<circle cx="'+x+'" cy="'+y+'" r="7" fill="'+col+'"/>'
-                : '<circle cx="'+x+'" cy="'+y+'" r="6" fill="none" stroke="'+col+'" stroke-width="2"/>';
+    svg.setAttribute("viewBox","0 0 640 300");
+    svg.setAttribute("aria-label","Comparison of the IL-2 mRNA and secreted protein responses to gene knockdown");
+    if(!row){ svg.innerHTML=""; return; }
+    function qtxt(v){ return v==null?"not available":(Number(v)<0.001?Number(v).toExponential(1):Number(v).toFixed(3)); }
+    function direction(v){ return v<0?"DECREASED":v>0?"INCREASED":"NO CHANGE"; }
+    function arrow(v){ return v<0?"↓":v>0?"↑":"→"; }
+    function assayRow(y,label,assay,effectLabel,effect,qvalue,hit,color,untested){
+      if(untested) return '<rect x="18" y="'+y+'" width="604" height="92" rx="8" fill="#171F23" stroke="#334148"/>'
+        +'<text x="38" y="'+(y+29)+'" fill="#E3E9E6" font-size="17" font-weight="600">'+label+'</text>'
+        +'<text x="38" y="'+(y+52)+'" fill="#84918E" font-size="13">'+assay+'</text>'
+        +'<text x="602" y="'+(y+44)+'" text-anchor="end" fill="#9AA5A2" font-size="15">NOT MEASURED</text>'
+        +'<text x="602" y="'+(y+66)+'" text-anchor="end" fill="#72807F" font-size="12">not included in this assay library</text>';
+      var dir=direction(effect), arr=arrow(effect), status=hit?"significant screen hit":"not statistically significant";
+      return '<rect x="18" y="'+y+'" width="604" height="92" rx="8" fill="#171F23" stroke="#334148"/>'
+        +'<rect x="18" y="'+y+'" width="4" height="92" rx="2" fill="'+color+'"/>'
+        +'<text x="38" y="'+(y+27)+'" fill="#E3E9E6" font-size="17" font-weight="600">'+label+'</text>'
+        +'<text x="38" y="'+(y+50)+'" fill="#84918E" font-size="13">'+assay+'</text>'
+        +'<text x="38" y="'+(y+74)+'" fill="#B8C3C0" font-size="13.5">'+effectLabel+' '+fmt(effect)+'  ·  q-value '+qtxt(qvalue)+'</text>'
+        +'<text x="602" y="'+(y+38)+'" text-anchor="end" fill="'+color+'" font-size="25" font-weight="600">'+arr+' '+dir+'</text>'
+        +'<text x="602" y="'+(y+66)+'" text-anchor="end" fill="'+(hit?color:'#84918E')+'" font-size="12.5">'+status+'</text>';
     }
-    var mRow = zR==null ? '' :
-      '<line x1="'+cx+'" y1="70" x2="'+xR+'" y2="70" stroke="#4FC7A5" stroke-width="2.5"/>'
-      +marker(xR,70,hR,"#4FC7A5")
-      +'<text x="'+(xR+(xR>cx?12:-12))+'" y="74" text-anchor="'+(xR>cx?"start":"end")+'" fill="#4FC7A5" font-size="11" font-weight="500">z='+fmt(zR)+'</text>'
-      +'<text x="'+xR+'" y="56" text-anchor="middle" fill="#4FC7A5" font-size="8.5">q='+(row.q_rna==null?"—":Number(row.q_rna).toPrecision(2))+' · '+(hR?"hit":"n.s.")+'</text>';
-    var pRow;
-    if(row&&row.prot_tested===false){
-      pRow='<text x="'+cx+'" y="140" text-anchor="middle" fill="#8A867E" font-size="10">not in the FACS library — untested</text>';
-    } else {
-      pRow='<line x1="'+cx+'" y1="140" x2="'+xP+'" y2="140" stroke="'+(hP?"#E07BB6":"#8A867E")+'" stroke-width="2.5"/>'
-        +marker(xP,140,hP,hP?"#E07BB6":"#8A867E")
-        +'<text x="'+(xP+(xP>cx?12:-12))+'" y="144" text-anchor="'+(xP>cx?"start":"end")+'" fill="'+(hP?"#E07BB6":"#8A867E")+'" font-size="11" font-weight="500">lfc='+fmt(zP)+'</text>'
-        +'<text x="'+xP+'" y="126" text-anchor="middle" fill="#6B6862" font-size="8.5">q='+(row.q_prot==null?"—":Number(row.q_prot).toPrecision(2))+' · '+(hP?"hit":"n.s.")+'</text>';
-    }
-    svg.innerHTML=
-      '<line x1="'+cx+'" y1="34" x2="'+cx+'" y2="176" stroke="#4A4844" stroke-width="1"/>'
-      +'<text x="'+cx+'" y="26" text-anchor="middle" fill="#8A867E" font-size="9.5">no effect</text>'
-      +'<line x1="60" y1="176" x2="500" y2="176" stroke="#3A3835" stroke-width="1"/>'
-      +'<text x="66" y="192" fill="#6B6862" font-size="9">← knockdown lowers IL-2</text>'
-      +'<text x="494" y="192" text-anchor="end" fill="#6B6862" font-size="9">raises IL-2 →</text>'
-      +'<text x="52" y="68" text-anchor="end" fill="#B4B0A8" font-size="11">mRNA</text>'
-      +'<text x="52" y="80" text-anchor="end" fill="#6B6862" font-size="8">Perturb-seq</text>'
-      +'<text x="52" y="138" text-anchor="end" fill="#B4B0A8" font-size="11">protein</text>'
-      +'<text x="52" y="150" text-anchor="end" fill="#6B6862" font-size="8">FACS</text>'
-      +mRow+pRow;
+    var discord=row.prot_tested!==false && row.hit_rna && row.hit_prot && ((row.z_rna<0)!=(row.lfc_prot<0));
+    var conclusion=discord?"Opposite directions across assays → DISCORDANT":
+      row.verdict==="replicated"?"Same direction across assays → REPLICATED":
+      "Combined screen verdict → "+String(row.verdict||"neither").replace("_"," ").toUpperCase();
+    svg.innerHTML=assayRow(14,"IL-2 mRNA abundance","Perturb-seq transcript readout","z-score",row.z_rna,row.q_rna,row.hit_rna,"#4FC7A5",false)
+      +assayRow(116,"Secreted IL-2 protein","FACS protein readout","log₂ fold change",row.lfc_prot,row.q_prot,row.hit_prot,"#E07BB6",row.prot_tested===false)
+      +'<path d="M40 230 H600" stroke="#334148"/>'
+      +'<text x="40" y="257" fill="#84918E" font-size="12.5">Cross-assay interpretation</text>'
+      +'<text x="40" y="283" fill="'+(discord?'#D8A85A':'#E3E9E6')+'" font-size="15" font-weight="600">'+conclusion+'</text>';
   }
 
   // Caption + the verdict sentence, both grounded in the numbers.
   function figCaption(gene,cond,row){
     if(!row) return "";
-    return '<b>Figure.</b> '+gene+' knockdown effect on IL-2 at '+COND_LABEL[cond]
-      +', mRNA (Perturb-seq z-score) vs protein (FACS log-fold-change) on a shared direction axis. '
-      +'Filled marker = significant; open marker = not significant. Effect sizes are each screen’s native units.';
+    return '<b>Figure 1.</b> Response to '+gene+' knockdown at '+COND_LABEL[cond]+'. '
+      +'Direction and statistical status are shown separately for each assay. The z-score and log₂ fold change remain in their native units and should not be compared by magnitude.';
   }
 
   // Chain of custody — traces, inline, how the verdict was earned: each screen READ (mRNA, protein)
@@ -1539,6 +1564,11 @@ ZNF250</div>
     // verdict WORD. The long experimentalist paragraph is exclusively the agent's job — we do NOT run
     // streamExplanation here (that was the duplicate second narration).
     q(turn,"js-proseOpen").textContent=openingProse2(gene,row);
+    var narrative=q(turn,"js-resultNarrative");
+    if(narrative){
+      narrative.textContent=resultNarrative2(gene,row);
+      narrative.style.display=turn._hideUser?"none":"";
+    }
     drawEffectFig(turn,row);
     q(turn,"js-figCap").innerHTML=figCaption(gene,cond,row);
     var fe=q(turn,"js-figEyebrow"); if(fe) fe.textContent="Figure 1 · "+gene+" knockdown on IL-2 · "+COND_LABEL[cond];
@@ -1556,6 +1586,10 @@ ZNF250</div>
       +'. Claude narrates it above — it does not decide it.';
 
     renderDossier(turn);
+
+    // Direct/shareable gene routes do not have a separate agent narration turn, so restore the live
+    // grounded explanation here. Agent-driven reconciliations already narrate above the evidence.
+    if(!turn._hideUser) streamExplanation(turn,row);
 
     // QUESTION-SCOPED rendering: a plain reconcile answers "do the two screens agree at this
     // condition?" — the figure, chain-of-custody and verdict. The dossier (druggability / disease /
@@ -1593,7 +1627,8 @@ ZNF250</div>
     if(turn._explainAbort){ try{turn._explainAbort.abort();}catch(e){} }
     var seq=(turn._explainSeq=(turn._explainSeq||0)+1);
     if(!row||!row.gene||!row.cytokine||!row.condition){ return; }  // nothing to explain
-    var el=q(turn,"js-explainText");
+    var el=q(turn,"js-resultNarrative")||q(turn,"js-explainText");
+    if(!el) return;
     var ctrl=("AbortController" in window)?new AbortController():null;
     turn._explainAbort=ctrl;
     var url="api/explanation/"+encodeURIComponent(row.gene)+"/"+encodeURIComponent(row.cytokine)+"/"+encodeURIComponent(row.condition);
@@ -1691,27 +1726,24 @@ ZNF250</div>
     wireFollowups(turn);
   }
 
-  // Follow-up chips on any turn: append the requested facet as a NEW turn, sourced from THIS turn's
-  // gene/conditions. reconcile→full turn, plan→plan turn, truth→known-biology, druggability/…→facet.
-  // Follow-up chips route through the AGENT (handleMessage), same as any user message, so a
-  // follow-up click stays in the agentic experience — narration + activity trace — instead of
-  // re-entering the old direct-template path. Each chip becomes a natural-language message the
-  // agent reasons about and answers with the right tool.
+  // Suggested next steps are prompt starters, not immediate actions. Clicking one places a clear,
+  // editable question in the composer so the user stays in control of what the agent does next.
   function wireFollowups(turn){
     var fu=q(turn,"js-followups"); if(!fu) return;
     fu.querySelectorAll(".fchip").forEach(function(chip){
       chip.addEventListener("click",function(){
-        if(chip.disabled) return;
-        chip.disabled=true;   // one of each follow-up per source turn
         var f=chip.dataset.follow, g=turn._gene;
-        // The plan/brief renders directly from the deterministic endpoint — no agent tool emits a
-        // plan view_update, so route it here rather than through the agent (which would fall back to
-        // a reconcile). Shows the user bubble, then the six-part decision brief.
-        if(f==="plan"){ renderPlanFor(g, "Draft a validation plan for "+g+"."); return; }
-        if(f==="truth") handleMessage("Does Concord recover known biology?");
-        else if(f==="reconcile") handleMessage("Reconcile "+g+".");
-        else if(f==="druggability") handleMessage("Is "+g+" druggable?");
-        else handleMessage("Is "+g+" "+(f==="genetics"?"disease-linked":f==="quality"?"a reliable hit":f)+"?");
+        var prompt=f==="plan"?("Draft a validation plan for "+g+"."):
+          f==="truth"?("Does "+g+" agree with known biology?"):
+          f==="reconcile"?("Reconcile "+g+" across both screens."):
+          f==="druggability"?("Review the druggability and supporting evidence for "+g+"."):
+          ("Is "+g+" "+(f==="genetics"?"disease-linked":f==="quality"?"a reliable hit":f)+"?");
+        var input=$("geneInput");
+        input.value=prompt;
+        input.focus();
+        input.setSelectionRange(prompt.length,prompt.length);
+        fu.querySelectorAll(".fchip").forEach(function(b){ b.classList.remove("copied"); });
+        chip.classList.add("copied");
       });
     });
   }
@@ -1913,6 +1945,17 @@ ZNF250</div>
       if(pendingView.action==="reconcile" || pendingView.action==="compare"){
         var evidenceTurn=thread.lastElementChild;
         if(evidenceTurn && evidenceTurn!==added){
+          if(pendingView.action==="reconcile"){
+            var erow=(evidenceTurn._byCondition||{})[COND_API[evidenceTurn._cond||"Stim48h"]];
+            if(erow){
+              var ref=document.createElement("p");
+              ref.className="figure-reference";
+              var rnaDir=erow.z_rna<0?"decreased":erow.z_rna>0?"increased":"did not change";
+              var protDir=erow.lfc_prot<0?"decreased":erow.lfc_prot>0?"increased":"did not change";
+              ref.textContent="Figure 1 below separates the assay readouts because their effect sizes use different units. It shows IL-2 mRNA "+rnaDir+" while secreted IL-2 protein "+protDir+".";
+              el.after(ref);
+            }
+          }
           evidenceTurn.classList.add("inline-evidence");
           el.parentElement.appendChild(evidenceTurn);
         }
