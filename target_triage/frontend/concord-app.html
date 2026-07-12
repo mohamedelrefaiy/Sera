@@ -259,6 +259,15 @@
   .agent-activity .act.done .adot{background:var(--line-strong)}
   .agent-activity .act.verdict .adot{background:var(--accent)}
   .agent-activity .act .ak{color:var(--ink-soft)}
+  .agent-activity summary{list-style:none;display:flex;align-items:center;gap:9px;cursor:pointer;
+    color:var(--ink-soft);user-select:none}
+  .agent-activity summary::-webkit-details-marker{display:none}
+  .agent-activity summary::before{content:"›";font-size:15px;line-height:1;color:var(--ink-faint);
+    transform:rotate(0);transition:transform .18s ease}
+  .agent-activity[open] summary::before{transform:rotate(90deg)}
+  .activity-title{font-family:var(--font-ui);font-size:12px;font-weight:600;color:var(--ink-soft)}
+  .activity-status{margin-left:auto;font-size:10px;letter-spacing:.04em;color:var(--ink-faint)}
+  .activity-steps{display:flex;flex-direction:column;gap:5px;padding-top:9px}
   @keyframes apulse{0%,100%{opacity:.4}50%{opacity:1}}
   .agent-facet{margin-top:16px;max-width:540px}
 
@@ -611,12 +620,14 @@
 
   .agent-activity{margin:2px 0 20px;padding:10px 14px;border:1px solid var(--line);border-left:2px solid var(--accent);
     border-radius:0 7px 7px 0;background:rgba(23,29,34,.62);font-size:10.5px;gap:4px}
-  .agent-activity .act.done{display:none}
+  .agent-activity .act.done{display:flex}
   .agent-activity .act.verdict{color:var(--ink-soft)}
-  .fig{margin:24px 0}
-  .fig-frame{background:#131A1E;border-color:var(--line-strong);border-radius:9px;box-shadow:var(--shadow)}
+  .agent-activity{display:block}
+  .agent-activity[open]{background:rgba(23,29,34,.82)}
+  .fig{margin:28px 0;width:100%}
+  .fig-frame{width:100%;max-width:none;background:#131A1E;border-color:var(--line-strong);border-radius:9px;box-shadow:var(--shadow)}
   .fig-eyebrow{padding:15px 18px 8px;color:var(--ink-faint);letter-spacing:.1em}
-  .fig svg{max-width:620px}
+  .fig svg{max-width:720px}
   .cap{font-family:var(--font-serif);font-size:13.5px;line-height:1.65;border-top:1px solid var(--line);
     margin-top:4px;padding:15px 18px 17px;color:var(--ink-soft)}
   .chain{border-radius:7px;background:var(--surface);border-color:var(--line)}
@@ -645,6 +656,10 @@
   .lprompt{border-radius:8px;padding:16px 17px;background:rgba(23,29,34,.75)}
   .lprompt-hero{border-color:var(--line-strong);box-shadow:inset 3px 0 0 var(--accent)}
   .lprompt-hero .lp-k,.lprompt .lp-ex{color:var(--mrna)}
+  .reply-body{width:100%}
+  .reply-body>.prose,.js-answerText,.js-facetLead{width:100%;max-width:78ch;text-wrap:pretty}
+  .agent-facet,.js-facetCard{max-width:100%!important;width:100%}
+  .chain{max-width:100%}
 
   @media(max-width:1280px){.workspace{grid-template-columns:220px minmax(0,1fr)}.arts{display:none}}
   @media(max-width:940px){.workspace{grid-template-columns:64px minmax(0,1fr)}.convo-context{display:none}}
@@ -935,7 +950,10 @@ ZNF250</div>
         <div class="reply-turn agent">
           <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
           <div class="reply-body">
-            <div class="agent-activity js-activity" hidden></div>
+            <details class="agent-activity js-activity" open hidden>
+              <summary><span class="activity-title">Agent activity</span><span class="activity-status">Working</span></summary>
+              <div class="activity-steps"></div>
+            </details>
             <p class="prose js-answerText"></p>
           </div>
         </div>
@@ -1661,16 +1679,27 @@ ZNF250</div>
   function act(container, key, label, state){
     if(!container) return;
     container.hidden=false;
+    var steps=container.querySelector(".activity-steps")||container;
     var row=container.querySelector('[data-act="'+key+'"]');
     if(!row){
       if(label==null) return;                       // nothing to update, nothing to create
       row=document.createElement("div");
       row.className="act"; row.setAttribute("data-act",key);
       row.innerHTML='<span class="adot"></span><span class="ak"></span>';
-      container.appendChild(row);
+      steps.appendChild(row);
     }
     if(label!=null) row.querySelector(".ak").textContent=label;
     row.className="act "+(state||"");
+  }
+
+  // Keep the complete trace available after the response. It starts open while work is live,
+  // then collapses to a compact receipt that the user can reopen at any time.
+  function settleActivity(container){
+    if(!container) return;
+    var rows=container.querySelectorAll(".act");
+    var status=container.querySelector(".activity-status");
+    if(status) status.textContent=rows.length+" step"+(rows.length===1?"":"s")+" complete";
+    container.open=false;
   }
 
   // The verdict the CODE assigned to the gene now shown, read off the rendered reconcile turn's
@@ -1770,6 +1799,7 @@ ZNF250</div>
     if(pendingView){
       var pg=await applyAgentView(pendingView, text, el.parentElement); if(pg) renderedGene=pg;
     }
+    settleActivity(actEl);
     scrollToTurn(added);
     persistTurn({role:"agent", text:acc||"", intent:"agent", gene:renderedGene||null});
   }
