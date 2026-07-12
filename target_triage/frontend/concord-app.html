@@ -1891,7 +1891,11 @@ ZNF250</div>
       var r=await fetch("api/ground_truth");
       if(!r.ok){ q(added,"js-gtClaim").textContent="Ground-truth artifact not built."; return; }
       var d=await r.json();
-      q(added,"js-gtClaim").textContent=d.claim;
+      // The agent narrates the MEANING above this panel; the panel is just the supporting data. So
+      // suppress the backend `claim` (which restates it in stats-heavy prose: "aggregate Spearman is
+      // -0.015…") and the redundant header. A short plain caption labels what the numbers are.
+      var claimEl=q(added,"js-gtClaim"); if(claimEl){ claimEl.textContent="How the two screens recover the known IL-2 regulators, gene by gene."; }
+      var hdr=added.querySelector(".gt-h"); if(hdr){ hdr.textContent="Validation · known IL-2 biology"; }
       var s=d.summary;
       q(added,"js-gtStats").innerHTML=
         stat(s.n_recovered+"/"+s.n_positive,"known regulators recovered")+
