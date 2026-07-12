@@ -228,6 +228,20 @@
   @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .cond-row{display:flex;margin-bottom:14px}
 
+  /* agent activity — the MACHINE voice: what the agent decided and did, inline, before the prose.
+     Mono, muted, a hairline left rail so it reads as the work-log behind the narration. */
+  .agent-activity{font-family:var(--font-mono);font-size:11.5px;line-height:1.5;color:var(--ink-faint);
+    border-left:2px solid var(--line);padding:2px 0 2px 12px;margin-bottom:13px;display:flex;
+    flex-direction:column;gap:5px}
+  .agent-activity .act{display:flex;align-items:baseline;gap:8px}
+  .agent-activity .act .adot{width:5px;height:5px;border-radius:50%;background:var(--ink-faint);flex:none;
+    transform:translateY(-1px)}
+  .agent-activity .act.running .adot{background:var(--mrna);animation:apulse 1s ease-in-out infinite}
+  .agent-activity .act.done .adot{background:var(--line-strong)}
+  .agent-activity .act.verdict .adot{background:var(--accent)}
+  .agent-activity .act .ak{color:var(--ink-soft)}
+  @keyframes apulse{0%,100%{opacity:.4}50%{opacity:1}}
+
   /* prose — the agent writing, streamed. Serif, generous measure, journal-like leading. */
   .prose{font-family:var(--font-serif);font-size:var(--t-body);line-height:1.68;color:var(--ink);
     margin:0 0 4px;max-width:60ch}
@@ -800,6 +814,7 @@ ZNF250</div>
         <div class="reply-turn agent">
           <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
           <div class="reply-body">
+            <div class="agent-activity js-activity" hidden></div>
             <p class="prose js-answerText"></p>
           </div>
         </div>
@@ -1504,6 +1519,36 @@ ZNF250</div>
     await runAgent(text);
   }
 
+  // Upsert one activity step in the inline agent trace. Keyed by `key` so a "running" row can be
+  // flipped to "done" (or its label updated) without duplicating. Passing label=null only updates
+  // the state of an existing row. This is the MACHINE voice — what the agent decided and did.
+  function act(container, key, label, state){
+    if(!container) return;
+    container.hidden=false;
+    var row=container.querySelector('[data-act="'+key+'"]');
+    if(!row){
+      if(label==null) return;                       // nothing to update, nothing to create
+      row=document.createElement("div");
+      row.className="act"; row.setAttribute("data-act",key);
+      row.innerHTML='<span class="adot"></span><span class="ak"></span>';
+      container.appendChild(row);
+    }
+    if(label!=null) row.querySelector(".ak").textContent=label;
+    row.className="act "+(state||"");
+  }
+
+  // The verdict the CODE assigned to the gene now shown, read off the rendered reconcile turn's
+  // per-condition state (so the trace can say "verdict computed by code → discordant").
+  function verdictOf(gene){
+    if(!gene) return null;
+    var turn=[].slice.call(thread.querySelectorAll(".turn")).reverse()
+      .find(function(t){ return t._gene===gene && t._byCondition; });
+    if(!turn) return null;
+    var cond=turn._cond||"Stim48h";
+    var row=(turn._byCondition||{})[COND_API[cond]] || Object.values(turn._byCondition||{})[0];
+    return row?row.verdict:null;
+  }
+
   // Drive one agent turn: append a user bubble + an agent bubble, stream the SSE, and let the agent's
   // tool calls render the reconciliation view. The agent's narration streams into the agent bubble.
   async function runAgent(text){
@@ -1517,7 +1562,10 @@ ZNF250</div>
     el.textContent="Thinking…";
     scrollToTurn(added);
 
-    var startedText=false, acc="", renderedGene=null;
+    var actEl=q(added,"js-activity");
+    act(actEl,"think","reasoning — deciding what to do","running");
+
+    var startedText=false, acc="", renderedGene=null, calledTool=false;
     try{
       var resp=await fetch("api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({message:text, mode:"concord"})});
@@ -1533,21 +1581,30 @@ ZNF250</div>
           var ev; try{ ev=JSON.parse(line.slice(5).trim()); }catch(e){ continue; }
           if(ev.type==="tool_call"){
             if(ev.tool==="ToolSearch") continue;            // internal SDK discovery — not user-facing
-            // A real tool call fired: drop any "I'll call the tool…" preamble text and show a live
-            // working line. The narration that matters is what the agent writes AFTER the tool result.
-            acc=""; startedText=false;
-            el.textContent="Working — "+prettyTool(ev.tool, ev.input)+"…";
+            // A real tool call fired: log it in the activity trace, and drop the "I'll call the
+            // tool…" preamble (the narration that matters is written AFTER the tool result).
+            act(actEl,"think","reasoning — deciding what to do","done");
+            act(actEl,"tool","called "+prettyTool(ev.tool, ev.input),"running");
+            calledTool=true; acc=""; startedText=false;
+            el.textContent="";
           }
           else if(ev.type==="view_update"){
-            var g=applyAgentView(ev.update, text); if(g) renderedGene=g;
+            act(actEl,"tool",null,"done");
+            var g=await applyAgentView(ev.update, text); if(g) renderedGene=g;
+            // Show that the VERDICT came from code, not the model — the product's core claim. Read
+            // after the awaited render so turn._byCondition is populated.
+            var vd=verdictOf(renderedGene);
+            if(vd) act(actEl,"verdict","verdict computed by code → "+vd,"verdict");
           }
           else if(ev.type==="text"){
-            if(!startedText){ el.textContent=""; startedText=true; }
+            if(!startedText){ el.textContent=""; startedText=true; if(calledTool) act(actEl,"narrate","narrating the result","done"); }
             acc+=ev.text; el.textContent=stripMd(acc);
           }
           else if(ev.type==="error"){ if(!startedText){ el.textContent="The agent hit an error: "+(ev.detail||"unknown")+"."; } }
         }
       }
+      // settle any still-running step
+      act(actEl,"think",null,"done"); act(actEl,"tool",null,"done");
       if(!startedText && !renderedGene){ el.textContent="I didn't get a response — try rephrasing, or name a gene like TSC1."; }
     }catch(e){
       el.classList.remove("streaming"); if(!startedText) el.textContent="The agent is unavailable (network error).";
@@ -1562,20 +1619,20 @@ ZNF250</div>
   // Human label for a tool call while it runs.
   function prettyTool(tool, input){
     var g=(input&&input.gene)?String(input.gene).toUpperCase():"";
-    if(tool==="reconcile_gene") return "reconciling "+g;
-    if(tool==="gene_evidence") return "pulling evidence for "+g;
-    return "running "+(tool||"analysis");
+    if(tool==="reconcile_gene") return "reconcile_gene("+g+") — reading both screens";
+    if(tool==="gene_evidence") return "gene_evidence("+g+") — druggability + disease";
+    return (tool||"analysis");
   }
 
   // A tool's view_update renders a view. reconcile → append the full figure+chain+dossier turn via
-  // the existing loadGene renderer; evidence → populate the artifacts rail. Returns the gene shown.
-  function applyAgentView(update, userMsg){
+  // the existing loadGene renderer; evidence → populate the artifacts rail. Returns a PROMISE of the
+  // gene shown (awaited so the activity trace can read the code-computed verdict once it's loaded).
+  async function applyAgentView(update, userMsg){
     if(!update||!update.action) return null;
     if(update.action==="reconcile" && update.gene){
-      // Append the reconciliation turn (figure+chain+dossier). hideUser=true suppresses its user
-      // bubble — the agent turn above already showed the user's message. Race-free: the flag is set
-      // ON the turn before its bubble renders, inside loadGene (which is async).
-      loadGene(update.gene, null, "", true);
+      // hideUser=true suppresses the reconcile turn's user bubble — the agent turn above already
+      // showed the message. Await loadGene so turn._byCondition is populated before we read the verdict.
+      await loadGene(update.gene, null, "", true);
       return update.gene;
     }
     if(update.action==="evidence" && update.gene){
