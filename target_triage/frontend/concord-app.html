@@ -570,6 +570,23 @@
   .decision p{font-family:var(--font-serif);margin:0;font-size:15.5px;line-height:1.62;color:var(--ink)}
   .corrob{font-family:var(--font-serif);margin-top:16px;font-size:14.5px;color:var(--ink-soft);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
   .corrob .cb{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap}
+  /* Decision-brief blocks: comparability warning, outcome matrix, sources. Machine voice = mono. */
+  .brief-comp{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;background:var(--surface);padding:12px 16px;margin-top:14px}
+  .brief-comp .bc-h{font-family:var(--font-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+  .brief-comp .bc-r{margin:0;padding-left:18px;font-family:var(--font-serif);font-size:13.5px;line-height:1.55;color:var(--ink-soft)}
+  .brief-comp .bc-r li{margin:2px 0}
+  .brief-extra{margin-top:18px}
+  .brief-extra .be-h{font-family:var(--font-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);margin:16px 0 8px}
+  .brief-extra .be-note{text-transform:none;letter-spacing:0;color:var(--ink-faint);font-size:10.5px}
+  .omx{width:100%;border-collapse:collapse;font-size:13px;color:var(--ink-soft)}
+  .omx th{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);text-align:left;padding:6px 10px;border-bottom:1px solid var(--line-strong)}
+  .omx td{font-family:var(--font-serif);padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.5}
+  .omx td:first-child{color:var(--ink);width:34%}
+  .src-list{margin:0;padding-left:0;list-style:none}
+  .src-list li{font-family:var(--font-serif);font-size:13px;line-height:1.55;color:var(--ink-soft);margin:6px 0}
+  .src-list a{color:var(--ink-soft);text-decoration:underline;text-underline-offset:2px}
+  .src-list a:hover{color:var(--ink)}
+  .src-tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px;margin-right:4px}
 
   .hidden{display:none}
   :focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
@@ -1025,6 +1042,13 @@ ZNF250</div>
     protein_only:{cls:"po",txt:"Protein-only",x:100,y:60,fill:"#E07BB6"},
     neither:{cls:"no",txt:"Neither",x:100,y:200,fill:"#8A867E"},
     discordant:{cls:"disc",txt:"Discordant",x:160,y:130,fill:"#D8A85A"}
+  };
+  // Human labels for the decision brief's closed comparability set (mirrors core/decision_brief.py).
+  var COMPARABILITY_LABEL={
+    comparable:"Comparable",
+    partially_comparable:"Partially comparable",
+    context_mismatch:"Context mismatch",
+    insufficient_metadata:"Insufficient metadata"
   };
   // API condition keys -> UI tab keys (backend uses Stim8hr/Stim48hr; tabs use Stim8h/Stim48h).
   var COND_API={Rest:"Rest",Stim8h:"Stim8hr",Stim48h:"Stim48hr"};
@@ -1639,8 +1663,11 @@ ZNF250</div>
         if(chip.disabled) return;
         chip.disabled=true;   // one of each follow-up per source turn
         var f=chip.dataset.follow, g=turn._gene;
-        if(f==="plan") handleMessage("Draft a validation plan for "+g+".");
-        else if(f==="truth") handleMessage("Does Concord recover known biology?");
+        // The plan/brief renders directly from the deterministic endpoint — no agent tool emits a
+        // plan view_update, so route it here rather than through the agent (which would fall back to
+        // a reconcile). Shows the user bubble, then the six-part decision brief.
+        if(f==="plan"){ renderPlanFor(g, "Draft a validation plan for "+g+"."); return; }
+        if(f==="truth") handleMessage("Does Concord recover known biology?");
         else if(f==="reconcile") handleMessage("Reconcile "+g+".");
         else if(f==="druggability") handleMessage("Is "+g+" druggable?");
         else handleMessage("Is "+g+" "+(f==="genetics"?"disease-linked":f==="quality"?"a reliable hit":f)+"?");
@@ -1936,7 +1963,7 @@ ZNF250</div>
     if(!d){ appendHelpTurn(text, routed); return; }
     var bc=d.by_condition||{}, en=d.enrichment||null;
     if(intent==="reconcile"){ loadGene(gene, null, text); }
-    else if(intent==="plan"){ appendPlanTurn(gene, bc, text); }
+    else if(intent==="plan"){ appendPlanTurn(gene, bc, text, d.decision_brief||null); }
     else { appendFacetTurn(intent, gene, bc, en, text); }   // druggability | genetics | quality
   }
 
@@ -1956,10 +1983,28 @@ ZNF250</div>
   // New chat: start a fresh empty conversation.
   $("newChat").addEventListener("click", newSession);
 
+  // Render the decision brief for a gene directly from the deterministic endpoint. Used by the
+  // "Validation plan" follow-up chip (no agent tool emits a plan view_update, so this is the plan
+  // entry point). Persists the user turn, fetches the brief, then renders the six-part answer —
+  // falling back to the verdict template if the brief isn't available.
+  async function renderPlanFor(gene, userMsg){
+    if(!gene) return;
+    persistTurn({role:"user", text:userMsg, intent:"plan", gene:gene});
+    var d=null;
+    try{ var r=await fetch("api/concordance/"+encodeURIComponent(gene)); d=r.ok?await r.json():null; }
+    catch(e){ d=null; }
+    var bc=d?(d.by_condition||{}):{};
+    appendPlanTurn(gene, bc, userMsg, d?(d.decision_brief||null):null);
+  }
+
   // ---- validation plan builder (verdict-driven; templates keyed on the real verdict) ----
   // Appends a plan turn to the thread from the source gene's own conditions (passed in, so it's
   // independent of whatever gene currently has focus).
-  function appendPlanTurn(gene, byCondition, customMsg){
+  function appendPlanTurn(gene, byCondition, customMsg, brief){
+    // Prefer the server's deterministic decision brief when present — the grounded six-part answer.
+    // Falls back to the verdict-keyed template below when the brief isn't available (e.g. provenance
+    // artifact missing), so the plan turn always renders something honest.
+    if(brief){ appendBriefTurn(gene, brief, customMsg); return; }
     var bc=byCondition||{};
     var row=bc.Stim48hr||bc.Stim8hr||bc.Rest||null;
     var v=row?row.verdict:"neither";
@@ -2029,6 +2074,86 @@ ZNF250</div>
     scrollToTurn(added);
   }
 
+  // ---- decision-brief turn (the grounded six-part answer) ----
+  // Renders the server's DecisionBrief into the SAME planTpl slots the export/copy code reads
+  // (js-recWhy, js-pPert, js-pCond, js-pRead, js-pQc, js-pDecision) so wirePlanExports keeps working
+  // unchanged, then injects three extra blocks: a comparability warning, the outcome matrix, and
+  // sources. Every string comes from the code-computed brief — the UI selects nothing.
+  function appendBriefTurn(gene, b, customMsg){
+    var v=(b.snapshot&&b.snapshot.verdict)||"neither";
+    var vm=VMAP[v]||VMAP.neither;
+    var exp=b.experiment||{};
+    var frag=$("planTpl").content.cloneNode(true);
+    var turn=frag.querySelector(".turn");
+    q(turn,"js-user").textContent=customMsg||("What should I do about "+gene+"?");
+    q(turn,"js-planGene").textContent=gene;
+    var pr=q(turn,"js-planRec"); pr.className="rec "+vm.cls+" js-planRec";
+    // 1. The decision (the answer, first).
+    q(turn,"js-recAction").textContent="Decision";
+    var pv=q(turn,"js-planVerdict"); pv.className="verdict-badge vb "+vm.cls+" js-planVerdict";
+    q(turn,"js-planVerdictTxt").textContent=vm.txt;
+    var pc=q(turn,"js-planConf");
+    pc.textContent=((b.snapshot&&b.snapshot.cytokine)||"IL2")+" · "+((b.snapshot&&b.snapshot.condition)||"Stim48hr");
+    pc.className="ctag High js-planConf";
+    q(turn,"js-recWhy").textContent=b.decision||"";
+    // 4. The discriminating experiment (perturbation + controls, conditions, readouts).
+    var guides=(exp.guides||[]).join(", ");
+    var controls=(exp.controls||[]).join("; ");
+    q(turn,"js-pPert").textContent=(exp.perturbation||"")+(guides?(" — 2 guides ("+guides+")"):"")+(controls?(" + "+controls):"")+", ≥3 donors.";
+    q(turn,"js-pCond").textContent=exp.conditions||"";
+    var roChips=(exp.readouts||[]).map(function(r){
+      var cls=/transcript/i.test(r)?"g":"m";
+      return '<span class="rchip '+cls+'">'+esc(r)+'</span>';
+    }).join("");
+    var tcNote=exp.timecourse?('<p>'+esc(exp.timecourse)+'</p>'):'';
+    q(turn,"js-pRead").innerHTML='<div class="rchips">'+roChips+'</div><p>Measure transcript AND protein in the SAME wells — the point is whether they still diverge.</p>'+tcNote;
+    // 3. Competing explanations (as QC/what-could-explain-it — the honest alternatives).
+    var explList=(b.explanation_labels||[]).map(function(l){return "• "+l;}).join("\n");
+    q(turn,"js-pQc").textContent=explList||"—";
+    // 8. Stop/go.
+    q(turn,"js-pDecision").textContent=b.remaining_uncertainty
+      ? (b.decision+" ("+b.remaining_uncertainty+")") : (b.decision||"");
+
+    // --- 2. comparability warning (injected before the plan grid, most prominent caveat) ---
+    var rec=q(turn,"js-planRec");
+    if(rec && b.comparability){
+      var warn=document.createElement("div");
+      warn.className="brief-comp";
+      var compTxt=COMPARABILITY_LABEL[b.comparability]||b.comparability;
+      var reasons=(b.comparability_reasons||[]).map(function(r){return '<li>'+esc(r)+'</li>';}).join("");
+      warn.innerHTML='<div class="bc-h">Comparability · '+esc(compTxt)+'</div>'+
+        (reasons?('<ul class="bc-r">'+reasons+'</ul>'):'');
+      rec.parentNode.insertBefore(warn, rec.nextSibling);
+    }
+
+    // Relabel the QC card to "Competing explanations" — the brief lists the honest alternatives
+    // there, not just QC notes.
+    var qcCard=q(turn,"js-pQc"); if(qcCard){ var pk=qcCard.parentNode.querySelector(".pk"); if(pk) pk.textContent="Competing explanations"; }
+    qcCard.style.whiteSpace="pre-line";
+
+    // --- 5. outcome matrix + 6. sources (appended after the plan body) ---
+    var body=turn.querySelector(".reply-body")||turn;
+    var extra=document.createElement("div");
+    extra.className="brief-extra";
+    var rows=(b.outcome_matrix||[]).map(function(o){
+      return '<tr><td>'+esc(o.result)+'</td><td>'+esc(o.interpretation)+'</td><td>'+esc(o.next_action)+'</td></tr>';
+    }).join("");
+    var matrix=rows?('<div class="be-h">If you run it — expected outcomes</div>'+
+      '<table class="omx"><thead><tr><th>Result</th><th>Interpretation</th><th>Next action</th></tr></thead><tbody>'+rows+'</tbody></table>'):'';
+    var cites=(b.citations||[]).map(function(c){
+      var url="https://pubmed.ncbi.nlm.nih.gov/"+esc(c.accession)+"/";
+      return '<li><span class="src-tag">background</span> <a href="'+url+'" target="_blank" rel="noopener">'+esc(c.title)+'</a> · PMID '+esc(c.accession)+'</li>';
+    }).join("");
+    var sources=cites?('<div class="be-h">Sources <span class="be-note">(background for a hypothesis, not verdict support)</span></div><ul class="src-list">'+cites+'</ul>'):'';
+    extra.innerHTML=matrix+sources;
+    if(matrix||sources) body.appendChild(extra);
+
+    thread.appendChild(frag);
+    var added=thread.lastElementChild;
+    wirePlanExports(added, gene);
+    scrollToTurn(added);
+  }
+
   // ---- hit-list (batch) reconciliation ----
   // Priority = verdict rank × confidence × druggability. replicated+druggable floats to the top;
   // concordant negatives sink. Uses IL2/Stim48hr as the anchor condition (the brief's default).
@@ -2039,7 +2164,7 @@ ZNF250</div>
     replicated:"Both screens agree — the strongest kind of hit.",
     discordant:"Both hit but directions disagree — resolve which endpoint matters.",
     mrna_only:"mRNA lead — confirm it reaches the protein.",
-    protein_only:"Post-transcriptional; a transcriptome-only search misses it.",
+    protein_only:"Protein-only — a transcriptome-only search misses it; confirm before assigning a mechanism.",
     neither:"Concordant negative — safe to drop."
   };
 
@@ -2431,12 +2556,29 @@ ZNF250</div>
   function copyProtocol(turn, gene){
     var parts=["Concord validation plan · "+gene,
       q(turn,"js-recAction").textContent+" ("+q(turn,"js-planVerdictTxt").textContent+")",
-      "Why: "+q(turn,"js-recWhy").textContent,
+      "Why: "+q(turn,"js-recWhy").textContent];
+    // Comparability warning (decision-brief turns only).
+    var comp=turn.querySelector(".brief-comp");
+    if(comp){ parts.push(comp.textContent.replace(/\s+/g," ").trim()); }
+    parts.push(
       "01 Perturbation & controls: "+q(turn,"js-pPert").textContent,
       "02 Condition: "+q(turn,"js-pCond").textContent,
       "03 Readout: "+q(turn,"js-pRead").textContent.replace(/\s+/g," ").trim(),
-      "04 QC & caveats: "+q(turn,"js-pQc").textContent,
-      "Go / no-go: "+q(turn,"js-pDecision").textContent];
+      "04 Competing explanations: "+q(turn,"js-pQc").textContent,
+      "Go / no-go: "+q(turn,"js-pDecision").textContent);
+    // Outcome matrix + sources (decision-brief turns only).
+    var omx=turn.querySelector(".omx");
+    if(omx){
+      var mrows=Array.prototype.map.call(omx.querySelectorAll("tbody tr"),function(tr){
+        var c=tr.querySelectorAll("td"); return "  · "+c[0].textContent+" → "+c[1].textContent+" → "+c[2].textContent;
+      });
+      parts.push("Expected outcomes:\n"+mrows.join("\n"));
+    }
+    var srcs=turn.querySelectorAll(".src-list li");
+    if(srcs.length){
+      parts.push("Sources (background, not verdict support):\n"+
+        Array.prototype.map.call(srcs,function(li){return "  · "+li.textContent.replace(/\s+/g," ").trim();}).join("\n"));
+    }
     try{ navigator.clipboard.writeText(parts.join("\n\n")); }catch(e){}
   }
 

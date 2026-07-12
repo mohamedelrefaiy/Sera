@@ -317,11 +317,43 @@ def concordance(condition: str | None = None, cytokine: str | None = None,
     }
 
 
+# The condition the decision brief anchors on, most→least preferred. Stim48hr is the demo anchor;
+# fall back through the earlier conditions, then to whatever the gene actually has.
+_BRIEF_ANCHOR_ORDER = ("Stim48hr", "Stim8hr", "Rest")
+
+
+def _decision_brief_for(hits: list[dict]) -> dict | None:
+    """Build the decision brief for a gene's anchor condition, serialised to a plain dict.
+
+    Degrades to None (never raises) so a missing provenance artifact or an unexpected verdict shows
+    the frontend's fallback rather than 500-ing the whole gene view. The verdict inside the brief is
+    the code-computed value from the row — this endpoint never recomputes it."""
+    import dataclasses
+
+    from ..core.brief_resolver import resolve_claims, resolve_context, resolve_snapshot
+    from ..core.decision_brief import build_decision_brief
+
+    by_cond = {r["condition"]: r for r in hits}
+    anchor = next((c for c in _BRIEF_ANCHOR_ORDER if c in by_cond), None)
+    if anchor is None:
+        anchor = hits[0]["condition"]
+    row = by_cond[anchor]
+    try:
+        snapshot = resolve_snapshot(row, _PROVENANCE)
+        context = resolve_context(row, _PROVENANCE)
+        claims = resolve_claims(row["gene"], row["cytokine"], anchor, _PROVENANCE)
+        brief = build_decision_brief(snapshot, context, claims)
+        return dataclasses.asdict(brief)
+    except (ValueError, KeyError, AssertionError):
+        return None
+
+
 @app.get("/api/concordance/{gene}")
 def concordance_gene(gene: str, cytokine: str | None = None) -> dict:
     """One gene's verdict across all conditions (for the Single-gene view's condition tabs),
-    plus its dossier enrichment (quality / druggability / disease). `enrichment` is null when
-    the enrichment artifact isn't built — the frontend then shows 'not available', not a fake."""
+    plus its dossier enrichment (quality / druggability / disease) and the anchor-condition
+    decision brief. `enrichment` and `decision_brief` are null when their inputs aren't available —
+    the frontend then shows 'not available' / falls back to its template, never a fake."""
     rows = _require_concordance()
     g = gene.upper()
     hits = [r for r in rows if r["gene"] == g]
@@ -340,7 +372,7 @@ def concordance_gene(gene: str, cytokine: str | None = None) -> dict:
             row["explanation"] = exp["explanation"]
         by_condition[r["condition"]] = row
     return {"gene": g, "cytokine": hits[0]["cytokine"], "by_condition": by_condition,
-            "enrichment": _ENRICHMENT.get(g)}
+            "enrichment": _ENRICHMENT.get(g), "decision_brief": _decision_brief_for(hits)}
 
 
 # How long a single grounded explanation may stream before we give up and fall back to cache.
