@@ -12,6 +12,11 @@ dependencies = [
   "claude-agent-sdk>=0.2.111",
   "fastapi>=0.115",
   "uvicorn>=0.30",
+  # The served app reads the concordance parquet at request time (api/app.py, llm/concord_tools.py),
+  # so pandas + a parquet engine are RUNTIME deps, not just build-time. A clean install without these
+  # boots but 503s on the first gene view — see eval/test_clean_install.py.
+  "pandas>=2.0",
+  "pyarrow>=15.0",
 ]
 
 [project.optional-dependencies]
@@ -39,12 +44,17 @@ target-triage-serve = "target_triage.api.serve:main"
 where = ["."]
 include = ["target_triage*"]
 
-# The screen CSVs and the served frontend are bundled inside the package, so they
-# must ship with an install (they are not .py and would otherwise be dropped).
+# The screen CSVs, the deterministic artifacts (parquet/json/yaml the served app reads at
+# request time), and the served frontend are bundled inside the package, so they must ship with
+# an install — they are not .py and would otherwise be dropped, leaving a clean install that boots
+# but 503s on the first gene view.
 [tool.setuptools.package-data]
 target_triage = [
   "data/**/*.csv",
   "data/**/*.md",
+  "data/**/*.parquet",
+  "data/**/*.json",
+  "data/**/*.yaml",
   "frontend/**/*",
   "clients/*.json",
 ]
