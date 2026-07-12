@@ -11,6 +11,13 @@ __pycache__/
 # Chat run logs (replay spine) — reproducible from a live run, never published.
 runs/
 
+# Persisted chat sessions (runtime data written by api/sessions.py) — per-user,
+# never published. The code that writes them IS committed; their output is not.
+data/sessions/
+
+# Local pre-redesign snapshots of the frontend — safety copies, kept out of git.
+*.bak.html
+
 # Concord pipeline: the 16.8 GB source h5ad (only present if 00_download.py --download
 # was run) is huge and reproducible from public S3 — never commit it. The small extracted
 # parquet under data/artifacts/ IS the served deliverable and is intentionally NOT ignored.
