@@ -322,12 +322,26 @@ def concordance(condition: str | None = None, cytokine: str | None = None,
 _BRIEF_ANCHOR_ORDER = ("Stim48hr", "Stim8hr", "Rest")
 
 
-def _decision_brief_for(hits: list[dict]) -> dict | None:
+def _parse_constraints(readouts: str | None, donors: int | None, days: int | None):
+    """Turn the three optional query params into ExperimentConstraints, or None if none were given.
+
+    `readouts` is a comma-separated closed-enum list (qpcr,elisa,facs,western). An unknown token or a
+    negative count raises ValueError inside ExperimentConstraints — the caller turns that into an
+    explicit 400 rather than silently building an unconstrained brief that would look feasible."""
+    if readouts is None and donors is None and days is None:
+        return None
+    from ..core.decision_brief import ExperimentConstraints
+    ros = tuple(t.strip().lower() for t in (readouts or "").split(",") if t.strip())
+    return ExperimentConstraints(readouts=ros, donors=donors or 0, days=days or 0)
+
+
+def _decision_brief_for(hits: list[dict], constraints=None) -> dict | None:
     """Build the decision brief for a gene's anchor condition, serialised to a plain dict.
 
     Degrades to None (never raises) so a missing provenance artifact or an unexpected verdict shows
     the frontend's fallback rather than 500-ing the whole gene view. The verdict inside the brief is
-    the code-computed value from the row — this endpoint never recomputes it."""
+    the code-computed value from the row — this endpoint never recomputes it. `constraints`, when
+    present, drives feasibility — an infeasible ask is reported as infeasible, never downgraded."""
     import dataclasses
 
     from ..core.brief_resolver import resolve_claims, resolve_context, resolve_snapshot
@@ -342,18 +356,24 @@ def _decision_brief_for(hits: list[dict]) -> dict | None:
         snapshot = resolve_snapshot(row, _PROVENANCE)
         context = resolve_context(row, _PROVENANCE)
         claims = resolve_claims(row["gene"], row["cytokine"], anchor, _PROVENANCE)
-        brief = build_decision_brief(snapshot, context, claims)
+        brief = build_decision_brief(snapshot, context, claims, constraints)
         return dataclasses.asdict(brief)
     except (ValueError, KeyError, AssertionError):
         return None
 
 
 @app.get("/api/concordance/{gene}")
-def concordance_gene(gene: str, cytokine: str | None = None) -> dict:
+def concordance_gene(gene: str, cytokine: str | None = None,
+                     readouts: str | None = None, donors: int | None = None,
+                     days: int | None = None) -> dict:
     """One gene's verdict across all conditions (for the Single-gene view's condition tabs),
     plus its dossier enrichment (quality / druggability / disease) and the anchor-condition
     decision brief. `enrichment` and `decision_brief` are null when their inputs aren't available —
-    the frontend then shows 'not available' / falls back to its template, never a fake."""
+    the frontend then shows 'not available' / falls back to its template, never a fake.
+
+    Optional `readouts` (comma-separated: qpcr,elisa,facs,western), `donors`, and `days` constrain
+    the discriminating experiment; an infeasible set is reported as infeasible in the brief, never
+    silently downgraded. A malformed constraint (unknown readout, negative count) is a 400."""
     rows = _require_concordance()
     g = gene.upper()
     hits = [r for r in rows if r["gene"] == g]
@@ -361,6 +381,10 @@ def concordance_gene(gene: str, cytokine: str | None = None) -> dict:
         hits = [r for r in hits if r["cytokine"] == cytokine.upper()]
     if not hits:
         raise HTTPException(status_code=404, detail=f"{gene} not in the concordance table")
+    try:
+        constraints = _parse_constraints(readouts, donors, days)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     # Attach the grounded explanation (if precomputed) to each condition's row. The frontend
     # prefers it and falls back to its deterministic template when absent.
     by_condition = {}
@@ -372,7 +396,8 @@ def concordance_gene(gene: str, cytokine: str | None = None) -> dict:
             row["explanation"] = exp["explanation"]
         by_condition[r["condition"]] = row
     return {"gene": g, "cytokine": hits[0]["cytokine"], "by_condition": by_condition,
-            "enrichment": _ENRICHMENT.get(g), "decision_brief": _decision_brief_for(hits)}
+            "enrichment": _ENRICHMENT.get(g),
+            "decision_brief": _decision_brief_for(hits, constraints)}
 
 
 # How long a single grounded explanation may stream before we give up and fall back to cache.

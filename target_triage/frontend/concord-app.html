@@ -587,6 +587,20 @@
   .src-list a{color:var(--ink-soft);text-decoration:underline;text-underline-offset:2px}
   .src-list a:hover{color:var(--ink)}
   .src-tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line-strong);border-radius:4px;padding:1px 5px;margin-right:4px}
+  /* Constraints control (Task 4) — closed-enum inputs, code-driven re-plan. */
+  .brief-constraints{border:1px dashed var(--line-strong);border-radius:10px;background:var(--surface);padding:12px 16px;margin-top:16px}
+  .cx-row{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:8px}
+  .cx{font-family:var(--font-serif);font-size:13.5px;color:var(--ink-soft);display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+  .cx input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px}
+  .cx-num{font-family:var(--font-serif);font-size:13.5px;color:var(--ink-soft);display:inline-flex;align-items:center;gap:6px}
+  .cx-num input{width:52px;background:var(--surface-2);border:1px solid var(--line-strong);border-radius:6px;color:var(--ink);padding:4px 6px;font-family:var(--font-mono);font-size:12.5px}
+  .js-conApply{cursor:pointer}
+  .brief-infeasible{border:1px solid var(--line);border-left:4px solid #C4703A;border-radius:10px;background:var(--surface);padding:12px 16px;margin-top:14px}
+  .brief-infeasible .bi-h{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#D0864F;margin-bottom:6px}
+  .brief-adapt{border:1px solid var(--line);border-left:4px solid var(--lock);border-radius:10px;background:var(--surface);padding:12px 16px;margin-top:14px}
+  .brief-adapt .ba-h{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--lock);margin-bottom:6px}
+  .bi-r{margin:0;padding-left:18px;font-family:var(--font-serif);font-size:13.5px;line-height:1.55;color:var(--ink-soft)}
+  .bi-r li{margin:2px 0}
 
   .hidden{display:none}
   :focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
@@ -2131,8 +2145,21 @@ ZNF250</div>
     var qcCard=q(turn,"js-pQc"); if(qcCard){ var pk=qcCard.parentNode.querySelector(".pk"); if(pk) pk.textContent="Competing explanations"; }
     qcCard.style.whiteSpace="pre-line";
 
-    // --- 5. outcome matrix + 6. sources (appended after the plan body) ---
+    // --- constraints bar + feasibility banner (Task 4: the adaptive money shot) ---
     var body=turn.querySelector(".reply-body")||turn;
+    var con=(b && b.__constraints)||null;   // echo the active constraints on re-render
+    var constraintsBar=briefConstraintsHTML(con);
+    // Feasibility banner: shown only when constraints made the ask infeasible.
+    var feasBanner="";
+    if(b.feasible===false && (b.unmet_requirements||[]).length){
+      var unmet=(b.unmet_requirements||[]).map(function(u){return '<li>'+esc(u)+'</li>';}).join("");
+      feasBanner='<div class="brief-infeasible"><div class="bi-h">This plan can’t resolve the disagreement as specified</div><ul class="bi-r">'+unmet+'</ul></div>';
+    } else if(con && (b.adaptations||[]).length){
+      feasBanner='<div class="brief-adapt"><div class="ba-h">Adapted to your constraints</div><ul class="bi-r">'+
+        (b.adaptations||[]).map(function(a){return '<li>'+esc(a)+'</li>';}).join("")+'</ul></div>';
+    }
+
+    // --- 5. outcome matrix + 6. sources (appended after the plan body) ---
     var extra=document.createElement("div");
     extra.className="brief-extra";
     var rows=(b.outcome_matrix||[]).map(function(o){
@@ -2145,13 +2172,51 @@ ZNF250</div>
       return '<li><span class="src-tag">background</span> <a href="'+url+'" target="_blank" rel="noopener">'+esc(c.title)+'</a> · PMID '+esc(c.accession)+'</li>';
     }).join("");
     var sources=cites?('<div class="be-h">Sources <span class="be-note">(background for a hypothesis, not verdict support)</span></div><ul class="src-list">'+cites+'</ul>'):'';
-    extra.innerHTML=matrix+sources;
-    if(matrix||sources) body.appendChild(extra);
+    extra.innerHTML=constraintsBar+feasBanner+matrix+sources;
+    body.appendChild(extra);
 
     thread.appendChild(frag);
     var added=thread.lastElementChild;
     wirePlanExports(added, gene);
+    wireBriefConstraints(added, gene, customMsg);
     scrollToTurn(added);
+  }
+
+  // The three-input constraints control: what can you measure, how many donors, how long. Closed
+  // enums / ints only — the same set the endpoint validates. Pre-checks the active constraints on
+  // re-render so the control reflects the current ask.
+  function briefConstraintsHTML(con){
+    var ro=(con&&con.readouts)||["qpcr","facs"];
+    function chk(id,label){ return '<label class="cx"><input type="checkbox" data-ro="'+id+'"'+(ro.indexOf(id)>=0?" checked":"")+'> '+label+'</label>'; }
+    return '<div class="brief-constraints"><div class="be-h">Tune to your bench — what can you actually run?</div>'+
+      '<div class="cx-row">'+chk("qpcr","qPCR (transcript)")+chk("elisa","ELISA")+chk("facs","FACS")+chk("western","Western")+'</div>'+
+      '<div class="cx-row"><span class="cx-num">Donors <input type="number" class="js-conDonors" min="1" max="12" value="'+((con&&con.donors)||3)+'"></span>'+
+      '<span class="cx-num">Days <input type="number" class="js-conDays" min="1" max="60" value="'+((con&&con.days)||7)+'"></span>'+
+      '<button class="fchip js-conApply">Re-plan</button></div></div>';
+  }
+
+  // Wire the constraints control: on Re-plan, fetch the brief WITH constraints and re-render the
+  // turn in place. The recommendation visibly changes (or is marked infeasible) — code-driven, the
+  // scientist only picks from the closed set.
+  function wireBriefConstraints(turn, gene, customMsg){
+    var apply=turn.querySelector(".js-conApply"); if(!apply) return;
+    apply.addEventListener("click", async function(){
+      var readouts=Array.prototype.map.call(turn.querySelectorAll('[data-ro]:checked'),function(c){return c.dataset.ro;});
+      var donors=parseInt((turn.querySelector(".js-conDonors")||{}).value,10)||0;
+      var days=parseInt((turn.querySelector(".js-conDays")||{}).value,10)||0;
+      var qs="readouts="+encodeURIComponent(readouts.join(","))+"&donors="+donors+"&days="+days;
+      apply.disabled=true; apply.textContent="Re-planning…";
+      try{
+        var r=await fetch("api/concordance/"+encodeURIComponent(gene)+"?"+qs);
+        var d=r.ok?await r.json():null;
+        var nb=d?(d.decision_brief||null):null;
+        if(nb){
+          nb.__constraints={readouts:readouts,donors:donors,days:days};   // echo for the control state
+          turn.remove();                                                  // replace this turn in place
+          appendPlanTurn(gene, d.by_condition||{}, customMsg, nb);
+        }else{ apply.disabled=false; apply.textContent="Re-plan"; }
+      }catch(e){ apply.disabled=false; apply.textContent="Re-plan"; }
+    });
   }
 
   // ---- hit-list (batch) reconciliation ----

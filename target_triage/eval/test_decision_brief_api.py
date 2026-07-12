@@ -116,3 +116,43 @@ def test_brief_is_json_serialisable_over_the_wire():
         assert isinstance(b["explanations"], list)
         assert isinstance(b["outcome_matrix"], list) and b["outcome_matrix"]
         assert isinstance(b["experiment"], dict)
+
+
+# --- constraints over the wire (Task 4) ------------------------------------------------------
+
+def test_elisa_only_constraint_is_reported_infeasible():
+    with TestClient(app) as client:
+        b = client.get("/api/concordance/TSC1?readouts=elisa&donors=3&days=5").json()["decision_brief"]
+        assert b["feasible"] is False
+        assert any("transcript" in u.lower() for u in b["unmet_requirements"])
+        # still the same code-computed verdict — constraints never touch it
+        assert b["snapshot"]["verdict"] == "discordant"
+
+
+def test_too_few_donors_constraint_is_infeasible():
+    with TestClient(app) as client:
+        b = client.get("/api/concordance/TSC1?readouts=qpcr,facs&donors=1&days=5").json()["decision_brief"]
+        assert b["feasible"] is False
+        assert any("donor" in u.lower() for u in b["unmet_requirements"])
+
+
+def test_valid_constraints_are_feasible_and_respected():
+    with TestClient(app) as client:
+        b = client.get("/api/concordance/TSC1?readouts=qpcr,facs&donors=4&days=7").json()["decision_brief"]
+        assert b["feasible"] is True
+        assert not b["unmet_requirements"]
+        ro = " ".join(b["experiment"]["readouts"]).lower()
+        assert "qpcr" in ro and "facs" in ro
+
+
+def test_short_window_drops_timecourse_and_says_so():
+    with TestClient(app) as client:
+        b = client.get("/api/concordance/TSC1?readouts=qpcr,facs&donors=3&days=2").json()["decision_brief"]
+        assert b["experiment"]["timecourse"] is None
+        assert any("timepoint" in a.lower() or "window" in a.lower() for a in b["adaptations"])
+
+
+def test_unknown_readout_token_is_a_400():
+    with TestClient(app) as client:
+        r = client.get("/api/concordance/TSC1?readouts=bogus&donors=3&days=5")
+        assert r.status_code == 400
