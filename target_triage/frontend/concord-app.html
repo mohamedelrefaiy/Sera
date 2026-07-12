@@ -44,9 +44,15 @@
   *{box-sizing:border-box}
   /* The body default is the SERIF — because the page is mostly the agent's written reply, and the
      reply is the product. UI chrome (nav, composer, chips) opts into the sans via --font-ui. */
+  html{background:var(--bg);scroll-behavior:smooth}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-serif);
     font-size:var(--t-body);line-height:1.55;-webkit-font-smoothing:antialiased;
-    text-rendering:optimizeLegibility;padding:0;height:100vh;overflow:hidden}
+    text-rendering:optimizeLegibility;padding:0;height:100dvh;overflow:hidden}
+  button,input{font:inherit}
+  button{touch-action:manipulation}
+  .skip-link{position:fixed;z-index:20;top:10px;left:10px;transform:translateY(-160%);padding:9px 13px;
+    border-radius:6px;background:var(--ink);color:var(--bg);font:600 13px/1 var(--font-ui);text-decoration:none}
+  .skip-link:focus{transform:none}
   .shell{max-width:820px;margin:0 auto}
   .mono{font-family:var(--font-mono)}
   h1,h2,h3{font-family:var(--font-serif);letter-spacing:-.005em;margin:0}
@@ -56,7 +62,7 @@
   /* ── Claude Science 3-pane shell ──────────────────────────────────────────────────────
      left nav · center conversation · right artifacts. Full-height, no page scroll; each
      pane scrolls independently. */
-  .workspace{display:grid;grid-template-columns:232px minmax(0,1fr) 400px;height:100vh}
+  .workspace{display:grid;grid-template-columns:232px minmax(0,1fr) 400px;height:100dvh}
   @media(max-width:1100px){.workspace{grid-template-columns:64px minmax(0,1fr) 340px}}
   @media(max-width:860px){.workspace{grid-template-columns:1fr}}
   /* Artifacts collapsed: drop the third column and hide the rail; the thread reclaims the width. */
@@ -84,22 +90,24 @@
   .newchat svg{width:15px;height:15px;stroke:currentColor;flex-shrink:0}
   .sessions{display:flex;flex-direction:column;gap:1px;overflow-y:auto;min-height:0;flex:1}
   .sessions-empty{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);padding:6px 10px}
-  .session{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:13px;
-    color:var(--ink-soft);cursor:pointer;transition:.12s;border:none;background:transparent;text-align:left;width:100%}
+  .session{display:flex;align-items:center;gap:4px;border-radius:8px;font-size:13px;color:var(--ink-soft);
+    transition:.18s ease;background:transparent;width:100%;padding:0 4px 0 0}
+  .session-open{display:flex;align-items:center;min-width:0;flex:1;padding:7px 6px 7px 10px;border:0;
+    background:transparent;color:inherit;text-align:left;cursor:pointer}
   .session:hover{background:var(--surface-2);color:var(--ink)}
   .session.on{background:var(--surface-2);color:var(--ink)}
   .session .s-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-ui)}
-  .session .s-del{flex:none;width:20px;height:20px;border-radius:5px;border:none;background:transparent;
-    color:var(--ink-faint);cursor:pointer;display:none;align-items:center;justify-content:center}
-  .session:hover .s-del{display:flex}
+  .session .s-del{flex:none;width:26px;height:26px;border-radius:5px;border:none;background:transparent;
+    color:var(--ink-faint);cursor:pointer;display:flex;opacity:0;align-items:center;justify-content:center;transition:.18s ease}
+  .session:hover .s-del,.session:focus-within .s-del{opacity:1}
   .session .s-del:hover{background:var(--line);color:var(--ink)}
   .session .s-del svg{width:13px;height:13px;stroke:currentColor}
   @media(max-width:1100px){.sessions,.sessions-empty,.newchat .lbl{display:none}}
-  .nav-foot{margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+  .nav-foot{display:none}
   @media(max-width:1100px){.nav .lbl,.nav-sec,.nav-top small{display:none}.nav-top .txt{display:none}}
 
   /* center conversation column */
-  .convo{display:flex;flex-direction:column;min-width:0;height:100vh;background:var(--bg)}
+  .convo{display:flex;flex-direction:column;min-width:0;height:100dvh;background:var(--bg)}
   .convo-head{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--line);flex-shrink:0}
   .convo-head .title{font-family:var(--font-display);font-weight:500;font-size:15px}
   .convo-head .crumb{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint)}
@@ -123,7 +131,7 @@
   .cchip.on{background:var(--surface-2);border-color:var(--line-strong);color:var(--ink)}
 
   /* right artifacts panel */
-  .arts{background:var(--sidebar);border-left:1px solid var(--line);display:flex;flex-direction:column;min-width:0;height:100vh}
+  .arts{background:var(--sidebar);border-left:1px solid var(--line);display:flex;flex-direction:column;min-width:0;height:100dvh}
   @media(max-width:860px){.arts{display:none}}
   .arts-head{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line);flex-shrink:0}
   .arts-head .h{font-family:var(--font-display);font-weight:500;font-size:14px;display:flex;align-items:center;gap:8px}
@@ -183,12 +191,12 @@
 
   .thread{display:flex;flex-direction:column}
   .turn{max-width:680px;margin:0 auto;width:100%;padding:22px 0}
-  .turn+.turn{border-top:1px solid var(--line)}
+  .turn+.turn{border-top:0}
   .turn:first-child{padding-top:8px}
   .reply-turn.user-row{justify-content:flex-end;margin-bottom:18px}
   .reply-turn.user-row .user-msg{max-width:70%}
   /* follow-up chips — ask the agent for the plan / known-biology check, appended as a new turn */
-  .followups{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px;padding-top:16px;border-top:1px dashed var(--line)}
+  .followups{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;padding-top:0;border-top:0}
   .fchip{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-ui);font-size:13px;
     color:var(--ink-soft);background:var(--surface);border:1px solid var(--line-strong);border-radius:9px;
     padding:8px 13px;cursor:pointer;transition:.12s}
@@ -249,25 +257,30 @@
 
   /* agent activity — the MACHINE voice: what the agent decided and did, inline, before the prose.
      Mono, muted, a hairline left rail so it reads as the work-log behind the narration. */
-  .agent-activity{font-family:var(--font-mono);font-size:11.5px;line-height:1.5;color:var(--ink-faint);
-    border-left:2px solid var(--line);padding:2px 0 2px 12px;margin-bottom:13px;display:flex;
-    flex-direction:column;gap:5px}
-  .agent-activity .act{display:flex;align-items:baseline;gap:8px}
-  .agent-activity .act .adot{width:5px;height:5px;border-radius:50%;background:var(--ink-faint);flex:none;
+  .agent-activity{font-family:var(--font-ui);font-size:12.5px;line-height:1.5;color:var(--ink-faint);
+    border:0;padding:0;margin:1px 0 14px;display:block}
+  .agent-activity .act{display:flex;align-items:baseline;gap:9px;padding-left:22px}
+  .agent-activity .act .adot{width:4px;height:4px;border-radius:50%;background:var(--ink-faint);flex:none;
     transform:translateY(-1px)}
   .agent-activity .act.running .adot{background:var(--mrna);animation:apulse 1s ease-in-out infinite}
   .agent-activity .act.done .adot{background:var(--line-strong)}
   .agent-activity .act.verdict .adot{background:var(--accent)}
   .agent-activity .act .ak{color:var(--ink-soft)}
-  .agent-activity summary{list-style:none;display:flex;align-items:center;gap:9px;cursor:pointer;
-    color:var(--ink-soft);user-select:none}
+  .agent-activity summary{list-style:none;display:flex;align-items:center;gap:7px;cursor:pointer;
+    min-height:26px;color:var(--ink-soft);user-select:none;width:max-content;max-width:100%}
   .agent-activity summary::-webkit-details-marker{display:none}
-  .agent-activity summary::before{content:"›";font-size:15px;line-height:1;color:var(--ink-faint);
+  .agent-activity summary::before{content:"›";font-size:16px;line-height:1;color:var(--ink-faint);
     transform:rotate(0);transition:transform .18s ease}
   .agent-activity[open] summary::before{transform:rotate(90deg)}
-  .activity-title{font-family:var(--font-ui);font-size:12px;font-weight:600;color:var(--ink-soft)}
-  .activity-status{margin-left:auto;font-size:10px;letter-spacing:.04em;color:var(--ink-faint)}
-  .activity-steps{display:flex;flex-direction:column;gap:5px;padding-top:9px}
+  .activity-title{font-family:var(--font-ui);font-size:12.5px;font-weight:500;color:var(--ink-soft)}
+  .activity-status{font-family:var(--font-mono);font-size:10px;letter-spacing:.03em;color:var(--ink-faint)}
+  .activity-steps{display:flex;flex-direction:column;gap:5px;padding:5px 0 4px}
+  .inline-evidence{width:100%;max-width:none;margin:24px 0 0;padding:0}
+  .inline-evidence::before{content:"Supporting evidence";display:block;margin-bottom:12px;font:500 12px/1.4 var(--font-ui);color:var(--ink-faint)}
+  .inline-evidence>.reply-turn.agent{display:block}
+  .inline-evidence>.reply-turn.agent>.ava{display:none}
+  .inline-evidence .reply-body{width:100%}
+  .inline-evidence .js-proseOpen{display:none}
   @keyframes apulse{0%,100%{opacity:.4}50%{opacity:1}}
   .agent-facet{margin-top:16px;max-width:540px}
 
@@ -610,10 +623,10 @@
      Product chrome is quiet and architectural; colour belongs to measured data. Serif is
      reserved for interpretation, giving the assay evidence and the UI distinct voices. */
   :root{
-    --bg:#101519;--sidebar:#0C1115;--surface:#171D22;--surface-2:#1D252B;
-    --ink:#F0F3F2;--ink-soft:#AEB9B8;--ink-faint:#72807F;
-    --line:#263137;--line-strong:#36454B;--prov:#304047;
-    --accent:#4BAF9B;--shadow:0 18px 48px -28px rgba(0,12,18,.9);
+    --bg:#0F1518;--sidebar:#0A1013;--surface:#172025;--surface-2:#1D292E;
+    --ink:#F3F6F4;--ink-soft:#B8C3C0;--ink-faint:#7F8E8B;
+    --line:#26343A;--line-strong:#3A4C52;--prov:#304047;
+    --accent:#58BCA8;--shadow:0 18px 48px -28px rgba(0,12,18,.9);
     --radius:10px;
   }
   body{font-family:var(--font-ui);font-size:14px;line-height:1.55;background:var(--bg)}
@@ -628,7 +641,7 @@
   .newchat{margin:5px 0 8px;border-color:var(--line)!important;background:var(--surface)!important}
   .nav-sec{padding-top:18px;color:#687776}
 
-  .convo{background:radial-gradient(circle at 50% 0,rgba(70,116,111,.07),transparent 30%),var(--bg)}
+  .convo{background:radial-gradient(circle at 52% -10%,rgba(88,188,168,.09),transparent 34%),var(--bg)}
   .convo-head{min-height:64px;padding:0 30px;background:rgba(16,21,25,.92);border-bottom-color:var(--line)}
   .convo-head .title{font-family:var(--font-ui);font-size:14px;font-weight:600;letter-spacing:-.005em}
   .convo-head .crumb{font-family:var(--font-ui);font-size:12px;color:var(--ink-faint)}
@@ -649,12 +662,11 @@
   .cond-inline button{border-radius:5px!important}
   .prose{font-family:var(--font-serif);font-size:17px;line-height:1.7;color:#DCE2DF;max-width:66ch}
 
-  .agent-activity{margin:2px 0 20px;padding:10px 14px;border:1px solid var(--line);border-left:2px solid var(--accent);
-    border-radius:0 7px 7px 0;background:rgba(23,29,34,.62);font-size:10.5px;gap:4px}
+  .agent-activity{margin:1px 0 14px;padding:0;border:0;border-radius:0;background:transparent;font-size:12.5px}
   .agent-activity .act.done{display:flex}
   .agent-activity .act.verdict{color:var(--ink-soft)}
   .agent-activity{display:block}
-  .agent-activity[open]{background:rgba(23,29,34,.82)}
+  .agent-activity[open]{background:transparent}
   .fig{margin:28px 0;width:100%}
   .fig-frame{width:100%;max-width:none;background:#131A1E;border-color:var(--line-strong);border-radius:9px;box-shadow:var(--shadow)}
   .fig-eyebrow{padding:15px 18px 8px;color:var(--ink-faint);letter-spacing:.1em}
@@ -665,7 +677,7 @@
   .foot,.srcline{color:var(--ink-faint)}
   .dossier{gap:10px}
   .card.soft{background:var(--surface);border-color:var(--line);border-radius:8px}
-  .followups{border-top-style:solid}
+  .followups{border-top:0}
   .fchip,.cchip{border-radius:6px;background:transparent}
 
   .composer{padding:12px 34px 18px;background:rgba(16,21,25,.96);border-top-color:var(--line)}
@@ -684,7 +696,11 @@
   .landing-h{max-width:18ch;font-size:42px;line-height:1.08;letter-spacing:-.025em;text-wrap:balance}
   .landing-sub{margin:0 0 34px;max-width:60ch;font-size:17px;line-height:1.65}
   .landing-prompts{gap:10px}
-  .lprompt{border-radius:8px;padding:16px 17px;background:rgba(23,29,34,.75)}
+  .lprompt{position:relative;border-radius:8px;padding:16px 17px;background:rgba(23,32,37,.78);overflow:hidden}
+  .lprompt::after{content:"\2197";position:absolute;right:14px;top:12px;color:var(--ink-faint);font:14px var(--font-ui);
+    opacity:0;transform:translate(-3px,3px);transition:.2s ease}
+  .lprompt:hover{transform:translateY(-2px);box-shadow:0 16px 34px -28px rgba(0,0,0,.95)}
+  .lprompt:hover::after{opacity:1;transform:none}
   .lprompt-hero{border-color:var(--line-strong);box-shadow:inset 3px 0 0 var(--accent)}
   .lprompt-hero .lp-k,.lprompt .lp-ex{color:var(--mrna)}
   .reply-body{width:100%}
@@ -692,9 +708,20 @@
   .agent-facet,.js-facetCard{max-width:100%!important;width:100%}
   .chain{max-width:100%}
 
-  @media(max-width:1280px){.workspace{grid-template-columns:220px minmax(0,1fr)}.arts{display:none}}
+  @media(max-width:1280px){.workspace{grid-template-columns:220px minmax(0,1fr)}.arts{display:none}.arts-toggle{display:none}}
   @media(max-width:940px){.workspace{grid-template-columns:64px minmax(0,1fr)}.convo-context{display:none}}
-  @media(max-width:700px){.workspace{grid-template-columns:1fr}.nav{display:none}.convo-scroll,.composer{padding-left:18px;padding-right:18px}.landing-h{font-size:34px}}
+  @media(max-width:700px){
+    .workspace{grid-template-columns:1fr;grid-template-rows:58px minmax(0,1fr)}
+    .nav{display:flex;flex-direction:row;align-items:center;padding:8px 12px;border-right:0;border-bottom:1px solid var(--line);gap:6px}
+    .nav-top{min-height:0;height:40px;margin:0 auto 0 0;padding:0 8px;border:0}.nav-top .txt{display:flex}.nav-top small{display:none}
+    .newchat{width:40px;margin:0!important;padding:0!important;justify-content:center}.newchat .lbl{display:none}
+    .modes{display:flex!important}.modes .nav-item{width:auto;min-height:40px;padding:8px 11px}.modes .lbl{display:inline}
+    .sessions,.nav-sec,.nav-foot{display:none}.convo{height:calc(100dvh - 58px)}
+    .convo-head{min-height:52px;padding:0 18px}.convo-scroll,.composer{padding-left:18px;padding-right:18px}
+    .landing{padding-top:7vh}.landing-h{font-size:34px}.composer-chips{overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px}
+    .cchip{flex:none}.reply-turn.user-row .user-msg{max-width:86%}
+  }
+  @media(max-width:420px){.nav-top .txt{font-size:13px}.modes .nav-item{padding:8px}.modes .lbl{display:none}.landing-h{font-size:30px}}
 
   /* print: a clean one-page validation plan (the ELN/PDF export — the handoff artifact). The app
      is dark on screen; on paper it must be black-on-white. Force light surfaces, keep the serif/mono
@@ -717,13 +744,14 @@
 </style>
 </head>
 <body>
+<a class="skip-link" href="#mainContent">Skip to main content</a>
 <div class="workspace">
 
   <!-- LEFT NAV — one primary surface (Chat) + a secondary Hit-list tool. Validation plan and
        Known biology are no longer destinations; they're produced inside the thread on request. -->
   <nav class="nav" aria-label="Workspace">
     <div class="nav-top"><span class="merge"><i class="g"></i><i class="m"></i></span><span class="txt">Concord <small style="color:var(--ink-faint);font-family:var(--font-mono);font-size:10px">mRNA × protein</small></span></div>
-    <button class="nav-item newchat" id="newChat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">New chat</span></button>
+    <button class="nav-item newchat" id="newChat" aria-label="New chat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">New chat</span></button>
     <div class="modes" role="tablist" style="display:contents">
       <button class="nav-item mode on" id="mChat" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="lbl">Chat</span></button>
       <button class="nav-item mode" id="mBatch" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="lbl">Hit list</span></button>
@@ -736,7 +764,7 @@
   </nav>
 
   <!-- CENTER CONVERSATION -->
-  <div class="convo">
+  <main class="convo" id="mainContent">
     <div class="convo-head">
       <span class="title" id="convoTitle">Chat</span>
       <span class="crumb" id="urlPath">gene/ITK</span>
@@ -1003,7 +1031,7 @@ ZNF250</div>
           <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
           <div class="reply-body">
             <details class="agent-activity js-activity" open hidden>
-              <summary><span class="activity-title">Agent activity</span><span class="activity-status">Working</span></summary>
+              <summary><span class="activity-title">Working</span><span class="activity-status"></span></summary>
               <div class="activity-steps"></div>
             </details>
             <p class="prose js-answerText"></p>
@@ -1027,7 +1055,7 @@ ZNF250</div>
       </div>
       <div class="composer-hint">the verdict is deterministic · the agents narrate and cite, they don't decide</div>
     </div>
-  </div><!-- /convo -->
+  </main><!-- /convo -->
 
   <!-- RIGHT ARTIFACTS PANEL — collapsible (toggled from the convo header). -->
   <aside class="arts" id="artsPanel" aria-label="Artifacts">
@@ -1139,17 +1167,16 @@ ZNF250</div>
     var list=[];
     try{ var r=await fetch("api/sessions"); if(r.ok){ list=(await r.json()).sessions||[]; } }catch(e){}
     if(!list.length){ box.innerHTML='<div class="sessions-empty" id="sessionsEmpty">No chats yet</div>'; return; }
-    box.innerHTML=list.map(function(s){
+    box.innerHTML=list.slice(0,24).map(function(s){
       var on=currentSession&&currentSession.id===s.id;
-      return '<button class="session'+(on?" on":"")+'" data-sid="'+esc(s.id)+'" title="'+esc(s.title)+'">'
-        +'<span class="s-title">'+esc(s.title||"New chat")+'</span>'
-        +'<span class="s-del" data-del="'+esc(s.id)+'" role="button" aria-label="Delete chat">'
+      return '<div class="session'+(on?" on":"")+'">'
+        +'<button class="session-open" data-sid="'+esc(s.id)+'" title="'+esc(s.title)+'"><span class="s-title">'+esc(s.title||"New chat")+'</span></button>'
+        +'<button class="s-del" data-del="'+esc(s.id)+'" aria-label="Delete '+esc(s.title||"chat")+'">'
         +'<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>'
-        +'</span></button>';
+        +'</button></div>';
     }).join("");
-    box.querySelectorAll(".session").forEach(function(b){
-      b.addEventListener("click",function(e){
-        if(e.target.closest("[data-del]")) return;   // delete handled below
+    box.querySelectorAll(".session-open").forEach(function(b){
+      b.addEventListener("click",function(){
         openSession(b.dataset.sid);
       });
     });
@@ -1787,8 +1814,10 @@ ZNF250</div>
   function settleActivity(container){
     if(!container) return;
     var rows=container.querySelectorAll(".act");
+    var title=container.querySelector(".activity-title");
     var status=container.querySelector(".activity-status");
-    if(status) status.textContent=rows.length+" step"+(rows.length===1?"":"s")+" complete";
+    if(title) title.textContent="Worked";
+    if(status) status.textContent=rows.length+" step"+(rows.length===1?"":"s");
     container.open=false;
   }
 
@@ -1814,7 +1843,7 @@ ZNF250</div>
     var added=thread.lastElementChild;
     var el=q(added,"js-answerText");
     el.classList.add("streaming");
-    el.textContent="Thinking…";
+    el.textContent="";
     scrollToTurn(added);
 
     var actEl=q(added,"js-activity");
@@ -1847,24 +1876,11 @@ ZNF250</div>
             act(actEl,"tool",null,"done");
             var _vaction=ev.update && ev.update.action;
             if(_vaction==="reconcile" || _vaction==="compare"){
-              // RECONCILE / COMPARE: the figure (or trajectory strip) is a single clear visual — show
-              // it FIRST, then narrate it (the "agent building the answer" beat). Render the visual
-              // turn, mark the trace, and relocate the streaming narration into a bubble AFTER it.
-              var g=await applyAgentView(ev.update, text, el.parentElement); if(g) renderedGene=g;
-              if(_vaction==="reconcile"){
-                var vd=verdictOf(renderedGene);
-                if(vd) act(actEl,"verdict","verdict computed by code → "+vd,"verdict");
-              } else {
-                act(actEl,"compare","verdict per condition, in time order","verdict");
-              }
-              var figTurn=thread.lastElementChild;
-              if(figTurn && figTurn!==added){
-                var narrWrap=document.createElement("div");
-                narrWrap.className="turn narr-after";
-                narrWrap.innerHTML='<div class="reply-turn agent"><div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div><div class="reply-body"></div></div>';
-                narrWrap.querySelector(".reply-body").appendChild(el);   // move the streaming <p> here
-                figTurn.after(narrWrap);
-              }
+              // Match a Codex-style response: finish the explanation first, then attach the
+              // deterministic figure as supporting evidence inside this same agent turn.
+              pendingView=ev.update;
+              if(_vaction==="reconcile") act(actEl,"verdict","computing the deterministic verdict","running");
+              else act(actEl,"compare","comparing verdicts across conditions","running");
             } else {
               // EVIDENCE / KNOWN_BIOLOGY: the panel is a DENSE data block — the user must READ the
               // explanation FIRST to know what they're looking at. So DEFER the panel: stash it and
@@ -1894,6 +1910,17 @@ ZNF250</div>
     // data below it (narration-first, per the dense-panel UX).
     if(pendingView){
       var pg=await applyAgentView(pendingView, text, el.parentElement); if(pg) renderedGene=pg;
+      if(pendingView.action==="reconcile" || pendingView.action==="compare"){
+        var evidenceTurn=thread.lastElementChild;
+        if(evidenceTurn && evidenceTurn!==added){
+          evidenceTurn.classList.add("inline-evidence");
+          el.parentElement.appendChild(evidenceTurn);
+        }
+        if(pendingView.action==="reconcile"){
+          var vd=verdictOf(renderedGene);
+          act(actEl,"verdict",vd?("verdict computed by code → "+vd):null,"verdict");
+        } else act(actEl,"compare","verdict per condition, in time order","verdict");
+      }
     }
     settleActivity(actEl);
     scrollToTurn(added);
