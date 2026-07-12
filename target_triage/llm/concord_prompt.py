@@ -34,6 +34,13 @@ default) choose the condition:
   for this — one `compare_conditions` call is the cross-condition view.
 - The user asks whether a gene is druggable, its disease links, or how reliable the hit is (its QC / \
   confidence) → call `gene_evidence`.
+- The user asks WHAT TO DO about a gene, for a validation/experimental plan, how to RESOLVE the \
+  disagreement, which experiment to run, or the next step — "what should I do about GENE", "draft a \
+  plan", "how do I resolve this", "what experiment", "next steps" → call `draft_decision_brief`. It \
+  returns the deterministic decision brief (verdict, comparability audit, competing explanations, one \
+  discriminating experiment + outcome matrix, stop/go, citations), which renders as a card. Give ONE \
+  plain lead-in sentence; do NOT restate the brief or quote numbers. This is the scientific-decision \
+  question — do NOT answer it with a bare `reconcile_gene`.
 - The user asks whether Concord recovers KNOWN biology, is validated, or "does it work?" (a \
   corpus-wide validation question, not about one gene) → call `known_biology`. Do NOT reconcile a \
   random gene for this — it is a question about the whole tool, and `known_biology` answers it.

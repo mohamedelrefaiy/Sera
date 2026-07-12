@@ -158,3 +158,34 @@ def test_prompt_routes_time_course_questions_to_compare():
 def test_prompt_lets_reconcile_take_a_named_condition():
     p = concord_prompt.CONCORD_SYSTEM_PROMPT.lower()
     assert "condition" in p, "prompt never tells the agent it can pass a condition to reconcile_gene"
+
+
+# ── 4. decision-brief tool (the 'what should I do' path) ─────────────────────────────────
+
+
+def test_draft_decision_brief_emits_a_plan_view_with_the_whole_brief():
+    """'What should I do about TSC1' must reach the decision brief, not a bare reconcile. The tool
+    ships the whole brief in the view_update so the browser renders without a second fetch."""
+    out = _run(concord_tools.draft_decision_brief.handler({"gene": _GENE}))
+    vu = _view(out)
+    assert vu["action"] == "plan" and vu["gene"] == _GENE
+    b = vu["decision_brief"]
+    assert b["snapshot"]["verdict"] == "discordant"          # code-computed, carried through
+    assert b["comparability"] == "partially_comparable"
+    assert b["citations"] and all(c["supports"] == "mtor_background" for c in b["citations"])
+
+
+def test_draft_decision_brief_never_fabricates_for_an_unknown_gene():
+    out = _run(concord_tools.draft_decision_brief.handler({"gene": "NOTAGENE12345"}))
+    payload = _payload(out)
+    assert "__view_update__" not in payload, "an unknown gene must not produce a plan view"
+    assert payload.get("error"), "an unknown gene must return an honest error"
+
+
+def test_draft_decision_brief_is_registered_and_prompt_routes_to_it():
+    assert "mcp__concord__draft_decision_brief" in concord_tools.CONCORD_ALLOWED_TOOLS
+    p = concord_prompt.CONCORD_SYSTEM_PROMPT.lower()
+    assert "draft_decision_brief" in p, "prompt never mentions the decision-brief tool"
+    assert any(k in p for k in ("what should i do", "validation", "resolve the disagreement",
+                                "what experiment", "next step")), \
+        "prompt has no decision-brief trigger language"

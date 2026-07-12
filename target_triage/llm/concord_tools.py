@@ -27,6 +27,7 @@ _ARTIFACTS = os.path.join(os.path.dirname(_HERE), "data", "artifacts")
 _CONCORDANCE_PARQUET = os.path.join(_ARTIFACTS, "concordance.parquet")
 _ENRICHMENT_JSON = os.path.join(_ARTIFACTS, "enrichment.json")
 _GROUND_TRUTH_JSON = os.path.join(_ARTIFACTS, "ground_truth.json")
+_PROVENANCE_JSON = os.path.join(_ARTIFACTS, "provenance.json")
 
 
 def _load_concordance() -> list[dict]:
@@ -68,9 +69,17 @@ def _load_ground_truth() -> dict:
         return json.load(fh)
 
 
+def _load_provenance() -> dict:
+    if not os.path.exists(_PROVENANCE_JSON):
+        return {}
+    with open(_PROVENANCE_JSON) as fh:
+        return json.load(fh)
+
+
 _CONCORDANCE = _load_concordance()
 _ENRICHMENT = _load_enrichment()
 _GROUND_TRUTH = _load_ground_truth()
+_PROVENANCE = _load_provenance()
 _GENES = {r["gene"] for r in _CONCORDANCE}          # the ONLY genes a tool may resolve
 _BY_GENE: dict[str, list[dict]] = {}
 for _r in _CONCORDANCE:
@@ -312,12 +321,69 @@ async def known_biology(args):
     )
 
 
+_BRIEF_ANCHOR_ORDER = ("Stim48hr", "Stim8hr", "Rest")
+
+
+@tool(
+    "draft_decision_brief",
+    "Answer the SCIENTIFIC-DECISION question for ONE gene: given the screen disagreement, what do "
+    "we still not know, and which feasible experiment resolves it? Call this for 'what should I do "
+    "about GENE', 'draft/design a validation plan', 'how do I resolve this', 'what experiment', "
+    "'next steps for GENE'. Returns the deterministic decision brief — the code-computed verdict, a "
+    "comparability audit, competing explanations (a closed set, not invented), one discriminating "
+    "experiment with its expected-outcome matrix, a stop/go decision, and background citations. You "
+    "narrate a one-line lead-in; the brief itself renders as a structured card. Do NOT restate the "
+    "brief's contents or quote raw statistics.",
+    {
+        "type": "object",
+        "properties": {
+            "gene": {"type": "string", "description": "Gene symbol, e.g. TSC1."},
+        },
+        "required": ["gene"],
+    },
+)
+async def draft_decision_brief(args):
+    import dataclasses
+
+    from ..core.brief_resolver import resolve_claims, resolve_context, resolve_snapshot
+    from ..core.decision_brief import build_decision_brief
+
+    gene = (args.get("gene") or "").strip().upper()
+    hits = _BY_GENE.get(gene)
+    if not hits:
+        return _text({"gene": gene, "error": "not in the screens",
+                      "note": "Only genes present in both CRISPR screens can be reconciled."})
+    by_cond = {r["condition"]: r for r in hits}
+    anchor = next((c for c in _BRIEF_ANCHOR_ORDER if c in by_cond), hits[0]["condition"])
+    row = by_cond[anchor]
+    try:
+        snapshot = resolve_snapshot(row, _PROVENANCE)
+        context = resolve_context(row, _PROVENANCE)
+        claims = resolve_claims(row["gene"], row["cytokine"], anchor, _PROVENANCE)
+        brief = dataclasses.asdict(build_decision_brief(snapshot, context, claims))
+    except (ValueError, KeyError, AssertionError) as e:
+        return _text({"gene": gene, "error": "could not build a decision brief",
+                      "detail": str(e),
+                      "note": "Say the decision brief isn't available for this gene; do not invent one."})
+    # The brief renders as a card; the agent adds a one-line lead-in. Ship the whole brief in the
+    # view_update so the browser renders without a second fetch. Verdict is code-computed.
+    return _view(
+        {"gene": gene, "verdict": brief["snapshot"]["verdict"],
+         "comparability": brief["comparability"], "feasible": brief["feasible"],
+         "note": "One plain lead-in sentence only (e.g. 'Here's how I'd resolve the "
+                 + gene + " disagreement.'). The card carries the detail — do NOT restate the "
+                 "experiment, explanations, or numbers."},
+        {"action": "plan", "gene": gene, "decision_brief": brief},
+    )
+
+
 def build_concord_server():
     """The in-process MCP server hosting Concord's tools."""
     return create_sdk_mcp_server(
         name="concord",
         version="0.1.0",
-        tools=[reconcile_gene, compare_conditions, gene_evidence, known_biology],
+        tools=[reconcile_gene, compare_conditions, gene_evidence, known_biology,
+               draft_decision_brief],
     )
 
 
@@ -326,4 +392,5 @@ CONCORD_ALLOWED_TOOLS = [
     "mcp__concord__compare_conditions",
     "mcp__concord__gene_evidence",
     "mcp__concord__known_biology",
+    "mcp__concord__draft_decision_brief",
 ]

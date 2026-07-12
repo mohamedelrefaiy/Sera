@@ -1872,6 +1872,7 @@ ZNF250</div>
               pendingView=ev.update;
               if(ev.update.action==="evidence") act(actEl,"data","druggability read from Open Targets","done");
               else if(ev.update.action==="known_biology") act(actEl,"data","validation panel — canonical IL-2 regulators","done");
+              else if(ev.update.action==="plan") act(actEl,"data","decision brief — verdict, comparability, discriminating experiment","done");
             }
           }
           else if(ev.type==="text"){
@@ -1926,6 +1927,15 @@ ZNF250</div>
       // trajectory above; hideUser suppresses the synthetic bubble. update.conditions is the ordered
       // list the tool chose.
       await appendCompareTurn(update.gene, update.conditions||null, true);
+      return update.gene;
+    }
+    if(update.action==="plan" && update.gene){
+      // The decision brief: the agent's draft_decision_brief tool ships the whole brief in the
+      // view_update, so render it directly (no second fetch). appendPlanTurn hides its own user
+      // bubble via the empty customMsg path; the agent turn above already showed the message.
+      appendPlanTurn(update.gene, {}, "", update.decision_brief||null);
+      var pt=thread.lastElementChild;
+      if(pt){ var pu=pt.querySelector(".js-user"); if(pu){ var prow=pu.closest(".user-row"); (prow||pu).style.display="none"; } }
       return update.gene;
     }
     if(update.action==="known_biology"){
