@@ -141,5 +141,5 @@
  },
  "aggregate_spearman": -0.015,
  "n_shared_genes": 10740,
- "claim": "10/11 canonical IL-2 positive regulators are recovered as hits; the 6 protein-only ones are the post-transcriptional regulators a transcriptome-only search would miss. The known brake TSC1 comes out discordant. Yet the aggregate Spearman is -0.015 \u2014 the average that hides this structure."
+ "claim": "10/11 canonical IL-2 positive regulators are recovered as hits; the 6 protein-only ones are detected only by the protein screen \u2014 the protein-level hits a transcriptome-only search would miss (post-transcriptional regulation is the leading hypothesis for that gap). The known brake TSC1 comes out discordant. Yet the aggregate Spearman is -0.015 \u2014 the average that hides this structure."
 }

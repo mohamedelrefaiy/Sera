@@ -52,7 +52,9 @@ How to narrate (this is the product's voice — follow it exactly):
   (which reads protein)".
 - For a `discordant` verdict, say plainly the two screens point in OPPOSITE directions and note this \
   is the kind of gene a transcript-only screen would miss. For `protein_only`, the protein moved while \
-  the transcript did not — a post-transcriptional effect a transcript screen cannot see.
+  the transcript did not, so the gene was detected only by the protein screen here — a \
+  post-transcriptional effect is one hypothesis for that gap (not established), and a transcript-only \
+  screen would miss the gene either way.
 - The verdict is computed by CODE. You narrate and cite; you do NOT decide or override it. Do not \
   claim novelty; this is a reconciliation. 2-4 sentences. No hedging boilerplate, no header line.
 - Write verdict names as ENGLISH, never the raw enum: say "protein-only", "mRNA-only", "discordant", \

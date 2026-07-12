@@ -7,9 +7,9 @@ known biology of IL-2 control in CD4+ T cells. We take a fixed set of textbook I
 
 The honest message is stronger than "the verdicts match a list":
   - every canonical POSITIVE regulator is a hit on at least the protein side (not 'neither'),
-  - the ones that come out protein_only are the proximal signaling/adaptor proteins whose KD
-    lowers secreted IL-2 without moving the transcript — exactly the post-transcriptional signal
-    a transcriptome-only search would miss,
+  - the ones that come out protein_only are proximal signaling/adaptor proteins whose KD
+    lowers secreted IL-2 without moving the transcript — protein-level hits a transcriptome-only
+    search would miss (post-transcriptional action is the leading hypothesis, not the verdict),
   - the canonical BRAKE (TSC1) comes out discordant (lowers transcript, raises protein),
   - and the aggregate Spearman(z_rna, schmidt_lfc) is ~0 — the average that HIDES this structure.
 
@@ -109,9 +109,11 @@ def build() -> dict:
         "n_shared_genes": len(shared),
         "claim": (
             f"{n_recovered}/{n_pos} canonical IL-2 positive regulators are recovered as hits; "
-            f"the {n_protein_only} protein-only ones are the post-transcriptional regulators a "
-            f"transcriptome-only search would miss. The known brake TSC1 comes out discordant. "
-            f"Yet the aggregate Spearman is {round(rho, 3)} — the average that hides this structure."
+            f"the {n_protein_only} protein-only ones are detected only by the protein screen — the "
+            f"protein-level hits a transcriptome-only search would miss (post-transcriptional "
+            f"regulation is the leading hypothesis for that gap). The known brake TSC1 comes out "
+            f"discordant. Yet the aggregate Spearman is {round(rho, 3)} — the average that hides "
+            f"this structure."
         ),
     }
 

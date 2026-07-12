@@ -274,8 +274,9 @@ async def gene_evidence(args):
     "known_biology",
     "Answer whether Concord recovers KNOWN IL-2 biology — the validation question, corpus-wide (not "
     "one gene). Returns how many canonical IL-2 regulators the two screens recover, how many are "
-    "protein-only (the post-transcriptional ones a transcriptome-only search misses), how the known "
-    "brake TSC1 lands, and the point that the aggregate correlation is ~zero and hides this "
+    "protein-only (detected only by the protein screen — the protein-level hits a transcriptome-only "
+    "search misses, for which post-transcriptional regulation is the leading hypothesis), how the "
+    "known brake TSC1 lands, and the point that the aggregate correlation is ~zero and hides this "
     "structure. Call this for 'does it recover known biology?', 'is it validated?', 'does it work?'.",
     {},
 )
@@ -291,8 +292,9 @@ async def known_biology(args):
     plain = {
         "recovered_summary": f"{n_rec} of {n_pos} canonical IL-2 positive regulators show up as hits",
         "protein_only_finding": (
-            f"{n_po} of those are protein-only — the post-transcriptional regulators a "
-            "transcript-only screen would miss entirely (this is the payoff)"),
+            f"{n_po} of those are protein-only — detected only by the protein screen, the "
+            "protein-level hits a transcript-only screen would miss entirely; post-transcriptional "
+            "regulation is the leading hypothesis for that gap (this is the payoff)"),
         "replicated_count": f"{n_rep} are replicated (both screens agree)",
         "known_brake": (
             "the canonical brake TSC1 comes out discordant — it lowers the transcript but raises the "

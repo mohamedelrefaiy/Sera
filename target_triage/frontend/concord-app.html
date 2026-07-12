@@ -722,7 +722,7 @@
         <div class="landing-mark" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
         <h1 class="landing-h">When two screens disagree, which do you believe?</h1>
         <p class="landing-sub">When your mRNA screen and your protein screen point different ways about a
-          gene, Concord tells you which to believe — and why. It catches the post-transcriptional hits
+          gene, Concord tells you which to believe — and why. It surfaces the protein-level hits
           a transcript-only screen throws away. Ask it to reconcile a gene.</p>
         <div class="landing-prompts" id="landingPrompts">
           <button class="lprompt lprompt-hero" data-q="Reconcile TSC1">
@@ -1346,7 +1346,7 @@ ZNF250</div>
     if(v==="replicated") return "Both screens independently flag "+gene+" at this condition, moving the same direction — the strongest kind of hit.";
     if(v==="discordant") return gene+" is significant in BOTH screens but they DISAGREE on direction: it "+(row.rna_promotes?"lowers":"raises")+" the transcript while it "+(row.prot_promotes?"lowers":"raises")+" the protein. A real mRNA/protein decoupling, not a clean replication.";
     if(v==="mrna_only") return "The mRNA screen calls "+gene+" a hit; the protein screen does not. It shifts the transcriptome without moving secreted cytokine — a lead to confirm at the protein level.";
-    if(v==="protein_only") return "The protein screen fires but the mRNA screen stays flat. "+gene+" changes protein output without changing transcript — a post-transcriptional regulator a transcriptome-only search would miss.";
+    if(v==="protein_only") return "The protein screen fires but the mRNA screen stays flat. "+gene+" was detected only by the protein screen under these conditions. Post-transcriptional regulation is one hypothesis for that gap — not the verdict — and a transcriptome-only search would miss it either way.";
     return "Neither screen sees "+gene+" doing much at this condition. Concordant absence — safe to deprioritise for this phenotype.";
   }
   function mechText(row){
@@ -1981,7 +1981,7 @@ ZNF250</div>
         cond:"Stimulated CD4⁺ T cells ("+hcTxt+").",
         read:'<div class="rchips"><span class="rchip g">transcript · qPCR</span><span class="rchip m">protein · ELISA/FACS <em>both, paired</em></span></div><p>Measure transcript AND protein in the SAME wells — the point is that they diverge.</p>',
         qc:"Confirm knockdown, then confirm the direction split reproduces before interpreting.",
-        decision:"Split reproduces → a genuine post-transcriptional / feedback node; pick the endpoint matching your biology. If not → a one-sided screen artifact."};
+        decision:"Split reproduces → a real mRNA/protein decoupling (post-transcriptional or feedback control is the leading hypothesis to test); pick the endpoint matching your biology. If not → a one-sided screen artifact."};
     } else if(v==="mrna_only"){
       T={action:"Bridge to protein",cls:"mo",
         why:"The mRNA atlas flags "+gene+", but the protein screen doesn't. The decisive experiment is whether the transcript effect actually reaches the secreted protein.",
@@ -1992,12 +1992,12 @@ ZNF250</div>
         decision:"Protein moves → upgrade to Replicated and advance. Transcript moves but protein doesn\u2019t → post-transcriptional or context-specific; deprioritize for a secretion phenotype."};
     } else if(v==="protein_only"){
       T={action:"Confirm & probe mechanism",cls:"po",
-        why:gene+" changes protein output without moving the transcriptome — it likely acts after transcription. A transcript-only assay will miss it entirely.",
+        why:gene+" was detected only by the protein screen under these conditions; the transcriptome screen did not flag it. Post-transcriptional action is one hypothesis — a transcript-only assay would miss the gene either way, so confirm the protein effect before assigning a mechanism.",
         pert:"Arrayed CRISPRi against "+gene+" — 2 independent guides ("+gene+"-sg1, "+gene+"-sg2) + NTC, ≥3 donors.",
         cond:"Stimulated CD4⁺ T cells ("+hcTxt+").",
         read:'<div class="rchips"><span class="rchip m">protein · FACS/ELISA <em>primary</em></span></div><p>Do not rely on qPCR — the transcript isn\u2019t expected to change, so a transcript assay reads as a false negative.</p>',
         qc:"Confirm knockdown at the "+gene+" protein/gene level directly, not via a downstream transcript.",
-        decision:"Protein effect reproduces → genuine post-transcriptional regulator; follow up on translation/secretion mechanism. No effect → likely a screen artifact."};
+        decision:"Protein effect reproduces → a real protein-level effect the transcript screen missed; post-transcriptional / translation / secretion control is the leading hypothesis to test next. No effect → likely a screen artifact."};
     } else {
       T={action:"Deprioritize",cls:"no",
         why:"Concordant absence across both screens at this condition. Validating is low-yield — spend bench time on replicated or discordant hits instead.",
@@ -2381,7 +2381,7 @@ ZNF250</div>
   function clientAnswerFallback(text){
     var low=(text||"").toLowerCase();
     if(/discordant/.test(low)) return "Discordant means both screens are significant for the gene but DISAGREE on direction — it moves the mRNA one way and the secreted protein the other. That's a real mRNA/protein decoupling, not a clean replication. Ask me to reconcile a gene to see its verdict.";
-    if(/protein.?only/.test(low)) return "Protein-only means the FACS (protein) screen fires but the mRNA screen stays flat — a post-transcriptional regulator a transcriptome-only search would miss.";
+    if(/protein.?only/.test(low)) return "Protein-only means the FACS (protein) screen fires but the mRNA screen stays flat — the gene was detected only by the protein screen under these conditions. Post-transcriptional regulation is one hypothesis for that gap, not the verdict; a transcriptome-only search would miss it either way.";
     if(/mrna.?only|mrna only/.test(low)) return "mRNA-only means the Perturb-seq (mRNA) screen calls it a hit but the protein screen doesn't — a lead to confirm at the protein level.";
     if(/replicat/.test(low)) return "Replicated means both screens are significant AND agree on direction — the strongest kind of hit.";
     if(/how.*(work|does this)|what (can you|do you)|who are you/.test(low)) return "I reconcile a gene's mRNA vs protein CRISPR screens into a deterministic verdict — replicated, discordant, mRNA-only, protein-only, or neither — and add druggability, disease genetics, and a validation plan. The verdict is computed by code; I narrate and cite, I don't decide. Ask me to reconcile a gene like TSC1.";

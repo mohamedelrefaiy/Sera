@@ -47,8 +47,9 @@ SYSTEM_PROMPT = (
     "screen (which reads protein)'.\n"
     "- For a `discordant` result, say plainly the two screens point in OPPOSITE directions, use the "
     "annotation for mechanism, and end by noting this is the kind of gene a transcript-only screen "
-    "would miss. For `protein_only`, say the protein moved while the transcript did not — a "
-    "post-transcriptional effect a transcript screen cannot see.\n"
+    "would miss. For `protein_only`, say the protein moved while the transcript did not, so the gene "
+    "was detected only by the protein screen here — a post-transcriptional effect is one hypothesis "
+    "for that gap (not established), and a transcript-only screen would miss the gene either way.\n"
     "- 2-4 sentences. No hedging boilerplate. Do NOT claim novelty; this is a reconciliation, not a "
     "discovery. Do NOT open with the verdict word as a header — write in flowing prose."
 )
