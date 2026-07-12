@@ -837,6 +837,7 @@ ZNF250</div>
 
             <!-- follow-up chips: ask the agent to produce the plan or the known-biology check inline -->
             <div class="followups js-followups">
+              <button class="fchip" data-follow="druggability"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z"/><path d="M8.5 8.5l7 7"/></svg>Evidence</button>
               <button class="fchip" data-follow="plan"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Validation plan</button>
               <button class="fchip" data-follow="truth"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>Known biology</button>
             </div>
@@ -903,6 +904,26 @@ ZNF250</div>
               </div>
             </div>
             <div class="srcline">recovered independently from · Zhu 2025 Perturb-seq (mRNA) × Schmidt 2022 FACS (protein) · no wet-lab table fetched (would be a different phenotype)</div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- A cross-condition / time-course turn: one gene's verdict across conditions in time order.
+         The agent narrates the trajectory above; this strip is the deterministic per-condition data. -->
+    <template id="compareTpl">
+      <div class="turn turn-follow">
+        <div class="reply-turn user-row"><div class="user-msg js-user"></div></div>
+        <div class="reply-turn agent">
+          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="reply-body">
+            <div class="fig-eyebrow js-cmpEyebrow">Across conditions · IL-2</div>
+            <div class="gt-col js-cmpStrip" style="margin-top:8px"></div>
+            <div class="foot js-cmpFoot"></div>
+            <div class="followups js-followups">
+              <button class="fchip" data-follow="reconcile"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Full reconciliation</button>
+              <button class="fchip" data-follow="druggability"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z"/><path d="M8.5 8.5l7 7"/></svg>Evidence</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1008,6 +1029,9 @@ ZNF250</div>
   // API condition keys -> UI tab keys (backend uses Stim8hr/Stim48hr; tabs use Stim8h/Stim48h).
   var COND_API={Rest:"Rest",Stim8h:"Stim8hr",Stim48h:"Stim48hr"};
   var COND_LABEL={Rest:"Rest",Stim8h:"Stim 8h",Stim48h:"Stim 48h"};
+  // Inverse of COND_API: the backend/tool speaks canonical names (Rest / Stim8hr / Stim48hr); the
+  // UI keys are Rest / Stim8h / Stim48h. Used to honour the condition the AGENT chose (view_update).
+  var COND_UI={Rest:"Rest",Stim8hr:"Stim8h",Stim48hr:"Stim48h"};
   var state={gene:null,cond:"Stim48h",byCondition:null,enrichment:null};
   function $(id){return document.getElementById(id);}
   function fmt(x){return (x===null||x===undefined)?"—":(x>=0?"+":"")+Number(x).toFixed(2);}
@@ -1172,22 +1196,29 @@ ZNF250</div>
   // Fetch one gene's concordance across conditions + its dossier enrichment, then APPEND a turn.
   // existingTurn set means "re-render into that turn" (condition tabs), not a new turn.
   // customMsg overrides the user bubble text (so a routed question shows the user's real words).
-  async function loadGene(gene, existingTurn, customMsg, hideUser){
+  async function loadGene(gene, existingTurn, customMsg, hideUser, condition){
     if(!existingTurn) hideLanding();   // a fresh gene turn leaves the empty state
     try{
       var r=await fetch("api/concordance/"+encodeURIComponent(gene));
       if(!r.ok){ if(!existingTurn) appendHelpTurn(customMsg||gene, {gene:null,intent:"help"}); return false; }
       var d=await r.json();
       var turn = existingTurn || appendTurn(d.gene);
-      if(customMsg) turn._userMsg=customMsg;
       if(hideUser) turn._hideUser=true;   // agent-driven: the agent bubble already showed the message
       // per-turn state lives ON the element, so each turn keeps its own gene/conditions/enrichment.
       turn._gene=d.gene; turn._byCondition=d.by_condition||{}; turn._enrichment=d.enrichment||null;
-      if(!turn._cond) turn._cond="Stim48h";
+      // STARTING condition = the one the AGENT chose (view_update.condition), mapped to a UI key —
+      // not a hardcoded Stim48h. Tabs change turn._cond locally afterwards; this only seeds it.
+      if(!turn._cond) turn._cond=(condition && COND_UI[condition]) || "Stim48h";
+      // FREEZE the question ONCE. The user bubble must NEVER be re-derived from turn._cond — that was
+      // the bug where clicking a condition tab rewrote "Reconcile X at <condition>". Immutable after.
+      if(turn._userMsg==null){
+        turn._userMsg=(customMsg!=null && customMsg!=="")
+          ? customMsg : ("Reconcile "+d.gene+" at "+COND_LABEL[turn._cond]+".");
+      }
       // also mirror into the global `state` so the artifacts rail / recent-gene highlight follow focus.
       state.gene=d.gene; state.byCondition=turn._byCondition; state.enrichment=turn._enrichment;
       renderTurn(turn);
-      renderSources(turn, d.gene);
+      if(turn._showDossier) renderSources(turn, d.gene);   // sources are a deferred (scoped) block
       renderArtifacts(d.gene);
       highlightGene(d.gene);
       $("convoTitle").textContent="Chat"; $("urlPath").textContent="gene/"+d.gene;
@@ -1428,7 +1459,13 @@ ZNF250</div>
     var gene=turn._gene, cond=turn._cond||"Stim48h";
     var row=(turn._byCondition||{})[COND_API[cond]];
 
-    q(turn,"js-user").textContent=turn._userMsg||("Reconcile "+gene+" at "+COND_LABEL[cond]+".");
+    // IMMUTABLE question: set the user bubble ONCE from the frozen _userMsg; NEVER re-derive it from
+    // the current condition. A condition-tab click re-renders the figure/caption below — not the
+    // question, and not the agent's conclusion.
+    if(!turn._userFrozen){
+      q(turn,"js-user").textContent=(turn._userMsg!=null?turn._userMsg:("Reconcile "+gene));
+      turn._userFrozen=true;
+    }
     if(turn._hideUser){ var _ur=q(turn,"js-user"); var _row=_ur&&_ur.closest(".user-row"); if(_row||_ur)(_row||_ur).style.display="none"; }
 
     // The figure block is the MACHINE-VOICE artifact (the agent narrates it in prose above, in its
@@ -1454,6 +1491,17 @@ ZNF250</div>
       +'. Claude narrates it above — it does not decide it.';
 
     renderDossier(turn);
+
+    // QUESTION-SCOPED rendering: a plain reconcile answers "do the two screens agree at this
+    // condition?" — the figure, chain-of-custody and verdict. The dossier (druggability / disease /
+    // QC) and the literature hypotheses answer DIFFERENT questions, so we don't dump them on every
+    // reconcile; they are one click away via the Evidence / Known-biology follow-ups. Set
+    // turn._showDossier=true to opt the whole dossier + sources back in.
+    var showExtra=turn._showDossier===true;
+    var dossierEl=turn.querySelector(".dossier"); if(dossierEl) dossierEl.style.display=showExtra?"":"none";
+    turn.querySelectorAll(".srcline").forEach(function(s){ s.style.display=showExtra?"":"none"; });
+    var _isayEl=q(turn,"js-interpSay"); if(_isayEl) _isayEl.style.display=showExtra?"":"none";
+    var _sbEl=q(turn,"js-sourcesBody"); if(_sbEl) _sbEl.style.display=showExtra?"":"none";
 
     // Stage the reveal ONLY on first render (a fresh turn), not on condition-tab re-renders — a tab
     // switch should update in place, not replay the whole build-up animation.
@@ -1594,6 +1642,7 @@ ZNF250</div>
         if(f==="plan") handleMessage("Draft a validation plan for "+g+".");
         else if(f==="truth") handleMessage("Does Concord recover known biology?");
         else if(f==="reconcile") handleMessage("Reconcile "+g+".");
+        else if(f==="druggability") handleMessage("Is "+g+" druggable?");
         else handleMessage("Is "+g+" "+(f==="genetics"?"disease-linked":f==="quality"?"a reliable hit":f)+"?");
       });
     });
@@ -1755,13 +1804,18 @@ ZNF250</div>
           }
           else if(ev.type==="view_update"){
             act(actEl,"tool",null,"done");
-            if(ev.update && ev.update.action==="reconcile"){
-              // RECONCILE: the figure is a single clear visual — show it FIRST, then narrate it (the
-              // "agent building the answer" beat). Render the figure turn, mark the verdict step, and
-              // relocate the streaming narration into a bubble placed AFTER the figure.
+            var _vaction=ev.update && ev.update.action;
+            if(_vaction==="reconcile" || _vaction==="compare"){
+              // RECONCILE / COMPARE: the figure (or trajectory strip) is a single clear visual — show
+              // it FIRST, then narrate it (the "agent building the answer" beat). Render the visual
+              // turn, mark the trace, and relocate the streaming narration into a bubble AFTER it.
               var g=await applyAgentView(ev.update, text, el.parentElement); if(g) renderedGene=g;
-              var vd=verdictOf(renderedGene);
-              if(vd) act(actEl,"verdict","verdict computed by code → "+vd,"verdict");
+              if(_vaction==="reconcile"){
+                var vd=verdictOf(renderedGene);
+                if(vd) act(actEl,"verdict","verdict computed by code → "+vd,"verdict");
+              } else {
+                act(actEl,"compare","verdict per condition, in time order","verdict");
+              }
               var figTurn=thread.lastElementChild;
               if(figTurn && figTurn!==added){
                 var narrWrap=document.createElement("div");
@@ -1808,6 +1862,7 @@ ZNF250</div>
   function prettyTool(tool, input){
     var g=(input&&input.gene)?String(input.gene).toUpperCase():"";
     if(tool==="reconcile_gene") return "reconcile_gene("+g+") — reading both screens";
+    if(tool==="compare_conditions") return "compare_conditions("+g+") — verdict across conditions";
     if(tool==="gene_evidence") return "gene_evidence("+g+") — druggability + disease";
     return (tool||"analysis");
   }
@@ -1820,8 +1875,16 @@ ZNF250</div>
     if(!update||!update.action) return null;
     if(update.action==="reconcile" && update.gene){
       // hideUser=true suppresses the reconcile turn's user bubble — the agent turn above already
-      // showed the message. Await loadGene so turn._byCondition is populated before we read the verdict.
-      await loadGene(update.gene, null, "", true);
+      // showed the message. Pass the condition the AGENT CHOSE so the view opens there, not a forced
+      // Stim48h. Await loadGene so turn._byCondition is populated before we read the verdict.
+      await loadGene(update.gene, null, "", true, update.condition);
+      return update.gene;
+    }
+    if(update.action==="compare" && update.gene){
+      // Cross-condition / time-course view: a per-condition trajectory strip. The agent narrates the
+      // trajectory above; hideUser suppresses the synthetic bubble. update.conditions is the ordered
+      // list the tool chose.
+      await appendCompareTurn(update.gene, update.conditions||null, true);
       return update.gene;
     }
     if(update.action==="known_biology"){
@@ -2057,6 +2120,58 @@ ZNF250</div>
   // ---- known biology — appended as an in-thread turn (corpus-wide, gene-independent) ----
   // Clone the template first (so the turn appears immediately with its "—" seed), then fill it once
   // the fetch resolves. No global latch needed now that each request paints its own fresh turn.
+  // ── Cross-condition / time-course view ───────────────────────────────────────────────────
+  // One condition's row in the trajectory strip: label + mRNA/protein KO-direction + verdict tag.
+  // Reuses the known-biology row styling (gtrow / gg / gz / ch / vtag) and dirArrow so the visual
+  // language matches. condKey is the canonical API name (Rest / Stim8hr / Stim48hr).
+  function compareRow(condKey, row){
+    if(!row) return "";
+    var vt=VTAG[row.verdict]||VTAG.neither;
+    var label=COND_LABEL[COND_UI[condKey]]||condKey;
+    var prot=(row.prot_tested===false)
+      ? '<span class="ch prot">protein <span class="dna">untested</span></span>'
+      : '<span class="ch prot">protein '+dirArrow(row.lfc_prot)+'</span>';
+    return '<div class="gtrow"><span class="gg">'+esc(label)+'</span>'+
+           '<span class="gz"><span class="ch mrna">mRNA '+dirArrow(row.z_rna)+'</span>'+prot+'</span>'+
+           '<span class="vtag '+vt[0]+'">'+esc(vt[1])+'</span></div>';
+  }
+
+  // A cross-condition / time-course turn: the gene's verdict across conditions, in time order. The
+  // agent narrates the TRAJECTORY above (hideUser suppresses the synthetic bubble); this strip is the
+  // deterministic per-condition data the narration cites. `conditions` is the ordered API-name list
+  // the tool chose (or null -> derive from the gene's rows, canonically ordered Rest->8h->48h).
+  async function appendCompareTurn(gene, conditions, hideUser, customMsg){
+    var frag=$("compareTpl").content.cloneNode(true);
+    var turn=frag.querySelector(".turn");
+    turn._gene=gene;
+    q(turn,"js-user").textContent=customMsg||("Compare "+gene+" across conditions.");
+    if(hideUser){ var _u=q(turn,"js-user"); var _r=_u&&_u.closest(".user-row"); if(_r||_u)(_r||_u).style.display="none"; }
+    q(turn,"js-cmpEyebrow").textContent=gene+" across conditions · IL-2";
+    thread.appendChild(frag);
+    var added=thread.lastElementChild;
+    scrollToTurn(added);
+    try{
+      var r=await fetch("api/concordance/"+encodeURIComponent(gene));
+      if(!r.ok){ q(added,"js-cmpStrip").innerHTML='<div class="arts-empty">'+esc(gene)+" isn't in the screens.</div>"; return added; }
+      var d=await r.json();
+      var bc=d.by_condition||{};
+      turn._byCondition=bc; turn._enrichment=d.enrichment||null;
+      // Order: the tool's list if given (already time-ordered), else the gene's conditions in the
+      // canonical Rest -> Stim8hr -> Stim48hr order. Both filtered to what the gene actually has.
+      var CANON=["Rest","Stim8hr","Stim48hr"];
+      var order=(conditions&&conditions.length)
+        ? conditions.filter(function(c){return bc[c];})
+        : CANON.filter(function(c){return bc[c];});
+      q(added,"js-cmpStrip").innerHTML=order.map(function(c){return compareRow(c,bc[c]);}).join("");
+      q(added,"js-cmpFoot").innerHTML='<b>Verdict per condition computed by code</b> from the two '
+        +'screens, in time order. Claude narrates the trajectory above — it does not decide it.';
+      renderArtifacts(gene);
+      highlightGene(gene);
+      wireFollowups(added);
+    }catch(e){ q(added,"js-cmpStrip").innerHTML='<div class="arts-empty">Comparison unavailable.</div>'; }
+    return added;
+  }
+
   async function appendTruthTurn(customMsg){
     var frag=$("truthTpl").content.cloneNode(true);
     var turn=frag.querySelector(".turn");
