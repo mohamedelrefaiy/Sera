@@ -749,6 +749,69 @@
   .chain{max-width:100%}
   .cond-row,.js-chain,.js-proseVerdict,.js-provFoot{display:none!important}
 
+  /* ── Luminous Lab ──────────────────────────────────────────────────────────────────────
+     A precision-instrument theme: ceramic canvas, spectral biological channels, and one blue
+     interaction color. Depth comes from layered light and concentric surfaces, not dark panels. */
+  :root{
+    --bg:#F4F7F8;--sidebar:rgba(247,249,250,.82);--surface:rgba(255,255,255,.78);--surface-2:#FFFFFF;
+    --ink:#111719;--ink-soft:#526064;--ink-faint:#819095;--line:rgba(20,43,50,.09);--line-strong:rgba(20,43,50,.16);
+    --prov:rgba(20,43,50,.12);--accent:#087CF0;--mrna:#00A88B;--mrna-soft:#DDF6EF;
+    --protein:#D34D91;--protein-soft:#FAE3EF;--warn:#C57B16;--warn-soft:#FBEED8;
+    --shadow:0 24px 70px -38px rgba(27,52,62,.28),0 2px 10px rgba(27,52,62,.05);
+    --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+    --font-serif:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;
+    --font-body:var(--font-ui);--font-display:var(--font-ui);
+  }
+  html,body{background:var(--bg)}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:
+    radial-gradient(circle at 47% -8%,rgba(0,168,139,.12),transparent 27%),
+    radial-gradient(circle at 82% 16%,rgba(211,77,145,.09),transparent 24%),
+    linear-gradient(115deg,rgba(255,255,255,.9),rgba(244,247,248,.68) 44%,rgba(235,241,243,.72));}
+  .workspace{position:relative;z-index:1}
+  .nav{background:var(--sidebar);border-right:1px solid rgba(20,43,50,.08);box-shadow:10px 0 38px rgba(42,66,73,.035)}
+  .nav-top{border-bottom-color:var(--line);font-weight:650;letter-spacing:-.02em}
+  .nav-top small{letter-spacing:.14em!important;color:var(--ink-faint)!important}
+  .nav-item,.session{color:var(--ink-soft)}
+  .nav-item:hover,.session:hover{background:rgba(255,255,255,.76);color:var(--ink)}
+  .nav-item.on,.session.on{background:#fff;color:var(--ink);box-shadow:0 8px 24px -16px rgba(25,54,64,.28),inset 3px 0 0 var(--accent)}
+  .newchat{background:rgba(255,255,255,.76)!important;border:0!important;box-shadow:inset 0 0 0 1px var(--line),0 8px 20px -18px rgba(20,43,50,.4)}
+  .convo{background:transparent}
+  .convo-head{background:rgba(247,250,250,.7);border-bottom:1px solid var(--line);backdrop-filter:saturate(160%) blur(22px)}
+  .convo-context::before{background:var(--mrna);box-shadow:0 0 0 4px rgba(0,168,139,.11)}
+  .arts-toggle,.arts-close{background:rgba(255,255,255,.72);border:0;box-shadow:inset 0 0 0 1px var(--line),0 5px 16px -12px rgba(20,43,50,.4)}
+  .convo-scroll::-webkit-scrollbar-thumb{background:rgba(76,94,99,.18);border-color:transparent}
+  .user-msg{background:rgba(255,255,255,.72);border:0;box-shadow:inset 0 0 0 1px var(--line),0 12px 30px -22px rgba(20,43,50,.32);color:var(--ink)}
+  .ava{background:rgba(255,255,255,.84);border:0;box-shadow:inset 0 0 0 1px var(--line),0 8px 20px -14px rgba(20,43,50,.28)}
+  .prose{color:var(--ink);font-family:var(--font-ui);font-size:17px;line-height:1.68;letter-spacing:-.006em}
+  .fig-frame{background:rgba(255,255,255,.66);border:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.9),inset 0 0 0 2px var(--line),var(--shadow);border-radius:22px;padding:7px}
+  .fig-eyebrow{color:var(--ink-faint);padding:18px 20px 9px}
+  .cap{border-top-color:var(--line);color:var(--ink-soft);padding:17px 20px 20px}
+  .resolution{border:0;border-radius:22px;background:rgba(255,255,255,.68);box-shadow:inset 0 0 0 1px rgba(255,255,255,.95),inset 0 0 0 2px var(--line),var(--shadow);padding:28px}
+  .resolution-h{font-family:var(--font-ui);font-size:23px;letter-spacing:-.025em}
+  .resolution-copy{color:var(--ink-soft)}
+  .resolution-tag{background:#fff;border:0;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink-faint)}
+  .outcome{background:rgba(246,249,249,.84);border:0;box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;color:var(--ink-soft);transition:.55s cubic-bezier(.22,1,.36,1)}
+  .outcome:hover,.outcome[aria-pressed="true"]{background:#fff;box-shadow:inset 0 0 0 1px var(--line-strong),0 16px 34px -26px rgba(20,43,50,.4)}
+  .outcome[aria-pressed="true"]{box-shadow:inset 0 3px 0 var(--accent),0 16px 34px -26px rgba(20,43,50,.4)}
+  .resolution-preview{background:rgba(237,243,244,.72);color:var(--ink-soft);border-radius:12px}
+  .followups .fchip{background:rgba(255,255,255,.6);border:0;box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;transition:.5s cubic-bezier(.22,1,.36,1)}
+  .followups .fchip:hover{background:#fff;box-shadow:inset 0 0 0 1px var(--line-strong),0 12px 26px -22px rgba(20,43,50,.35);transform:translateY(-1px)}
+  .composer{background:rgba(244,247,248,.78);border-top:0;backdrop-filter:saturate(160%) blur(22px)}
+  .composer-box{background:rgba(255,255,255,.88);border:0;border-radius:17px;box-shadow:inset 0 0 0 1px rgba(20,43,50,.1),0 18px 48px -28px rgba(20,43,50,.35);min-height:58px}
+  .composer-box:focus-within{box-shadow:inset 0 0 0 2px rgba(8,124,240,.42),0 20px 50px -28px rgba(8,124,240,.32)}
+  .send{width:38px;height:38px;border-radius:12px;background:var(--accent);box-shadow:0 8px 20px -10px rgba(8,124,240,.65);transition:.5s cubic-bezier(.22,1,.36,1)}
+  .send:hover{filter:none;transform:translateY(-1px) scale(1.02)}
+  .cchip{background:rgba(255,255,255,.58);border:0;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink-soft)}
+  .cchip.on{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px rgba(8,124,240,.25),0 8px 20px -17px rgba(8,124,240,.5)}
+  .arts{background:rgba(247,249,250,.9);border-left:1px solid var(--line)}
+  .art,.card.soft{background:rgba(255,255,255,.72);border:0;box-shadow:inset 0 0 0 1px var(--line);border-radius:14px}
+  .landing-h{font-family:var(--font-ui);font-size:52px;line-height:1.02;letter-spacing:-.05em;font-weight:680;max-width:14ch}
+  .landing-sub{font-family:var(--font-ui);font-size:18px;color:var(--ink-soft);letter-spacing:-.012em}
+  .lprompt{background:rgba(255,255,255,.62);border:0;border-radius:16px;box-shadow:inset 0 0 0 1px var(--line),0 20px 45px -38px rgba(20,43,50,.3);transition:.55s cubic-bezier(.22,1,.36,1)}
+  .lprompt:hover{background:#fff;box-shadow:inset 0 0 0 1px var(--line-strong),0 22px 48px -34px rgba(20,43,50,.32)}
+  .lprompt-hero{box-shadow:inset 3px 0 0 var(--accent),inset 0 0 0 1px var(--line),0 22px 48px -34px rgba(20,43,50,.32)}
+  :focus-visible{outline:3px solid rgba(8,124,240,.45);outline-offset:3px}
+
   @media(max-width:1280px){.workspace{grid-template-columns:220px minmax(0,1fr)}.arts{display:none}.arts-toggle{display:none}}
   @media(max-width:940px){.workspace{grid-template-columns:64px minmax(0,1fr)}.convo-context{display:none}}
   @media(max-width:700px){
@@ -762,6 +825,7 @@
     .landing{padding-top:7vh}.landing-h{font-size:34px}.composer-chips{overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px}
     .cchip{flex:none}.reply-turn.user-row .user-msg{max-width:86%}
   }
+  @media(max-width:560px){.nav-top{width:30px;padding:0;margin-right:auto}.nav-top .txt{display:none!important}.modes{gap:4px}}
   @media(max-width:420px){.nav-top .txt{font-size:13px}.modes .nav-item{padding:8px}.modes .lbl{display:none}.landing-h{font-size:30px}}
 
   /* print: a clean one-page validation plan (the ELN/PDF export — the handoff artifact). The app
@@ -1515,35 +1579,35 @@ ZNF250</div>
     function arrow(v){ return v<0?"↓":v>0?"↑":"→"; }
     function assayPanel(x,label,assay,effectLabel,effect,qvalue,hit,color,untested,align){
       var tx=align==="right"?x+278:x+22, anchor=align==="right"?"end":"start";
-      if(untested) return '<rect x="'+x+'" y="18" width="300" height="204" rx="10" fill="#171F23" stroke="#334148"/>'
-        +'<text x="'+tx+'" y="52" text-anchor="'+anchor+'" fill="#E3E9E6" font-size="17" font-weight="600">'+label+'</text>'
-        +'<text x="'+tx+'" y="76" text-anchor="'+anchor+'" fill="#84918E" font-size="12.5">'+assay+'</text>'
-        +'<text x="'+tx+'" y="138" text-anchor="'+anchor+'" fill="#9AA5A2" font-size="18">NOT MEASURED</text>'
-        +'<text x="'+tx+'" y="164" text-anchor="'+anchor+'" fill="#72807F" font-size="11.5">not included in this assay library</text>';
+      if(untested) return '<rect x="'+x+'" y="18" width="300" height="204" rx="14" fill="#FBFCFD" stroke="#DEE5E8"/>'
+        +'<text x="'+tx+'" y="52" text-anchor="'+anchor+'" fill="#182023" font-size="17" font-weight="600">'+label+'</text>'
+        +'<text x="'+tx+'" y="76" text-anchor="'+anchor+'" fill="#68777B" font-size="12.5">'+assay+'</text>'
+        +'<text x="'+tx+'" y="138" text-anchor="'+anchor+'" fill="#526064" font-size="18">NOT MEASURED</text>'
+        +'<text x="'+tx+'" y="164" text-anchor="'+anchor+'" fill="#819095" font-size="11.5">not included in this assay library</text>';
       var dir=direction(effect), arr=arrow(effect), status=hit?"significant screen hit":"not statistically significant";
-      return '<rect x="'+x+'" y="18" width="300" height="204" rx="10" fill="#171F23" stroke="#334148"/>'
+      return '<rect x="'+x+'" y="18" width="300" height="204" rx="14" fill="#FBFCFD" stroke="#DEE5E8"/>'
         +'<rect x="'+(align==="right"?x+296:x)+'" y="18" width="4" height="204" rx="2" fill="'+color+'"/>'
-        +'<text x="'+tx+'" y="52" text-anchor="'+anchor+'" fill="#E3E9E6" font-size="17" font-weight="600">'+label+'</text>'
-        +'<text x="'+tx+'" y="76" text-anchor="'+anchor+'" fill="#84918E" font-size="12.5">'+assay+'</text>'
+        +'<text x="'+tx+'" y="52" text-anchor="'+anchor+'" fill="#182023" font-size="17" font-weight="600">'+label+'</text>'
+        +'<text x="'+tx+'" y="76" text-anchor="'+anchor+'" fill="#68777B" font-size="12.5">'+assay+'</text>'
         +'<text x="'+tx+'" y="128" text-anchor="'+anchor+'" fill="'+color+'" font-size="27" font-weight="600">'+arr+' '+dir+'</text>'
-        +'<text x="'+tx+'" y="160" text-anchor="'+anchor+'" fill="#B8C3C0" font-size="13">'+effectLabel+' '+fmt(effect)+'</text>'
-        +'<text x="'+tx+'" y="183" text-anchor="'+anchor+'" fill="#84918E" font-size="12">q-value '+qtxt(qvalue)+'</text>'
-        +'<text x="'+tx+'" y="207" text-anchor="'+anchor+'" fill="'+(hit?color:'#84918E')+'" font-size="11.5">'+status+'</text>';
+        +'<text x="'+tx+'" y="160" text-anchor="'+anchor+'" fill="#344347" font-size="13">'+effectLabel+' '+fmt(effect)+'</text>'
+        +'<text x="'+tx+'" y="183" text-anchor="'+anchor+'" fill="#68777B" font-size="12">q-value '+qtxt(qvalue)+'</text>'
+        +'<text x="'+tx+'" y="207" text-anchor="'+anchor+'" fill="'+(hit?color:'#68777B')+'" font-size="11.5">'+status+'</text>';
     }
     var discord=row.prot_tested!==false && row.hit_rna && row.hit_prot && ((row.z_rna<0)!=(row.lfc_prot<0));
     var conclusion=discord?"Opposite directions across assays → DISCORDANT":
       row.verdict==="replicated"?"Same direction across assays → REPLICATED":
       "Combined screen verdict → "+String(row.verdict||"neither").replace("_"," ").toUpperCase();
-    svg.innerHTML=assayPanel(12,"IL-2 mRNA","Perturb-seq · transcript","z-score",row.z_rna,row.q_rna,row.hit_rna,"#4FC7A5",false,"left")
-      +assayPanel(388,"Secreted IL-2 protein","FACS · functional readout","log₂ fold change",row.lfc_prot,row.q_prot,row.hit_prot,"#E07BB6",row.prot_tested===false,"right")
-      +'<path class="assay-flow" d="M314 111 H344" stroke="#4FC7A5" stroke-width="2"/>'
-      +'<path class="assay-flow protein" d="M386 145 H356" stroke="#E07BB6" stroke-width="2"/>'
-      +'<path d="M350 76 V181" stroke="'+(discord?'#D8A85A':'#60706D')+'" stroke-width="2"/>'
-      +'<circle cx="350" cy="128" r="18" fill="#10171A" stroke="'+(discord?'#D8A85A':'#60706D')+'"/>'
-      +'<text x="350" y="132" text-anchor="middle" fill="'+(discord?'#D8A85A':'#B8C3C0')+'" font-size="11" font-weight="600">'+(discord?'SPLIT':'READ')+'</text>'
-      +'<text x="350" y="248" text-anchor="middle" fill="#84918E" font-size="11.5">Cross-assay interpretation</text>'
-      +'<text x="350" y="278" text-anchor="middle" fill="'+(discord?'#D8A85A':'#E3E9E6')+'" font-size="15.5" font-weight="600">'+conclusion+'</text>'
-      +'<text x="350" y="304" text-anchor="middle" fill="#72807F" font-size="10.5">Independent units · shared biological question</text>';
+    svg.innerHTML=assayPanel(12,"IL-2 mRNA","Perturb-seq · transcript","z-score",row.z_rna,row.q_rna,row.hit_rna,"#00A88B",false,"left")
+      +assayPanel(388,"Secreted IL-2 protein","FACS · functional readout","log₂ fold change",row.lfc_prot,row.q_prot,row.hit_prot,"#D34D91",row.prot_tested===false,"right")
+      +'<path class="assay-flow" d="M314 111 H344" stroke="#00A88B" stroke-width="2"/>'
+      +'<path class="assay-flow protein" d="M386 145 H356" stroke="#D34D91" stroke-width="2"/>'
+      +'<path d="M350 76 V181" stroke="'+(discord?'#C57B16':'#819095')+'" stroke-width="2"/>'
+      +'<circle cx="350" cy="128" r="18" fill="#FFFFFF" stroke="'+(discord?'#C57B16':'#819095')+'"/>'
+      +'<text x="350" y="132" text-anchor="middle" fill="'+(discord?'#C57B16':'#526064')+'" font-size="11" font-weight="600">'+(discord?'SPLIT':'READ')+'</text>'
+      +'<text x="350" y="248" text-anchor="middle" fill="#68777B" font-size="11.5">Cross-assay interpretation</text>'
+      +'<text x="350" y="278" text-anchor="middle" fill="'+(discord?'#A56410':'#182023')+'" font-size="15.5" font-weight="600">'+conclusion+'</text>'
+      +'<text x="350" y="304" text-anchor="middle" fill="#819095" font-size="10.5">Independent units · shared biological question</text>';
   }
 
   // Caption + the verdict sentence, both grounded in the numbers.
