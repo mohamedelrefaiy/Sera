@@ -1091,13 +1091,11 @@ async def chat(body: dict) -> StreamingResponse:
 
     from ..agent import run_triage  # lazy: only the chat path needs the SDK
 
-    # Which agent runs. `mode:"concord"` selects the mRNA×protein reconciliation agent (its own
-    # tools + prompt); anything else keeps the default Target Triage shortlist agent. Both share this
-    # one streaming/run-log path, so the frontend event contract is identical.
-    agent_options = None
-    if (body or {}).get("mode") == "concord":
-        from ..llm.concord_prompt import build_concord_options
-        agent_options = build_concord_options()
+    # The chat endpoint runs the Concord mRNA×protein reconciliation agent (its own tools +
+    # prompt). The former Target Triage shortlist agent has been removed; `run_triage` is the
+    # agent-agnostic driver, so building Concord's options here is the only agent it serves.
+    from ..llm.concord_prompt import build_concord_options
+    agent_options = build_concord_options()
 
     queue: asyncio.Queue = asyncio.Queue()
 

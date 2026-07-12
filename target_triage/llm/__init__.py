@@ -1,18 +1,10 @@
 """LLM surface — the Claude-facing adapters over the domain core.
 
-`tools.py` holds the @tool wrappers the agent calls; `prompt.py` holds the system
-prompt, default task, and SDK options. This layer adapts core/ for the model; core/
-knows nothing about Claude. The agent loop (agent/) consumes what is assembled here.
+Concord's model surface lives in `concord_prompt.py` (system prompt + SDK options) and
+`concord_tools.py` (the @tool wrappers). Both are imported directly by their consumers
+(api/app.py, the agent driver), so this package deliberately re-exports nothing —
+importing `target_triage.llm` must stay side-effect-free and must not pull in the SDK.
 """
 from __future__ import annotations
 
-from .prompt import DEFAULT_TASK, SYSTEM_PROMPT, build_options
-from .tools import ALLOWED_TOOLS, build_server
-
-__all__ = [
-    "DEFAULT_TASK",
-    "SYSTEM_PROMPT",
-    "build_options",
-    "ALLOWED_TOOLS",
-    "build_server",
-]
+__all__: list[str] = []

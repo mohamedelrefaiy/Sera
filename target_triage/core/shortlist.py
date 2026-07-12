@@ -11,13 +11,36 @@ Both are shown, including rejected candidates.
 """
 from __future__ import annotations
 
-from .data import load_screen
+from .data import CONDITIONS, load_screen
 from .evidence import load_evidence
 from .ranking import rank_by_impact, significant_records
 from .schema import MARSON, ScreenSchema
 from .verify import verify
 from ..clients import opentargets
-from ..llm.tools import _condition_rows
+
+# Canonical condition order (Rest -> Stim8hr -> Stim48hr) so per-condition figure data
+# always draws in time order regardless of dict insertion order.
+_COND_ORDER = {c: i for i, c in enumerate(CONDITIONS)}
+
+
+def _condition_rows(record) -> list[dict]:
+    """Per-condition figure data for a gene, in canonical order. n_downstream stays
+    int OR None (None = this screen has no breadth signal) — never coerced to 0, so
+    the figure can draw an honest 'N/A' bar instead of implying a measured zero.
+
+    Relocated from llm/tools.py when the Target Triage agent layer was removed; the
+    logic is unchanged (a pure reshape of record.by_condition), so the deterministic
+    shortlist keeps its per-condition bars with no dependency on the agent layer."""
+    return [
+        {"condition": c,
+         "n_downstream": p.n_downstream,
+         "effect_size": round(p.effect_size, 2),
+         "n_cells": p.n_cells,
+         "significant": p.significant,
+         "offtarget": p.offtarget}
+        for c, p in sorted(record.by_condition.items(),
+                           key=lambda kv: _COND_ORDER.get(kv[0], 99))
+    ]
 
 # Back-compat: the Marson anchors, which used to live here as a global. Screens now
 # declare their own (ScreenSchema.spotlight) — see docs/adr/0001-*.md. Prefer

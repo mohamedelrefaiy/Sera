@@ -7,28 +7,28 @@ numbers to produce a mechanism-annotated, scrutiny-survived shortlist — showin
 its work, including the candidates it rejects.
 
 This module is only the DRIVER: it owns the SDK client lifecycle and streams
-messages. The prompt, default task, and tool/allow-list config it consumes live in
-llm/ (see llm/prompt.py, llm/tools.py) so the model surface is edited independently.
-
-Run:  python -m target_triage  (see __main__.py)
+messages. The prompt and tool/allow-list config it consumes are passed in via
+`options` (see llm/concord_prompt.build_concord_options) so the model surface is
+configured by the caller, not this driver.
 """
 from __future__ import annotations
 
 from claude_agent_sdk import ClaudeSDKClient
 
-from ..llm.prompt import DEFAULT_TASK, SYSTEM_PROMPT, build_options
-
-__all__ = ["run_triage", "build_options", "DEFAULT_TASK", "SYSTEM_PROMPT"]
+__all__ = ["run_triage"]
 
 
 async def run_triage(task: str, on_message=None, options=None) -> list:
     """Run the agent on a task, returning all messages. on_message(msg) streams them.
 
-    `options` selects WHICH agent runs: the Target Triage shortlist agent (default), or another
-    ClaudeAgentOptions such as the Concord reconciliation agent (llm/concord_prompt.build_concord_options).
-    The driver is agent-agnostic — only the options (tools + prompt) differ."""
+    `options` (a ClaudeAgentOptions) selects WHICH agent runs — e.g. the Concord
+    reconciliation agent from llm/concord_prompt.build_concord_options(). The driver is
+    agent-agnostic; the caller supplies the prompt + tools, so `options` is required."""
     if options is None:
-        options = build_options()
+        raise ValueError(
+            "run_triage requires `options` (a ClaudeAgentOptions); the caller supplies the "
+            "agent's prompt + tools, e.g. build_concord_options()."
+        )
     messages: list = []
     async with ClaudeSDKClient(options=options) as client:
         await client.query(task)
