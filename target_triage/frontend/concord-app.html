@@ -1203,14 +1203,15 @@ ZNF250</div>
   // Persist one turn descriptor to the current session (no-op while replaying or if the store is
   // unavailable — persistence is best-effort and must never block the chat).
   async function persistTurn(desc){
-    if(_replaying) return;
-    var s=await ensureSession(); if(!s) return;
+    if(_replaying) return null;
+    var s=await ensureSession(); if(!s) return null;
     try{
       var r=await fetch("api/sessions/"+encodeURIComponent(s.id),{
         method:"PATCH",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({turn:desc})});
       if(r.ok){ var sum=await r.json(); if(sum&&sum.title) currentSession.title=sum.title; loadSessions(); }
     }catch(e){ /* best-effort */ }
+    return currentSession;
   }
 
   // Render the recent-sessions list in the nav (newest first).
@@ -1893,7 +1894,7 @@ ZNF250</div>
   async function handleMessage(text){
     text=(text||"").trim(); if(!text) return;
     hideLanding();
-    persistTurn({role:"user", text:text, intent:"agent", gene:null});
+    await persistTurn({role:"user", text:text, intent:"agent", gene:null});
     await runAgent(text);
   }
 
@@ -1959,7 +1960,7 @@ ZNF250</div>
     var startedText=false, acc="", renderedGene=null, calledTool=false, pendingView=null;
     try{
       var resp=await fetch("api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({message:text, mode:"concord"})});
+        body:JSON.stringify({message:text, mode:"concord", session_id:currentSession?currentSession.id:null})});
       if(!resp.ok||!resp.body){ el.classList.remove("streaming"); el.textContent="The agent is unavailable right now."; return; }
       var reader=resp.body.getReader(), dec=new TextDecoder(), buf="";
       while(true){
@@ -2042,7 +2043,7 @@ ZNF250</div>
     }
     settleActivity(actEl);
     scrollToTurn(added);
-    persistTurn({role:"agent", text:acc||"", intent:"agent", gene:renderedGene||null});
+    await persistTurn({role:"agent", text:acc||"", intent:"agent", gene:renderedGene||null});
   }
 
   // Human label for a tool call while it runs.
