@@ -4,6 +4,10 @@ __pycache__/
 .DS_Store
 .venv/
 *.egg-info/
+# Packaging byproducts from `python -m build` / wheel builds — regenerable, never committed.
+build/
+dist/
+*.whl
 .claude
 .gstack/
 .agents
