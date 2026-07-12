@@ -566,6 +566,90 @@
   :focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
+  /* ── Enterprise scientific system ──────────────────────────────────────────────────────
+     Product chrome is quiet and architectural; colour belongs to measured data. Serif is
+     reserved for interpretation, giving the assay evidence and the UI distinct voices. */
+  :root{
+    --bg:#101519;--sidebar:#0C1115;--surface:#171D22;--surface-2:#1D252B;
+    --ink:#F0F3F2;--ink-soft:#AEB9B8;--ink-faint:#72807F;
+    --line:#263137;--line-strong:#36454B;--prov:#304047;
+    --accent:#4BAF9B;--shadow:0 18px 48px -28px rgba(0,12,18,.9);
+    --radius:10px;
+  }
+  body{font-family:var(--font-ui);font-size:14px;line-height:1.55;background:var(--bg)}
+  .workspace{grid-template-columns:248px minmax(560px,1fr) 344px}
+  .nav{padding:18px 14px 14px;border-right-color:var(--line);background:var(--sidebar)}
+  .nav-top{min-height:46px;padding:0 10px 16px;margin-bottom:7px;border-bottom:1px solid var(--line);
+    font-family:var(--font-ui);font-size:15px;font-weight:600;letter-spacing:-.01em}
+  .nav-top .txt{display:flex;flex-direction:column;line-height:1.2}
+  .nav-top small{margin-top:4px!important;text-transform:uppercase;letter-spacing:.08em}
+  .nav-item,.session{border-radius:6px;min-height:36px}
+  .nav-item.on,.session.on{background:#1C272B;box-shadow:inset 2px 0 0 var(--accent)}
+  .newchat{margin:5px 0 8px;border-color:var(--line)!important;background:var(--surface)!important}
+  .nav-sec{padding-top:18px;color:#687776}
+
+  .convo{background:radial-gradient(circle at 50% 0,rgba(70,116,111,.07),transparent 30%),var(--bg)}
+  .convo-head{min-height:64px;padding:0 30px;background:rgba(16,21,25,.92);border-bottom-color:var(--line)}
+  .convo-head .title{font-family:var(--font-ui);font-size:14px;font-weight:600;letter-spacing:-.005em}
+  .convo-head .crumb{font-family:var(--font-ui);font-size:12px;color:var(--ink-faint)}
+  .convo-head .crumb::before{content:"/";margin-right:12px;color:var(--line-strong)}
+  .convo-context{margin-left:auto;display:flex;align-items:center;gap:8px;font:500 10px/1 var(--font-mono);
+    letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
+  .convo-context::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--mrna);
+    box-shadow:0 0 0 3px var(--mrna-soft)}
+  .convo-scroll{padding:12px 34px 28px}
+  .turn{max-width:760px;padding:32px 0}
+  .reply{max-width:760px}
+  .reply-turn.agent{gap:16px}
+  .ava{border-radius:7px;background:var(--surface);width:30px;height:30px}
+  .user-msg{font-family:var(--font-ui);background:var(--surface-2);border-color:var(--line-strong);
+    border-radius:8px;padding:9px 13px;color:var(--ink)}
+  .cond-row{margin-bottom:18px}
+  .cond-inline{background:var(--surface);padding:3px;border:1px solid var(--line);border-radius:7px}
+  .cond-inline button{border-radius:5px!important}
+  .prose{font-family:var(--font-serif);font-size:17px;line-height:1.7;color:#DCE2DF;max-width:66ch}
+
+  .agent-activity{margin:2px 0 20px;padding:10px 14px;border:1px solid var(--line);border-left:2px solid var(--accent);
+    border-radius:0 7px 7px 0;background:rgba(23,29,34,.62);font-size:10.5px;gap:4px}
+  .agent-activity .act.done{display:none}
+  .agent-activity .act.verdict{color:var(--ink-soft)}
+  .fig{margin:24px 0}
+  .fig-frame{background:#131A1E;border-color:var(--line-strong);border-radius:9px;box-shadow:var(--shadow)}
+  .fig-eyebrow{padding:15px 18px 8px;color:var(--ink-faint);letter-spacing:.1em}
+  .fig svg{max-width:620px}
+  .cap{font-family:var(--font-serif);font-size:13.5px;line-height:1.65;border-top:1px solid var(--line);
+    margin-top:4px;padding:15px 18px 17px;color:var(--ink-soft)}
+  .chain{border-radius:7px;background:var(--surface);border-color:var(--line)}
+  .foot,.srcline{color:var(--ink-faint)}
+  .dossier{gap:10px}
+  .card.soft{background:var(--surface);border-color:var(--line);border-radius:8px}
+  .followups{border-top-style:solid}
+  .fchip,.cchip{border-radius:6px;background:transparent}
+
+  .composer{padding:12px 34px 18px;background:rgba(16,21,25,.96);border-top-color:var(--line)}
+  .composer-box{min-height:50px;border-radius:8px;background:var(--surface);border-color:var(--line-strong);
+    box-shadow:0 10px 28px -22px rgba(0,0,0,.9)}
+  .composer-box input{font-family:var(--font-ui);font-size:14px}
+  .send{border-radius:6px;background:var(--accent)}
+  .composer-hint{font-family:var(--font-ui);font-size:10.5px;letter-spacing:.01em}
+
+  .arts{background:var(--sidebar)}
+  .arts-head{min-height:64px;padding:0 16px}
+  .arts-head .h{font-family:var(--font-ui);font-size:13px;font-weight:600}
+  .art{border-radius:7px;background:var(--surface)}
+  .landing{max-width:720px;padding:10vh 0 40px;text-align:left}
+  .landing-mark{margin-bottom:26px}
+  .landing-h{max-width:18ch;font-size:42px;line-height:1.08;letter-spacing:-.025em;text-wrap:balance}
+  .landing-sub{margin:0 0 34px;max-width:60ch;font-size:17px;line-height:1.65}
+  .landing-prompts{gap:10px}
+  .lprompt{border-radius:8px;padding:16px 17px;background:rgba(23,29,34,.75)}
+  .lprompt-hero{border-color:var(--line-strong);box-shadow:inset 3px 0 0 var(--accent)}
+  .lprompt-hero .lp-k,.lprompt .lp-ex{color:var(--mrna)}
+
+  @media(max-width:1280px){.workspace{grid-template-columns:220px minmax(0,1fr)}.arts{display:none}}
+  @media(max-width:940px){.workspace{grid-template-columns:64px minmax(0,1fr)}.convo-context{display:none}}
+  @media(max-width:700px){.workspace{grid-template-columns:1fr}.nav{display:none}.convo-scroll,.composer{padding-left:18px;padding-right:18px}.landing-h{font-size:34px}}
+
   /* print: a clean one-page validation plan (the ELN/PDF export — the handoff artifact). The app
      is dark on screen; on paper it must be black-on-white. Force light surfaces, keep the serif/mono
      voice split, and hide all chrome, nav, and the other three views. */
@@ -610,6 +694,7 @@
     <div class="convo-head">
       <span class="title" id="convoTitle">Chat</span>
       <span class="crumb" id="urlPath">gene/ITK</span>
+      <span class="convo-context">Evidence workspace</span>
       <button class="arts-toggle" id="artsToggle" aria-label="Toggle artifacts" title="Show/hide artifacts" aria-pressed="true">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M15 4v16"/></svg>
       </button>
