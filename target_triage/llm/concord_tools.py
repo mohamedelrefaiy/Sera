@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
@@ -88,14 +89,93 @@ def _view(agent_facts: dict, view_update: dict) -> dict:
     return {"content": [{"type": "text", "text": json.dumps(payload, indent=2)}]}
 
 
+# --- condition resolution ------------------------------------------------------------------
+# The three activation conditions in the screens, in their natural time order. A cross-condition
+# view (compare_conditions) and any "default focus" must present them in THIS order, never the
+# dict-insertion order of the loaded rows.
+_CANON_ORDER = ("Rest", "Stim8hr", "Stim48hr")
+
+# Loose aliases an LLM (or a scientist) might type for each condition. Keys are the normalised
+# token (lowercased, whitespace/dashes/underscores stripped); values are the canonical name.
+_COND_ALIASES = {
+    "rest": "Rest", "resting": "Rest", "unstim": "Rest", "unstimulated": "Rest",
+    "baseline": "Rest", "0h": "Rest", "0hr": "Rest", "t0": "Rest",
+    "stim8hr": "Stim8hr", "stim8h": "Stim8hr", "8h": "Stim8hr", "8hr": "Stim8hr",
+    "8hour": "Stim8hr", "8hours": "Stim8hr", "early": "Stim8hr",
+    "stim48hr": "Stim48hr", "stim48h": "Stim48hr", "48h": "Stim48hr", "48hr": "Stim48hr",
+    "48hour": "Stim48hr", "48hours": "Stim48hr", "stim": "Stim48hr", "stimulated": "Stim48hr",
+    "late": "Stim48hr",
+}
+
+
+def _norm_cond_token(raw: str) -> str:
+    """Lowercase and strip whitespace/dashes/underscores so '48 h' and 'Stim48hr' compare cleanly."""
+    return re.sub(r"[\s_\-]+", "", (raw or "").strip().lower())
+
+
+def _resolve_condition(raw, available: list[str]) -> str | None:
+    """Resolve a loosely-typed condition to a canonical name the gene ACTUALLY has, or None.
+
+    A name is only accepted if it maps to a condition present in `available` — the same closed-set
+    discipline as gene resolution. Matches exact canonical names case-insensitively first, then the
+    small alias table (rest / 8h / 48h / …). Never guesses a condition the gene lacks.
+    """
+    if not raw:
+        return None
+    tok = _norm_cond_token(raw)
+    for c in available:                       # exact canonical, case-insensitive
+        if _norm_cond_token(c) == tok:
+            return c
+    canon = _COND_ALIASES.get(tok)            # then the alias table
+    return canon if canon in available else None
+
+
+def _order_conditions(conds) -> list[str]:
+    """Canonical Rest -> Stim8hr -> Stim48hr order; any unexpected extras appended stably."""
+    conds = list(conds)
+    known = [c for c in _CANON_ORDER if c in conds]
+    extra = [c for c in conds if c not in _CANON_ORDER]
+    return known + extra
+
+
+def _parse_conditions_arg(raw) -> list[str]:
+    """Split a comma / space / semicolon separated conditions string into raw tokens (unresolved)."""
+    if not raw:
+        return []
+    return [t for t in re.split(r"[,;\s]+", str(raw).strip()) if t]
+
+
+def _by_condition(hits: list[dict], gene: str) -> dict[str, dict]:
+    """Per-condition {verdict, plain} for a gene, reusing the experimentalist-voice record builder.
+    The verdict is the value the CODE computed; `plain` is words-only (no z / lfc / p / fdr)."""
+    out = {}
+    for r in hits:
+        rec = build_record(r, gene)
+        out[r["condition"]] = {"verdict": r["verdict"], "plain": rec["plain"]}
+    return out
+
+
 @tool(
     "reconcile_gene",
     "Reconcile ONE gene's mRNA (Perturb-seq) vs protein (FACS) CRISPR screens into the "
     "code-computed concordance verdict (replicated / discordant / mRNA-only / protein-only / "
-    "neither), per activation condition. Returns the verdict plus a WORDS-ONLY summary (transcript "
-    "up/down, protein up/down, strength) you narrate from — never quote the raw statistics. Call "
-    "this whenever the user names a gene or asks whether the two screens agree about one.",
-    {"gene": str},
+    "neither) AT ONE activation condition. Returns the verdict plus a WORDS-ONLY summary "
+    "(transcript up/down, protein up/down, strength) you narrate from — never quote the raw "
+    "statistics. Pass `condition` (Rest, Stim8hr, or Stim48hr) to focus the condition the "
+    "question is about; omit it to default to Stim48hr. For how a gene CHANGES across conditions "
+    "or over time, call `compare_conditions` instead — do NOT call this three times.",
+    {
+        "type": "object",
+        "properties": {
+            "gene": {"type": "string", "description": "Gene symbol, e.g. TSC1."},
+            "condition": {
+                "type": "string",
+                "description": "Optional activation condition to focus: Rest, Stim8hr, or "
+                               "Stim48hr. Omit to default to Stim48hr.",
+            },
+        },
+        "required": ["gene"],
+    },
 )
 async def reconcile_gene(args):
     gene = (args.get("gene") or "").strip().upper()
@@ -103,20 +183,69 @@ async def reconcile_gene(args):
     if not hits:
         return _text({"gene": gene, "error": "not in the screens",
                       "note": "Only genes present in both CRISPR screens can be reconciled."})
-    # Words-only summaries per condition (reuse the experimentalist-voice record builder), plus the
-    # verdict the CODE computed — the agent narrates, it does not decide.
-    by_condition = {}
-    for r in hits:
-        rec = build_record(r, gene)
-        by_condition[r["condition"]] = {"verdict": r["verdict"], "plain": rec["plain"]}
-    # pick the most actionable condition to focus (Stim48hr is the canonical demo condition)
-    focus_cond = "Stim48hr" if "Stim48hr" in by_condition else hits[0]["condition"]
+    by_condition = _by_condition(hits, gene)
+    available = list(by_condition.keys())
+    # The question chooses the condition; fall back to the canonical demo condition (Stim48hr),
+    # then to the earliest available. A requested-but-unavailable condition degrades, never errors.
+    requested = _resolve_condition(args.get("condition"), available)
+    focus_cond = requested or ("Stim48hr" if "Stim48hr" in by_condition
+                               else _order_conditions(available)[0])
     return _view(
         {"gene": gene, "cytokine": hits[0]["cytokine"], "by_condition": by_condition,
          "focus_condition": focus_cond,
          "note": "Verdict computed by code. Narrate the `plain` summary in plain language — do NOT "
                  "quote z-scores, log-fold-changes, p-values or FDRs; those live in the figure."},
         {"action": "reconcile", "gene": gene, "condition": focus_cond},
+    )
+
+
+@tool(
+    "compare_conditions",
+    "Compare ONE gene's concordance verdict ACROSS activation conditions — the time-course / "
+    "cross-condition view. Use this for 'how does GENE change between rest and 48h', 'over time', "
+    "'across conditions', or when the user names two or more conditions. Returns the code-computed "
+    "verdict and a WORDS-ONLY summary for EACH condition, in time order (Rest -> Stim8hr -> "
+    "Stim48hr); you narrate the trajectory (e.g. what shifts from rest to late stimulation). Pass "
+    "`conditions` to restrict to a subset (comma-separated); omit it to compare all the gene has. "
+    "Never quote raw statistics.",
+    {
+        "type": "object",
+        "properties": {
+            "gene": {"type": "string", "description": "Gene symbol, e.g. TSC1."},
+            "conditions": {
+                "type": "string",
+                "description": "Optional comma-separated subset of Rest, Stim8hr, Stim48hr "
+                               "(e.g. 'Rest, Stim48hr'). Omit to compare every condition the "
+                               "gene has.",
+            },
+        },
+        "required": ["gene"],
+    },
+)
+async def compare_conditions(args):
+    gene = (args.get("gene") or "").strip().upper()
+    hits = _BY_GENE.get(gene)
+    if not hits:
+        return _text({"gene": gene, "error": "not in the screens",
+                      "note": "Only genes present in both CRISPR screens can be compared."})
+    all_by_condition = _by_condition(hits, gene)
+    available = list(all_by_condition.keys())
+    # Requested subset (resolved + validated against what the gene actually has), else everything.
+    requested_raw = _parse_conditions_arg(args.get("conditions"))
+    if requested_raw:
+        resolved = [c for c in (_resolve_condition(r, available) for r in requested_raw) if c]
+        chosen = list(dict.fromkeys(resolved)) or available   # dedupe; empty -> compare all
+    else:
+        chosen = available
+    ordered = _order_conditions(chosen)
+    by_condition = {c: all_by_condition[c] for c in ordered}
+    return _view(
+        {"gene": gene, "cytokine": hits[0]["cytokine"], "ordered_conditions": ordered,
+         "by_condition": by_condition,
+         "note": "Verdict per condition computed by code, in time order. Narrate the TRAJECTORY in "
+                 "plain language — what changes from rest to stimulation and why it matters — from "
+                 "the `plain` summaries. Do NOT quote z-scores, log-fold-changes, p-values or FDRs."},
+        {"action": "compare", "gene": gene, "conditions": ordered},
     )
 
 
@@ -186,12 +315,13 @@ def build_concord_server():
     return create_sdk_mcp_server(
         name="concord",
         version="0.1.0",
-        tools=[reconcile_gene, gene_evidence, known_biology],
+        tools=[reconcile_gene, compare_conditions, gene_evidence, known_biology],
     )
 
 
 CONCORD_ALLOWED_TOOLS = [
     "mcp__concord__reconcile_gene",
+    "mcp__concord__compare_conditions",
     "mcp__concord__gene_evidence",
     "mcp__concord__known_biology",
 ]
