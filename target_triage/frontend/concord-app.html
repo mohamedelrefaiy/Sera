@@ -812,7 +812,29 @@
   .lprompt-hero{box-shadow:inset 3px 0 0 var(--accent),inset 0 0 0 1px var(--line),0 22px 48px -34px rgba(20,43,50,.32)}
   :focus-visible{outline:3px solid rgba(8,124,240,.45);outline-offset:3px}
 
+  /* Experimental decision brief: narrative and data on the left, the next bench decision on the right. */
+  .turn{max-width:1160px}.brief-shell{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:28px;align-items:start}
+  .brief-main,.bench-workspace{min-width:0}.bench-workspace{position:sticky;top:20px;display:flex;flex-direction:column;gap:16px}
+  .brief-k{font:600 10px/1.2 var(--font-mono);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint)}
+  .decision-gate{display:grid;grid-template-columns:minmax(150px,.42fr) 1fr;gap:18px;align-items:center;margin:0 0 24px;padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.76);box-shadow:inset 0 0 0 1px var(--line)}
+  .decision-gate strong{display:block;margin-top:7px;font:670 17px/1.2 var(--font-ui);letter-spacing:-.02em}.decision-gate p{margin:0;color:var(--ink-soft);font-size:13px;line-height:1.5}
+  .decision-gate.advance strong{color:var(--mrna)}.decision-gate.hold strong{color:var(--warn)}.decision-gate.validate strong{color:var(--accent)}.decision-gate.deprioritize strong,.decision-gate.insufficient strong{color:var(--ink-soft)}
+  .evidence-boundary{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:24px 0;background:var(--line);border-radius:16px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+  .boundary{min-height:152px;padding:17px;background:rgba(255,255,255,.76)}.boundary .brief-k::before{content:"";display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:50%;background:var(--ink-faint)}
+  .boundary.observed .brief-k::before{background:var(--mrna)}.boundary.inferred .brief-k::before{background:var(--warn)}
+  .boundary p{margin:11px 0 0;padding-left:12px;border-left:1px solid var(--line-strong);color:var(--ink-soft);font-size:12px;line-height:1.46}
+  .brief-section-head{display:flex;justify-content:space-between;gap:14px;align-items:baseline;margin-bottom:13px;color:var(--ink-faint);font-size:11px}
+  .evidence-ledger,.threats{margin-top:18px;padding:20px;border-radius:18px;background:rgba(255,255,255,.64);box-shadow:inset 0 0 0 1px var(--line)}
+  .ledger-row,.threat-row,.spec-row{display:grid;gap:10px;padding:11px 0;border-top:1px solid var(--line);font-size:12px;line-height:1.4}.ledger-row{grid-template-columns:1fr auto}.ledger-row:first-child,.threat-row:first-child,.spec-row:first-child{border-top:0}
+  .ledger-row strong{color:var(--ink);font-weight:600}.ledger-row span,.threat-row{color:var(--ink-soft)}.ledger-status{font:600 10px var(--font-mono);text-transform:uppercase;color:var(--mrna)!important}
+  .threat-row{grid-template-columns:18px 1fr}.threat-row::before{content:"!";display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--warn-soft);color:var(--warn);font:700 10px var(--font-mono)}
+  .bench-workspace .resolution{margin:0;padding:22px;border-radius:18px;box-shadow:inset 0 0 0 1px var(--line),0 18px 48px -40px rgba(20,43,50,.4)}.bench-workspace .resolution-head{display:block}.bench-workspace .resolution-tag{display:inline-block;margin-top:9px}.bench-workspace .resolution-h{font-size:20px}.bench-workspace .outcomes{grid-template-columns:1fr}
+  .bench-spec{margin:16px 0;padding:2px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.spec-row{grid-template-columns:84px 1fr}.spec-row span:first-child{color:var(--ink-faint);font:600 9px/1.5 var(--font-mono);letter-spacing:.08em;text-transform:uppercase}.spec-row span:last-child{color:var(--ink)}
+  .bench-workspace .followups{display:flex;flex-direction:column;margin:0}.bench-workspace .followups::before{content:"Suggested next steps";margin:2px 0 8px;font:600 10px var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+  .bench-workspace .fchip{width:100%;justify-content:flex-start}.bench-workspace .dossier,.bench-workspace .srcline{display:none!important}
+
   @media(max-width:1280px){.workspace{grid-template-columns:220px minmax(0,1fr)}.arts{display:none}.arts-toggle{display:none}}
+  @media(max-width:1050px){.brief-shell{grid-template-columns:1fr}.bench-workspace{position:static}.evidence-boundary{grid-template-columns:1fr}.boundary{min-height:0}}
   @media(max-width:940px){.workspace{grid-template-columns:64px minmax(0,1fr)}.convo-context{display:none}}
   @media(max-width:700px){
     .workspace{grid-template-columns:1fr;grid-template-rows:58px minmax(0,1fr)}
@@ -824,6 +846,7 @@
     .convo-head{min-height:52px;padding:0 18px}.convo-scroll,.composer{padding-left:18px;padding-right:18px}
     .landing{padding-top:7vh}.landing-h{font-size:34px}.composer-chips{overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px}
     .cchip{flex:none}.reply-turn.user-row .user-msg{max-width:86%}
+    .decision-gate{grid-template-columns:1fr}.brief-shell{gap:20px}.evidence-ledger,.threats{padding:16px}
   }
   @media(max-width:560px){.nav-top{width:30px;padding:0;margin-right:auto}.nav-top .txt{display:none!important}.modes{gap:4px}}
   @media(max-width:420px){.nav-top .txt{font-size:13px}.modes .nav-item{padding:8px}.modes .lbl{display:none}.landing-h{font-size:30px}}
@@ -884,18 +907,18 @@
            turn is appended. A greeting + example prompts that teach what the tool can be asked. -->
       <div id="landing" class="landing">
         <div class="landing-mark" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
-        <h1 class="landing-h">When biology splits, see why.</h1>
-        <p class="landing-sub">Concord lets transcript and protein evidence speak independently, explains the split, and designs the experiment that resolves it.</p>
+        <h1 class="landing-h">From screen hit to next experiment.</h1>
+        <p class="landing-sub">Ask a target question. Get the scientific narrative, the evidence boundary, and the one experiment most likely to change the decision.</p>
         <div class="landing-prompts" id="landingPrompts">
-          <button class="lprompt lprompt-hero" data-q="Reconcile TSC1">
-            <span class="lp-k">Start here · Reconcile</span><span class="lp-t">Do the two screens agree on this gene — and if not, which wins?</span>
-            <span class="lp-ex">"Reconcile TSC1"</span></button>
+          <button class="lprompt lprompt-hero" data-q="Should TSC1 advance?">
+            <span class="lp-k">Start here · Decision brief</span><span class="lp-t">Should this target advance to a bench validation experiment?</span>
+            <span class="lp-ex">"Should TSC1 advance?"</span></button>
           <button class="lprompt" data-q="Is PTPN2 druggable?">
             <span class="lp-k">Druggability</span><span class="lp-t">Is a gene a viable drug target?</span>
             <span class="lp-ex">"Is PTPN2 druggable?"</span></button>
-          <button class="lprompt" data-q="What does discordant mean?">
-            <span class="lp-k">Explain</span><span class="lp-t">Ask about the biology or the method</span>
-            <span class="lp-ex">"What does discordant mean?"</span></button>
+          <button class="lprompt" data-q="What could make the TSC1 result fail?">
+            <span class="lp-k">Stress-test</span><span class="lp-t">Surface the assumptions and failure modes before going to the bench</span>
+            <span class="lp-ex">"What could make the TSC1 result fail?"</span></button>
           <button class="lprompt" data-q="Does Concord recover known biology?">
             <span class="lp-k">Validate</span><span class="lp-t">Does the tool recover known biology?</span>
             <span class="lp-ex">"Does it recover known biology?"</span></button>
@@ -954,8 +977,19 @@ ZNF250</div>
                 <button data-cond="Stim48h" role="tab" aria-selected="true">Stim 48h</button>
               </span>
             </div>
+            <div class="brief-shell">
+              <article class="brief-main">
+                <section class="decision-gate" aria-label="Current experimental decision">
+                  <div><div class="brief-k">Current gate</div><strong class="js-gateState">Review evidence</strong></div>
+                  <p class="js-gateReason"></p>
+                </section>
             <p class="prose js-proseOpen"></p>
             <p class="prose result-narrative js-resultNarrative"></p>
+            <section class="evidence-boundary" aria-label="Evidence boundary">
+              <div class="boundary observed"><div class="brief-k">Observed</div><div class="js-observed"></div></div>
+              <div class="boundary inferred"><div class="brief-k">Inferred</div><div class="js-inferred"></div></div>
+              <div class="boundary unknown"><div class="brief-k">Still unknown</div><div class="js-unknown"></div></div>
+            </section>
             <figure class="fig">
               <div class="fig-frame">
                 <div class="fig-eyebrow js-figEyebrow">Figure 1 · paired effect on IL-2</div>
@@ -963,15 +997,26 @@ ZNF250</div>
                 <figcaption class="cap js-figCap"></figcaption>
               </div>
             </figure>
+            <section class="evidence-ledger" aria-label="Evidence ledger">
+              <div class="brief-section-head"><span class="brief-k">Evidence ledger</span><span>What the decision rests on</span></div>
+              <div class="js-evidenceLedger"></div>
+            </section>
+              </article>
+              <aside class="bench-workspace" aria-label="Experimental planning workspace">
+            <section class="threats">
+              <div class="brief-section-head"><span class="brief-k">Threats to interpretation</span><span>Before you trust the call</span></div>
+              <div class="js-threats"></div>
+            </section>
             <section class="resolution js-resolution" aria-label="Resolution experiment">
               <div class="resolution-head">
                 <div>
-                  <div class="resolution-k">What would resolve this?</div>
+                  <div class="resolution-k">Most informative experiment</div>
                   <h3 class="resolution-h js-resolutionTitle">Run one matched experiment</h3>
                   <p class="resolution-copy js-resolutionCopy"></p>
                 </div>
-                <span class="resolution-tag">hypothesis preview</span>
+                <span class="resolution-tag">editable plan</span>
               </div>
+              <div class="bench-spec js-benchSpec"></div>
               <div class="outcomes js-outcomes"></div>
               <div class="resolution-preview js-resolutionPreview">Choose a possible result to preview how the interpretation would change.</div>
             </section>
@@ -1015,6 +1060,8 @@ ZNF250</div>
               <button class="fchip" data-follow="druggability"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z"/><path d="M8.5 8.5l7 7"/></svg>Review druggability and evidence</button>
               <button class="fchip" data-follow="plan"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Draft a validation plan</button>
               <button class="fchip" data-follow="truth"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>Check against known biology</button>
+            </div>
+              </aside>
             </div>
           </div>
         </div>
@@ -1617,6 +1664,48 @@ ZNF250</div>
       +'Direction and statistical status are shown separately for each assay. The z-score and log₂ fold change remain in their native units and should not be compared by magnitude.';
   }
 
+  function fillBriefList(el,items){
+    if(!el) return;
+    el.innerHTML="";
+    items.forEach(function(item){var p=document.createElement("p");p.textContent=item;el.appendChild(p);});
+  }
+
+  function renderDecisionBrief(turn,row){
+    if(!row) return;
+    var gene=turn._gene, cond=COND_LABEL[turn._cond||"Stim48h"];
+    function briefQ(v){return v==null?"not available":(Number(v)<0.001?Number(v).toExponential(1):Number(v).toFixed(3));}
+    var gate=q(turn,"decision-gate"), state=q(turn,"js-gateState"), reason=q(turn,"js-gateReason");
+    var gateData;
+    if(row.prot_tested===false) gateData=["insufficient","INSUFFICIENT EVIDENCE","The functional protein layer was not measured. Do not make an advancement decision from transcript alone."];
+    else if(row.verdict==="discordant") gateData=["hold","HOLD — RESOLVE THE SPLIT","The assays point in opposite directions. Resolve the conflict in matched samples before advancing the target."];
+    else if(row.verdict==="replicated") gateData=["advance","ADVANCE TO VALIDATION","Two independent assay layers agree in direction; confirm the effect in a targeted donor experiment."];
+    else if(row.verdict==="mrna_only"||row.verdict==="protein_only") gateData=["validate","VALIDATE THE MISSING LAYER","The effect is supported in only one biological layer. Keep the claim scoped until the paired readout is tested."];
+    else gateData=["deprioritize","DEPRIORITIZE","Neither screen provides convergent support at this condition. Revisit only with a strong external rationale."];
+    if(gate){gate.className="decision-gate "+gateData[0];} if(state) state.textContent=gateData[1]; if(reason) reason.textContent=gateData[2];
+
+    var observed=["IL-2 mRNA: "+(row.hit_rna?(row.z_rna<0?"decreased":"increased")+" (z-score "+fmt(row.z_rna)+", q "+briefQ(row.q_rna)+")":"no significant screen hit")];
+    observed.push(row.prot_tested===false?"Secreted IL-2 protein was not measured in this screen.":"Secreted IL-2 protein: "+(row.hit_prot?(row.lfc_prot<0?"decreased":"increased")+" (log₂FC "+fmt(row.lfc_prot)+", q "+briefQ(row.q_prot)+")":"no significant screen hit"));
+    var inferred=row.verdict==="discordant"?["The transcript and functional readouts disagree in direction.","A transcript-only call would not predict the observed secreted-protein response."]:
+      row.verdict==="replicated"?["The independent readouts support the same directional effect.","Cross-layer agreement raises confidence, but does not establish mechanism."]:["The current evidence supports a layer-specific, not system-wide, claim."];
+    var unknown=["Whether both effects reproduce in the same donor, wells, and perturbation batch.","Whether screen context or kinetics explain the difference.","The causal mechanism linking "+gene+" perturbation to IL-2 output."];
+    fillBriefList(q(turn,"js-observed"),observed);fillBriefList(q(turn,"js-inferred"),inferred);fillBriefList(q(turn,"js-unknown"),unknown);
+
+    var ledger=q(turn,"js-evidenceLedger");
+    if(ledger) ledger.innerHTML='<div class="ledger-row"><span><strong>Perturb-seq</strong> · transcript abundance · '+cond+'</span><span class="ledger-status">'+(row.hit_rna?'threshold met':'not significant')+'</span></div>'
+      +'<div class="ledger-row"><span><strong>FACS</strong> · secreted protein · '+cond+'</span><span class="ledger-status">'+(row.prot_tested===false?'not measured':row.hit_prot?'threshold met':'not significant')+'</span></div>'
+      +'<div class="ledger-row"><span><strong>Cross-assay call</strong> · direction, not magnitude</span><span class="ledger-status">'+String(row.verdict||"neither").replace("_"," ")+'</span></div>';
+    var threats=q(turn,"js-threats");
+    if(threats) threats.innerHTML='<div class="threat-row"><span>These are separate screens, not transcript and protein collected from the same wells.</span></div>'
+      +'<div class="threat-row"><span>z-score and log₂ fold change are different units; their magnitudes are not directly comparable.</span></div>'
+      +'<div class="threat-row"><span>Screen significance supports reproducibility within an assay, not the biological mechanism.</span></div>';
+    var spec=q(turn,"js-benchSpec");
+    if(spec) spec.innerHTML='<div class="spec-row"><span>Perturbation</span><span>2 independent '+gene+' guides + non-targeting control</span></div>'
+      +'<div class="spec-row"><span>Replication</span><span>≥3 biological donors</span></div>'
+      +'<div class="spec-row"><span>Condition</span><span>'+cond+'; preserve the original stimulation context</span></div>'
+      +'<div class="spec-row"><span>Sampling</span><span>RNA and supernatant from the same wells</span></div>'
+      +'<div class="spec-row"><span>Readouts</span><span>IL2 transcript + secreted IL-2 protein</span></div>';
+  }
+
   function renderResolution(turn,row){
     var box=q(turn,"js-resolution"); if(!box||!row) return;
     var gene=turn._gene, v=row.verdict;
@@ -1712,6 +1801,7 @@ ZNF250</div>
     q(turn,"js-figCap").innerHTML=figCaption(gene,cond,row);
     var fe=q(turn,"js-figEyebrow"); if(fe) fe.textContent="Figure 1 · "+gene+" knockdown on IL-2 · "+COND_LABEL[cond];
     renderChain(turn,row);
+    renderDecisionBrief(turn,row);
     renderResolution(turn,row);
     // Just the verdict WORD as a terse machine label (no paragraph) — the coloured word IS the readout.
     var v=row?(VLABEL[row.verdict]||VLABEL.neither):VLABEL.neither;
