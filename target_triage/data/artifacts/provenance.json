@@ -179,8 +179,8 @@
    "condition": "Stim48hr",
    "verdict": "discordant",
    "label": "HYPOTHESIS \u2014 not used in verdict",
-   "claim": "TSC1 knockdown inhibits mTORC1 signalling (lowering IL-2 mRNA production), but the resulting reduction in protein synthesis feedback relieves translational repression of IL-2 protein, allowing existing mRNA to be translated more efficiently and raising surface IL-2.",
-   "distinguishing_experiment": "Pulse-chase assay: label newly synthesized IL-2 protein with 35S-methionine for 30 min (pulse), then chase in non-radioactive medium for 2\u20134 hr in TSC1 KD and control cells. Measure half-life by immunoprecipitation and scintillation counting. If IL-2 protein half-life is substantially extended in TSC1 KD (supporting hypothesis 2), the mRNA\u2013protein discordance is driven by stabilization. If half-life is similar but newly synthesized IL-2 accumulates faster during the pulse phase (supporting hypothesis 1), the discordance is driven by translational efficiency relief.",
+   "claim": "TSC1 suppression activates mTORC1 signaling at the protein level, increasing IL-2 secretion through enhanced translation, while transcriptional feedback simultaneously lowers IL2 mRNA via a parallel regulatory mechanism.",
+   "distinguishing_experiment": "Treat TSC1-perturbed cells with the mTORC1 inhibitor rapamycin (10 nM, 6 hours), then measure IL-2 protein by intracellular staining (FACS) and IL2 mRNA by qRT-PCR. Hypothesis 1 predicts: rapamycin lowers IL-2 protein (mTORC1 is the effector) while IL2 mRNA remains low or rises slightly (transcriptional repression is independent). Hypothesis 2 predicts: rapamycin suppresses both IL-2 protein and IL2 mRNA (energy-sensing feedback is upstream of both). A dissociation between protein recovery and mRNA (protein drops while mRNA stays low) favours Hypothesis 1; coordinated suppression of both favours Hypothesis 2.",
    "citation": {
     "db": "pubmed",
     "accession": "12172553",
@@ -195,8 +195,8 @@
    "condition": "Stim48hr",
    "verdict": "discordant",
    "label": "HYPOTHESIS \u2014 not used in verdict",
-   "claim": "TSC1 knockdown suppresses mTOR-dependent cell growth and shifts cellular energy allocation away from cytokine production at the transcriptional level, but simultaneously triggers compensatory protein stabilization of IL-2 through altered ubiquitin-proteasome turnover.",
-   "distinguishing_experiment": "Pulse-chase assay: label newly synthesized IL-2 protein with 35S-methionine for 30 min (pulse), then chase in non-radioactive medium for 2\u20134 hr in TSC1 KD and control cells. Measure half-life by immunoprecipitation and scintillation counting. If IL-2 protein half-life is substantially extended in TSC1 KD (supporting hypothesis 2), the mRNA\u2013protein discordance is driven by stabilization. If half-life is similar but newly synthesized IL-2 accumulates faster during the pulse phase (supporting hypothesis 1), the discordance is driven by translational efficiency relief.",
+   "claim": "TSC1 loss impairs cellular energy sensing, causing sustained mTORC1-driven protein synthesis and IL-2 output despite transcriptional repression of IL2 mRNA through metabolic stress responses.",
+   "distinguishing_experiment": "Treat TSC1-perturbed cells with the mTORC1 inhibitor rapamycin (10 nM, 6 hours), then measure IL-2 protein by intracellular staining (FACS) and IL2 mRNA by qRT-PCR. Hypothesis 1 predicts: rapamycin lowers IL-2 protein (mTORC1 is the effector) while IL2 mRNA remains low or rises slightly (transcriptional repression is independent). Hypothesis 2 predicts: rapamycin suppresses both IL-2 protein and IL2 mRNA (energy-sensing feedback is upstream of both). A dissociation between protein recovery and mRNA (protein drops while mRNA stays low) favours Hypothesis 1; coordinated suppression of both favours Hypothesis 2.",
    "citation": {
     "db": "pubmed",
     "accession": "14651849",
