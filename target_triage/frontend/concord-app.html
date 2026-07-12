@@ -496,17 +496,33 @@
   /* Known biology — the claim is a scientific statement (serif, journal-like measure); the stat
      numbers are measurements (mono, so they read as data); labels/rows stay mono. */
   .gt-claim p{font-family:var(--font-serif);margin:0;font-size:16px;line-height:1.65;max-width:70ch}
-  .gt-stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px}
-  .gt-stat{border:1px solid var(--line);border-radius:11px;background:var(--surface);padding:12px 16px;min-width:120px}
-  .gt-stat .n{font-family:var(--font-mono);font-weight:600;font-size:23px;color:var(--ink);letter-spacing:-.01em}
-  .gt-stat .l{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px}
-  .gt-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  /* ONE headline stat — the protein-only payoff — then a quiet baseline line. */
+  .gt-stats{margin-top:18px}
+  .gt-hero{display:flex;align-items:flex-start;gap:18px;border:1px solid var(--line-strong);
+    border-left:3px solid var(--protein);border-radius:12px;background:var(--surface);padding:18px 20px}
+  .gt-hero-n{font-family:var(--font-mono);font-weight:600;font-size:44px;line-height:.9;color:var(--protein);
+    letter-spacing:-.02em;flex:none}
+  .gt-hero-txt{font-family:var(--font-serif);font-size:15px;line-height:1.5;color:var(--ink-soft);padding-top:3px}
+  .gt-hero-txt b{color:var(--ink);font-weight:600}
+  .gt-sub{display:flex;gap:24px;flex-wrap:wrap;margin-top:12px;padding:0 4px;
+    font-family:var(--font-mono);font-size:12px;color:var(--ink-faint)}
+  .gt-sub b{color:var(--ink-soft);font-weight:600}
+  .gt-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px}
   @media(max-width:780px){.gt-grid{grid-template-columns:1fr}}
   .gt-col .gt-ct{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
-  .gtrow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px}
+  .gtrow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 8px;border-top:1px solid var(--line);font-size:13.5px;border-radius:7px}
   .gtrow:first-of-type{border-top:none}
-  .gtrow .gg{font-family:var(--font-mono);font-weight:600}
-  .gtrow .gz{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
+  .gtrow .gg{font-family:var(--font-mono);font-weight:600;color:var(--ink-soft)}
+  .gtrow .gz{font-family:var(--font-mono);font-size:11.5px;display:flex;gap:12px}
+  .gtrow .gz .ch{color:var(--ink-faint)}
+  /* teal=mRNA, magenta=protein; ↓ dimmed, ↑ brighter so direction reads at a glance */
+  .gz .mrna .ddn,.gz .mrna .dup{color:var(--mrna)}
+  .gz .prot .ddn,.gz .prot .dup{color:var(--protein)}
+  .gz .dna{color:var(--ink-faint)}
+  /* the KEY genes (protein-only, discordant) pop; replicated baseline recedes */
+  .gtrow.gt-key{background:var(--surface-2)}
+  .gtrow.gt-key .gg{color:var(--ink)}
+  .gtrow:not(.gt-key){opacity:.72}
   .note{max-width:1080px;margin:20px auto 0;font-size:13px;color:var(--ink-soft);text-align:center}
 
   /* validation plan view — the most prose-heavy surface. The plan IS the argument for spending
@@ -1600,7 +1616,7 @@ ZNF250</div>
     var actEl=q(added,"js-activity");
     act(actEl,"think","reasoning — deciding what to do","running");
 
-    var startedText=false, acc="", renderedGene=null, calledTool=false;
+    var startedText=false, acc="", renderedGene=null, calledTool=false, pendingView=null;
     try{
       var resp=await fetch("api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({message:text, mode:"concord"})});
@@ -1625,16 +1641,13 @@ ZNF250</div>
           }
           else if(ev.type==="view_update"){
             act(actEl,"tool",null,"done");
-            var g=await applyAgentView(ev.update, text, el.parentElement); if(g) renderedGene=g;
-            // For a reconcile, show that the VERDICT came from code — the product's core claim. Read
-            // after the awaited render so turn._byCondition is populated. (Evidence has no verdict.)
             if(ev.update && ev.update.action==="reconcile"){
+              // RECONCILE: the figure is a single clear visual — show it FIRST, then narrate it (the
+              // "agent building the answer" beat). Render the figure turn, mark the verdict step, and
+              // relocate the streaming narration into a bubble placed AFTER the figure.
+              var g=await applyAgentView(ev.update, text, el.parentElement); if(g) renderedGene=g;
               var vd=verdictOf(renderedGene);
               if(vd) act(actEl,"verdict","verdict computed by code → "+vd,"verdict");
-              // ORDER FIX: the figure turn was just appended BELOW this agent turn. Move the narration
-              // paragraph so it streams AFTER the figure — the words describe an artifact already on
-              // screen ("agent building the answer"), not a slab that lands after the prose. We relocate
-              // `el` into its own follow bubble placed right after the figure turn.
               var figTurn=thread.lastElementChild;
               if(figTurn && figTurn!==added){
                 var narrWrap=document.createElement("div");
@@ -1643,10 +1656,13 @@ ZNF250</div>
                 narrWrap.querySelector(".reply-body").appendChild(el);   // move the streaming <p> here
                 figTurn.after(narrWrap);
               }
-            } else if(ev.update && ev.update.action==="evidence"){
-              act(actEl,"data","druggability read from Open Targets","done");
-            } else if(ev.update && ev.update.action==="known_biology"){
-              act(actEl,"data","validation panel — canonical IL-2 regulators","done");
+            } else {
+              // EVIDENCE / KNOWN_BIOLOGY: the panel is a DENSE data block — the user must READ the
+              // explanation FIRST to know what they're looking at. So DEFER the panel: stash it and
+              // render it only AFTER the narration finishes (see the post-stream block below).
+              pendingView=ev.update;
+              if(ev.update.action==="evidence") act(actEl,"data","druggability read from Open Targets","done");
+              else if(ev.update.action==="known_biology") act(actEl,"data","validation panel — canonical IL-2 regulators","done");
             }
           }
           else if(ev.type==="text"){
@@ -1663,8 +1679,12 @@ ZNF250</div>
       el.classList.remove("streaming"); if(!startedText) el.textContent="The agent is unavailable (network error).";
     }
     el.classList.remove("streaming");
-    // Keep the agent's narration bubble visible ABOVE the rendered reconciliation turn, then scroll
-    // so the whole exchange (user bubble → agent narration → figure) reads top-to-bottom.
+    // DEFERRED PANEL: for evidence / known_biology the data panel renders NOW — after the narration
+    // has finished — so the user reads the plain-language explanation FIRST, then sees the supporting
+    // data below it (narration-first, per the dense-panel UX).
+    if(pendingView){
+      var pg=await applyAgentView(pendingView, text, el.parentElement); if(pg) renderedGene=pg;
+    }
     scrollToTurn(added);
     persistTurn({role:"agent", text:acc||"", intent:"agent", gene:renderedGene||null});
   }
@@ -1939,25 +1959,38 @@ ZNF250</div>
       var claimEl=q(added,"js-gtClaim"); if(claimEl){ claimEl.textContent="How the two screens recover the known IL-2 regulators, gene by gene."; }
       var hdr=added.querySelector(".gt-h"); if(hdr){ hdr.textContent="Validation · known IL-2 biology"; }
       var s=d.summary;
+      // ONE headline (the payoff: the protein-only recoveries a transcript screen misses), with the
+      // baseline counts as a quiet secondary line. Dropped the abstract "~none" tile — the narration
+      // above already makes the aggregate-hides-structure point in words.
       q(added,"js-gtStats").innerHTML=
-        stat(s.n_recovered+"/"+s.n_positive,"known regulators recovered")+
-        stat(s.n_replicated,"agree in both screens")+
-        stat(s.n_protein_only,"protein-only (transcript screen misses)")+
-        // The aggregate correlation (~0) means nothing to a bench scientist as a number — say what
-        // it MEANS: overall the two screens barely track each other (the structure is per-gene).
-        stat("~none","overall screen-to-screen agreement");
-      q(added,"js-gtPositives").innerHTML=d.positive_regulators.map(gtRow).join("");
-      q(added,"js-gtBrakes").innerHTML=d.brakes.map(gtRow).join("");
+        '<div class="gt-hero">'
+          +'<div class="gt-hero-n">'+s.n_protein_only+'</div>'
+          +'<div class="gt-hero-txt"><b>protein-only recoveries</b> — real IL-2 regulators the '
+          +'protein screen caught but a transcript-only screen would have missed entirely. '
+          +'This is the payoff.</div>'
+        +'</div>'
+        +'<div class="gt-sub">'
+          +'<span><b>'+s.n_recovered+'/'+s.n_positive+'</b> known regulators recovered</span>'
+          +'<span><b>'+s.n_replicated+'</b> confirmed in both screens</span>'
+        +'</div>';
+      // Sort so the INTERESTING genes lead each column (protein-only / discordant first, replicated
+      // baseline last) and mark them so they visually pop.
+      q(added,"js-gtPositives").innerHTML=gtSort(d.positive_regulators).map(gtRow).join("");
+      q(added,"js-gtBrakes").innerHTML=gtSort(d.brakes).map(gtRow).join("");
     }catch(e){ q(added,"js-gtClaim").textContent="Ground-truth panel unavailable."; }
   }
-  function stat(n,l){ return '<div class="gt-stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
-  // Translate a gene's raw z (transcript) + lfc (protein) into plain up/down arrows a bench scientist
-  // reads at a glance. Negative z = knockdown lowered the transcript; negative lfc = lowered protein.
-  function dirArrow(v){ if(v==null) return "—"; return v<0?"↓":v>0?"↑":"·"; }
+  // Lead with the genes that make the point (protein-only, discordant), replicated baseline last.
+  var _GT_INTEREST={protein_only:0,discordant:1,mrna_only:2,replicated:3,neither:4};
+  function gtSort(rows){ return (rows||[]).slice().sort(function(a,b){ return (_GT_INTEREST[a.verdict]==null?9:_GT_INTEREST[a.verdict])-(_GT_INTEREST[b.verdict]==null?9:_GT_INTEREST[b.verdict]); }); }
+  // A gene row: name, colour-coded transcript/protein direction (teal=mRNA, magenta=protein), verdict.
+  // Negative z/lfc = knockdown LOWERED that layer. Interesting verdicts get a highlight class.
+  function dirArrow(v){ if(v==null) return '<span class="dna">—</span>'; return v<0?'<span class="ddn">↓</span>':v>0?'<span class="dup">↑</span>':'<span class="dna">·</span>'; }
   function gtRow(x){
     var vt=VTAG[x.verdict]||VTAG.neither;
-    return '<div class="gtrow"><span class="gg">'+x.gene+'</span>'+
-           '<span class="gz">transcript '+dirArrow(x.z_rna)+' · protein '+dirArrow(x.lfc_prot)+'</span>'+
+    var interesting=(x.verdict==="protein_only"||x.verdict==="discordant");
+    return '<div class="gtrow'+(interesting?" gt-key":"")+'"><span class="gg">'+x.gene+'</span>'+
+           '<span class="gz"><span class="ch mrna">mRNA '+dirArrow(x.z_rna)+'</span>'+
+           '<span class="ch prot">protein '+dirArrow(x.lfc_prot)+'</span></span>'+
            '<span class="vtag '+vt[0]+'">'+vt[1]+'</span></div>';
   }
 
