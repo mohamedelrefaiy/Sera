@@ -1599,6 +1599,8 @@ ZNF250</div>
               if(vd) act(actEl,"verdict","verdict computed by code → "+vd,"verdict");
             } else if(ev.update && ev.update.action==="evidence"){
               act(actEl,"data","druggability read from Open Targets","done");
+            } else if(ev.update && ev.update.action==="known_biology"){
+              act(actEl,"data","validation panel — canonical IL-2 regulators","done");
             }
           }
           else if(ev.type==="text"){
@@ -1640,6 +1642,14 @@ ZNF250</div>
       // showed the message. Await loadGene so turn._byCondition is populated before we read the verdict.
       await loadGene(update.gene, null, "", true);
       return update.gene;
+    }
+    if(update.action==="known_biology"){
+      // Corpus-wide validation panel (recovery counts + regulator tables). The agent narrates the
+      // MEANING above; this panel is the cited data. Hide its duplicate user bubble.
+      await appendTruthTurn("");
+      var tt=thread.lastElementChild;
+      if(tt){ var tu=tt.querySelector(".js-user"); if(tu){ var trow=tu.closest(".user-row"); (trow||tu).style.display="none"; } }
+      return "__known_biology__";
     }
     if(update.action==="evidence" && update.gene){
       // Fetch the gene's enrichment and render the deterministic druggability card inline, so the
