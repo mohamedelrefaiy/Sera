@@ -643,10 +643,41 @@ _ANSWER_SYSTEM = (
     "Rules: the verdict and all numbers are deterministic — the agent narrates and cites, it does "
     "not decide. If asked for a SPECIFIC gene's numbers or verdict, briefly say to ask to reconcile "
     "that gene (e.g. 'reconcile TSC1') rather than guessing. NEVER invent gene symbols, effect "
-    "sizes, p-values, or citations. If you don't know, say so."
+    "sizes, p-values, or citations. If you don't know, say so.\n\n"
+    "Scope: you ONLY discuss immunology gene reconciliation — the mRNA vs protein screens, the "
+    "verdicts, druggability, disease genetics, and the validation plan. You are NOT a coding or "
+    "software assistant. Do NOT speculate about codebases, pipelines, data splits, frameworks, or "
+    "other applications, and NEVER name another tool or product. If a question is off-topic, "
+    "ambiguous, or not about a gene or the reconciliation method, do not guess or ask which system "
+    "the user means — reply in one sentence that you reconcile a gene's mRNA and protein screens, "
+    "and invite them to name a gene (e.g. 'Try: reconcile TSC1.')."
 )
 
 ANSWER_TIMEOUT_S = 45
+
+# Deterministic backstop for the conversational answer. The prompt tells the model to stay in
+# scope, but a prompt is probabilistic — on an off-topic or product-name question it occasionally
+# names a removed product ("Target Triage") or offers to act as a coding assistant ("let me read
+# the codebase"). These terms must NEVER reach the browser, so after the full answer is buffered we
+# scan it; a hit replaces the whole reply with the safe redirect. Lowercased substring match.
+_ANSWER_BANNED_TERMS = (
+    "target triage", "target_triage",
+    "codebase", "code base", "repository", "the repo",
+    "read the project", "read the file", "project layout", "the pipeline",
+    "train/test", "train / test", "frontend", "backend",
+)
+
+
+def _scrub_answer(text: str) -> str | None:
+    """Return None if the answer is clean, or the safe redirect sentence if it mentions a banned
+    term. Kept pure and importable so eval/ can assert the backstop without a live model call."""
+    low = text.lower()
+    if any(term in low for term in _ANSWER_BANNED_TERMS):
+        return ("I reconcile a gene's mRNA and protein CRISPR screens for IL-2 and give a "
+                "deterministic verdict — replicated, discordant, mRNA-only, protein-only, or "
+                "neither — plus druggability, disease genetics, and a validation plan. Ask me to "
+                "reconcile a gene like TSC1 to see it.")
+    return None
 
 
 @app.get("/api/answer")
@@ -692,31 +723,40 @@ async def answer(q: str = "") -> StreamingResponse:
         options = ClaudeAgentOptions(system_prompt=_ANSWER_SYSTEM,
                                      model="claude-haiku-4-5-20251001",
                                      max_turns=1, allowed_tools=[])
-        emitted = False
+        # Buffer the whole (short, 2-4 sentence) answer before emitting so the deterministic
+        # scope backstop can scan the COMPLETE text — a banned term could span two token chunks,
+        # and it must never reach the browser. Buffering costs a beat of perceived latency but the
+        # answer is tiny; correctness of the guard wins over token-by-token streaming here.
+        parts: list[str] = []
         try:
             async def run():
-                nonlocal emitted
                 async with ClaudeSDKClient(options=options) as client:
                     await client.query(text[:500])
                     async for message in client.receive_response():
                         if isinstance(message, AssistantMessage):
                             for block in message.content:
                                 if isinstance(block, TextBlock) and block.text:
-                                    emitted = True
-                                    yield {"type": "token", "text": block.text}
+                                    yield block.text
 
             agen = run()
             while True:
                 try:
-                    ev = await asyncio.wait_for(agen.__anext__(), timeout=ANSWER_TIMEOUT_S)
+                    chunk = await asyncio.wait_for(agen.__anext__(), timeout=ANSWER_TIMEOUT_S)
                 except StopAsyncIteration:
                     break
                 except asyncio.TimeoutError:
                     yield _sse({"type": "error", "detail": "answer timed out", "fallback": fallback})
-                    break
-                yield _sse(ev)
-            if not emitted:
+                    yield _sse({"type": "done"})
+                    return
+                parts.append(chunk)
+
+            full = "".join(parts).strip()
+            if not full:
                 yield _sse({"type": "error", "detail": "empty response", "fallback": fallback})
+            else:
+                # Deterministic backstop: if the model drifted off-scope, replace the whole reply.
+                safe = _scrub_answer(full)
+                yield _sse({"type": "token", "text": safe if safe is not None else full})
         except Exception as e:  # noqa: BLE001
             yield _sse({"type": "error", "detail": str(e), "fallback": fallback})
         finally:
