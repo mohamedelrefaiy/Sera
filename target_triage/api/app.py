@@ -43,6 +43,7 @@ from ..core.ranking import significant_records
 from ..core.schema import MARSON, REGISTRY, ScreenSchema
 from ..core.shortlist import compute_shortlist
 from . import runlog
+from . import sessions as sessions_store
 from .replay import replay_stream
 
 # app.py lives at target_triage/api/app.py; the served frontend is bundled inside
@@ -344,6 +345,325 @@ def concordance_gene(gene: str, cytokine: str | None = None) -> dict:
 
 # How long a single grounded explanation may stream before we give up and fall back to cache.
 EXPLANATION_TIMEOUT_S = 45
+
+
+# The closed set of things the chat can DO. The router LLM must return one of these verbatim;
+# anything else (or no key) falls back to a deterministic keyword classifier. Each maps to a
+# scoped reply the frontend renders — the LLM chooses the route, it never authors the answer.
+_INTENTS = ("reconcile", "druggability", "genetics", "quality",
+            "plan", "known_biology", "answer", "help")
+
+# Keyword → intent, for the deterministic fallback (and as the LLM's guardrail). First match wins;
+# order matters (more specific phrases first).
+_INTENT_KEYWORDS: tuple[tuple[tuple[str, ...], str], ...] = (
+    # Conversational / definitional questions — answered in prose, not a rendered view. Checked
+    # FIRST so "what does discordant mean" doesn't get swallowed by the 'discordant' reconcile keyword.
+    (("what does", "what is", "what's", "explain", "how does", "why do", "why does", "what do you",
+      "difference between", "mean", "meaning", "how do you", "what can you", "who are you", "how are you"),
+     "answer"),
+    (("known biology", "ground truth", "recover", "canonical", "positive regulator"), "known_biology"),
+    (("validation plan", "validate", "experiment", "protocol", "bench", "assay", "how to test",
+      "how do i test", "wet lab", "wet-lab"), "plan"),
+    (("druggable", "druggability", "drug", "tractab", "small molecule", "antibody",
+      "clinical", "open targets"), "druggability"),
+    (("genetics", "gwas", "disease", "autoimmune", "immune-linked", "association"), "genetics"),
+    (("quality", "qc", "confidence", "donor", "guide", "off-target", "off target",
+      "knockdown", "reliable", "trust"), "quality"),
+    (("reconcile", "concordance", "concordant", "discordant", "verdict", "mrna", "protein",
+      "screens", "compare"), "reconcile"),
+)
+
+
+def _gene_set() -> set[str]:
+    """Every gene symbol present in the concordance table — the ONLY genes the router may return.
+    Built fresh from the cache each call (cheap; the table is small) so it can never go stale."""
+    return {r["gene"] for r in _CONCORDANCE}
+
+
+def _extract_gene(text: str, genes: set[str]) -> str | None:
+    """Pull the first token that IS a real concordance gene out of free text. Deterministic and
+    safe: it can only ever return a symbol that exists in the table, never invent one."""
+    import re
+    # Gene symbols are alnum runs (often with a trailing digit); check longest tokens first so
+    # 'PTPN2' wins over a stray 'PT'. Uppercase to match the table's canonical casing.
+    tokens = sorted(set(re.findall(r"[A-Za-z][A-Za-z0-9]{1,}", text)), key=len, reverse=True)
+    for tok in tokens:
+        if tok.upper() in genes:
+            return tok.upper()
+    return None
+
+
+def _classify_keywords(text: str) -> str:
+    """Deterministic intent from keywords. Defaults to 'reconcile' when a gene is present but no
+    facet keyword matched (asking about a gene with no qualifier means 'reconcile it')."""
+    low = text.lower()
+    for phrases, intent in _INTENT_KEYWORDS:
+        if any(p in low for p in phrases):
+            return intent
+    return "reconcile"
+
+
+async def _route_with_llm(text: str, genes: set[str]) -> tuple[str | None, str] | None:
+    """Ask Claude to classify (gene, intent) — returns None on any failure so the caller falls
+    back to the deterministic path. The model is constrained to the CLOSED intent set and is told
+    to return only a symbol; we still VALIDATE the gene against `genes` afterwards, so a
+    hallucinated symbol is dropped rather than trusted."""
+    try:
+        from claude_agent_sdk import (
+            AssistantMessage, ClaudeAgentOptions, ClaudeSDKClient, TextBlock)
+    except Exception:  # noqa: BLE001 — SDK missing in a keyless clone
+        return None
+
+    system = (
+        "You are a router for a gene-evidence tool. Given a user's message, return ONLY a compact "
+        "JSON object: {\"gene\": <SYMBOL or null>, \"intent\": <one of "
+        + "|".join(_INTENTS) + ">}. "
+        "gene = the HGNC gene symbol the user is asking about, uppercased, or null if none. "
+        "intent meanings: reconcile=compare the mRNA vs protein screens / the verdict for a gene; "
+        "druggability=is it a drug target / tractability; genetics=disease/GWAS association; "
+        "quality=is the hit reliable (QC, donor/guide agreement, knockdown); "
+        "plan=how to validate it at the bench; known_biology=does the tool recover known biology "
+        "(corpus-wide, gene-independent); "
+        "answer=a conversational or definitional question that wants a WRITTEN explanation rather "
+        "than a data view (e.g. 'what does discordant mean?', 'why do mRNA and protein disagree?', "
+        "'how does this tool work?', 'what can you do?'); "
+        "help=an empty/greeting message with no real question. "
+        "Prefer a specific data intent (reconcile/druggability/genetics/quality/plan) when the user "
+        "names a gene AND asks about its evidence; use 'answer' for general/definitional questions. "
+        "Return the JSON and nothing else. Do NOT invent a gene symbol."
+    )
+    options = ClaudeAgentOptions(system_prompt=system, model="claude-haiku-4-5-20251001",
+                                 max_turns=1, allowed_tools=[])
+    acc = ""
+    try:
+        async def run():
+            nonlocal acc
+            async with ClaudeSDKClient(options=options) as client:
+                await client.query(text[:500])
+                async for message in client.receive_response():
+                    if isinstance(message, AssistantMessage):
+                        for block in message.content:
+                            if isinstance(block, TextBlock) and block.text:
+                                acc += block.text
+        await asyncio.wait_for(run(), timeout=ROUTE_TIMEOUT_S)
+    except Exception:  # noqa: BLE001 — any failure → deterministic fallback
+        return None
+
+    # Parse the model's JSON leniently (it may wrap it in prose or fences).
+    import re
+    m = re.search(r"\{.*\}", acc, re.DOTALL)
+    if not m:
+        return None
+    try:
+        obj = json.loads(m.group(0))
+    except Exception:  # noqa: BLE001
+        return None
+    intent = obj.get("intent")
+    if intent not in _INTENTS:
+        intent = "reconcile"
+    raw_gene = obj.get("gene")
+    # VALIDATE: only accept a gene the table actually contains. This is the gate — the LLM's gene
+    # is a suggestion, not an authority.
+    gene = raw_gene.upper() if isinstance(raw_gene, str) else None
+    if gene not in genes:
+        gene = None
+    return (gene, intent)
+
+
+ROUTE_TIMEOUT_S = 12  # a one-shot classification is fast; fail over to keywords well before this
+
+
+@app.get("/api/route")
+async def route(q: str = "") -> dict:
+    """Classify a free-text chat message into {gene, intent} so the frontend can render a SCOPED
+    reply instead of dumping the full reconciliation for every message.
+
+    Contract (the frontend depends on it):
+      - `intent` is always one of _INTENTS.
+      - `gene` is either a symbol that EXISTS in the concordance table, or null. Never invented.
+      - `known` mirrors whether `gene` resolved to a real table entry.
+      - `source` is 'llm' or 'keywords' (which classifier decided), for transparency.
+
+    The LLM only ROUTES; the deterministic views it routes to are what actually answer. If there's
+    no API key (or the call fails/times out), a keyword classifier does the same job offline, so
+    the composer always works."""
+    text = (q or "").strip()
+    if not text:
+        return {"gene": None, "intent": "help", "known": False, "source": "empty",
+                "note": "Type a gene symbol or a question about one."}
+
+    genes = _gene_set()
+    llm = await _route_with_llm(text, genes) if _has_credentials() else None
+    if llm is not None:
+        gene, intent = llm
+        # The LLM may miss the symbol even when it's clearly in the text — backstop with extraction.
+        if gene is None:
+            gene = _extract_gene(text, genes)
+        return {"gene": gene, "intent": intent, "known": gene is not None, "source": "llm"}
+
+    # Deterministic fallback.
+    gene = _extract_gene(text, genes)
+    intent = _classify_keywords(text)
+    # 'known_biology' and 'answer' are gene-independent (corpus-wide / conversational), so they're
+    # valid with no gene. The gene-specific views need a gene; without one, degrade to 'answer' so
+    # the user still gets a written reply instead of a dead-end 'help'.
+    if gene is None and intent not in ("known_biology", "answer", "help"):
+        intent = "answer"
+    return {"gene": gene, "intent": intent, "known": gene is not None, "source": "keywords"}
+
+
+# ── Chat sessions ────────────────────────────────────────────────────────────────────────────
+# Persist a chat as an ordered list of turn descriptors (see sessions.py) so the left-nav can show
+# recent conversations and re-open them. The descriptors are replayed by the browser through its
+# own renderer; this API only stores/serves them.
+
+@app.post("/api/sessions")
+def create_session(body: dict | None = None) -> dict:
+    """Create a new (empty) chat session. Optional {title}. Returns the session summary."""
+    title = (body or {}).get("title", "") if body else ""
+    s = sessions_store.create(title)
+    return {"id": s["id"], "title": s["title"], "created": s["created"],
+            "updated": s["updated"], "turn_count": 0}
+
+
+@app.get("/api/sessions")
+def list_sessions(limit: int = 50) -> dict:
+    """Recent chat sessions, newest-updated first (summaries only, no turns)."""
+    return {"sessions": sessions_store.list_sessions(limit=limit)}
+
+
+@app.get("/api/sessions/{session_id}")
+def get_session(session_id: str) -> dict:
+    """One session's full turn list, for replay."""
+    s = sessions_store.get(session_id)
+    if s is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    return s
+
+
+@app.patch("/api/sessions/{session_id}")
+def patch_session(session_id: str, body: dict) -> dict:
+    """Append a turn descriptor ({turn: {...}}) or set the title ({title: ...})."""
+    body = body or {}
+    if "turn" in body and isinstance(body["turn"], dict):
+        summary = sessions_store.append_turn(session_id, body["turn"])
+        if summary is None:
+            raise HTTPException(status_code=404, detail="session not found")
+        return summary
+    if "title" in body:
+        if not sessions_store.set_title(session_id, str(body["title"])):
+            raise HTTPException(status_code=404, detail="session not found")
+        return {"id": session_id, "title": str(body["title"])[:60]}
+    raise HTTPException(status_code=400, detail="body must include 'turn' or 'title'")
+
+
+@app.delete("/api/sessions/{session_id}")
+def delete_session(session_id: str) -> dict:
+    """Remove a session. Idempotent-ish: a missing session returns 404."""
+    if not sessions_store.delete(session_id):
+        raise HTTPException(status_code=404, detail="session not found")
+    return {"deleted": session_id}
+
+
+# What the agent may say when ANSWERING a conversational question. Grounded in the tool's real
+# definitions so it explains the method honestly and refuses to invent per-gene numbers (for a
+# specific gene's numbers the router sends the user to a data view, not here).
+_ANSWER_SYSTEM = (
+    "You are the assistant inside Concord, a gene-evidence reconciliation tool for immunology "
+    "target discovery. Answer the user's question in 2-4 short sentences of plain prose — no "
+    "markdown headings, no bullet lists. Be precise and grounded.\n\n"
+    "What Concord does: for a candidate gene it compares TWO independent CRISPR screens measuring "
+    "the same IL-2 phenotype — an mRNA screen (Zhu 2025 Perturb-seq, transcriptome z-scores) and a "
+    "protein screen (Schmidt 2022 FACS, log-fold-change) — and assigns a DETERMINISTIC verdict, "
+    "computed by code, never by an LLM. The five verdicts: 'replicated' = both screens are "
+    "significant and agree on direction (strongest hit); 'discordant' = both significant but they "
+    "DISAGREE on direction (a real mRNA/protein decoupling); 'mrna_only' = only the mRNA screen "
+    "fires; 'protein_only' = only the protein screen fires (a post-transcriptional regulator a "
+    "transcriptome-only search would miss); 'neither' = concordant absence. It also surfaces "
+    "Open Targets druggability + disease genetics and can draft a bench validation plan.\n\n"
+    "Rules: the verdict and all numbers are deterministic — the agent narrates and cites, it does "
+    "not decide. If asked for a SPECIFIC gene's numbers or verdict, briefly say to ask to reconcile "
+    "that gene (e.g. 'reconcile TSC1') rather than guessing. NEVER invent gene symbols, effect "
+    "sizes, p-values, or citations. If you don't know, say so."
+)
+
+ANSWER_TIMEOUT_S = 45
+
+
+@app.get("/api/answer")
+async def answer(q: str = "") -> StreamingResponse:
+    """Stream a GROUNDED conversational answer to a definitional/'how does this work' question as
+    SSE — the 'answer the question' half of the agentic split (vs. running a data view). Same event
+    shape as /api/explanation: {type:'token',text} … {type:'done'}, or {type:'error',detail,fallback}.
+
+    This path deliberately carries NO per-gene numbers — it explains the method/biology. A question
+    about a specific gene's data is routed to a deterministic view instead, so this endpoint can
+    never fabricate a verdict or an effect size."""
+    text = (q or "").strip()
+    if not text:
+        async def empty():
+            yield _sse({"type": "error", "detail": "empty question", "fallback": None})
+            yield _sse({"type": "done"})
+        return StreamingResponse(empty(), media_type="text/event-stream")
+
+    # A deterministic fallback sentence when the live call can't run — still useful, never blank.
+    fallback = ("I compare a gene's mRNA and protein CRISPR screens and give a deterministic "
+                "verdict — replicated, discordant, mRNA-only, protein-only, or neither — plus "
+                "druggability, disease genetics, and a validation plan. Ask me to reconcile a gene "
+                "like TSC1 to see it.")
+
+    def fail(detail: str):
+        async def one():
+            yield _sse({"type": "error", "detail": detail, "fallback": fallback})
+            yield _sse({"type": "done"})
+        return StreamingResponse(one(), media_type="text/event-stream")
+
+    if not _has_credentials():
+        return fail("No Anthropic credentials configured.")
+
+    async def event_stream():
+        try:
+            from claude_agent_sdk import (
+                AssistantMessage, ClaudeAgentOptions, ClaudeSDKClient, TextBlock)
+        except Exception as e:  # noqa: BLE001
+            yield _sse({"type": "error", "detail": f"SDK unavailable: {e}", "fallback": fallback})
+            yield _sse({"type": "done"})
+            return
+
+        options = ClaudeAgentOptions(system_prompt=_ANSWER_SYSTEM,
+                                     model="claude-haiku-4-5-20251001",
+                                     max_turns=1, allowed_tools=[])
+        emitted = False
+        try:
+            async def run():
+                nonlocal emitted
+                async with ClaudeSDKClient(options=options) as client:
+                    await client.query(text[:500])
+                    async for message in client.receive_response():
+                        if isinstance(message, AssistantMessage):
+                            for block in message.content:
+                                if isinstance(block, TextBlock) and block.text:
+                                    emitted = True
+                                    yield {"type": "token", "text": block.text}
+
+            agen = run()
+            while True:
+                try:
+                    ev = await asyncio.wait_for(agen.__anext__(), timeout=ANSWER_TIMEOUT_S)
+                except StopAsyncIteration:
+                    break
+                except asyncio.TimeoutError:
+                    yield _sse({"type": "error", "detail": "answer timed out", "fallback": fallback})
+                    break
+                yield _sse(ev)
+            if not emitted:
+                yield _sse({"type": "error", "detail": "empty response", "fallback": fallback})
+        except Exception as e:  # noqa: BLE001
+            yield _sse({"type": "error", "detail": str(e), "fallback": fallback})
+        finally:
+            yield _sse({"type": "done"})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @app.get("/api/explanation/{gene}/{cytokine}/{condition}")
@@ -712,6 +1032,14 @@ async def chat(body: dict) -> StreamingResponse:
 
     from ..agent import run_triage  # lazy: only the chat path needs the SDK
 
+    # Which agent runs. `mode:"concord"` selects the mRNA×protein reconciliation agent (its own
+    # tools + prompt); anything else keeps the default Target Triage shortlist agent. Both share this
+    # one streaming/run-log path, so the frontend event contract is identical.
+    agent_options = None
+    if (body or {}).get("mode") == "concord":
+        from ..llm.concord_prompt import build_concord_options
+        agent_options = build_concord_options()
+
     queue: asyncio.Queue = asyncio.Queue()
 
     # Persist the tool_use_id -> short-name map ACROSS messages: a ToolResultBlock
@@ -725,7 +1053,7 @@ async def chat(body: dict) -> StreamingResponse:
 
     async def drive():
         try:
-            await run_triage(task, on_message=on_message)
+            await run_triage(task, on_message=on_message, options=agent_options)
         except Exception as e:  # noqa: BLE001
             queue.put_nowait({"type": "error", "detail": str(e)})
         finally:
@@ -869,6 +1197,20 @@ def root() -> RedirectResponse:
     return RedirectResponse(url="/concord-app.html")
 
 
-# Static frontend last, so /api/* and the explicit "/" route above win routing.
+# No-cache for the HTML shell so a reload ALWAYS gets the latest JS/CSS. StaticFiles emits an etag
+# but no Cache-Control, and browsers (incl. the preview pane) then hold the parsed JS across reloads
+# — the "I fixed it but the tab shows the old behaviour" trap. A middleware sets the header on the
+# way OUT, which works no matter whether the route or the StaticFiles mount produced the response
+# (an explicit route was tried first but the Mount("/") shadowed it — middleware sidesteps that).
+@app.middleware("http")
+async def _no_cache_html(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path.endswith(".html") or path == "/":
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
+
+
+# Static frontend last, so /api/* and the explicit routes above win routing.
 if os.path.isdir(_WEB_DIR):
     app.mount("/", StaticFiles(directory=_WEB_DIR, html=True), name="web")

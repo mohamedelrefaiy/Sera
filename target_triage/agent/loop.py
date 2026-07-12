@@ -21,9 +21,14 @@ from ..llm.prompt import DEFAULT_TASK, SYSTEM_PROMPT, build_options
 __all__ = ["run_triage", "build_options", "DEFAULT_TASK", "SYSTEM_PROMPT"]
 
 
-async def run_triage(task: str, on_message=None) -> list:
-    """Run the agent on a task, returning all messages. on_message(msg) streams them."""
-    options = build_options()
+async def run_triage(task: str, on_message=None, options=None) -> list:
+    """Run the agent on a task, returning all messages. on_message(msg) streams them.
+
+    `options` selects WHICH agent runs: the Target Triage shortlist agent (default), or another
+    ClaudeAgentOptions such as the Concord reconciliation agent (llm/concord_prompt.build_concord_options).
+    The driver is agent-agnostic — only the options (tools + prompt) differ."""
+    if options is None:
+        options = build_options()
     messages: list = []
     async with ClaudeSDKClient(options=options) as client:
         await client.query(task)

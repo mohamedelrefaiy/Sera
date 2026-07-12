@@ -3,91 +3,309 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Concord — app mockup</title>
+<title>Concord — reconcile your mRNA and protein screens</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Two voices, deliberately paired. Source Serif 4 = the agent narrating (humanist serif, made
+     for screen reading, journal-adjacent). IBM Plex Mono = the machine speaking (verdicts, numbers,
+     provenance). The typographic split IS the product thesis: code decides, the agent narrates. -->
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#E9EDF1; --surface:#FFFFFF; --surface-2:#F3F6F8;
-    --ink:#141C26; --ink-soft:#54616F; --ink-faint:#8593A1;
-    --line:#D2DAE2; --line-strong:#B9C4CF;
-    --mrna:#0F9B7C; --mrna-soft:#DCF1EB;
-    --protein:#C0398B; --protein-soft:#F7E1EF;
-    --lock:#173049; --lock-soft:#DDE7F0;
-    --warn:#B8863B; --warn-soft:#F4EAD5;
-    --absent:#93A0AD; --absent-soft:#E6EBEF;
+    /* Claude Science dark shell. Near-black canvas, layered charcoal surfaces, warm-desaturated
+       accents. Every downstream component reads these vars, so the whole app is dark by flipping
+       them here — the thread, verdict card, and hypotheses inherit without change.
+       Enterprise discipline: the ONLY saturated things on the page are the two data channels
+       (--mrna, --protein). Everything structural lives on the charcoal→ink ramp, so the eye
+       reads colour as "this is the measurement", never as decoration. */
+    --bg:#1C1B1A; --sidebar:#171615; --surface:#242322; --surface-2:#2B2A28;
+    --ink:#EDEBE7; --ink-soft:#B4B0A8; --ink-faint:#87837B;
+    --line:#332F2C; --line-strong:#453F3B;
+    --mrna:#4FC7A5; --mrna-soft:#182E28;
+    --protein:#E07BB6; --protein-soft:#33202D;
+    --lock:#9DB4CC; --lock-soft:#1F2C39;
+    --warn:#D8A85A; --warn-soft:#332C1D;
+    --absent:#87837B; --absent-soft:#2B2A28;
+    --accent:#C96442;               /* Claude clay — reserved for the primary/brand action only */
+    /* Provenance rule: the single hairline colour that marks the audit trail — figure borders,
+       the chain-of-custody strip, the provenance footnote. Consistent so "traceable" has a look. */
+    --prov:#403A35;
     --radius:14px;
-    --shadow:0 1px 2px rgba(20,28,38,.05), 0 12px 30px -18px rgba(20,28,38,.28);
-    --font-display:'Space Grotesk',sans-serif;
-    --font-body:'IBM Plex Sans',sans-serif;
+    --shadow:0 1px 2px rgba(0,0,0,.32), 0 18px 44px -22px rgba(0,0,0,.66);
+    /* Two voices. Serif narrates; mono is the machine. Sans only for dense UI chrome (nav, chips). */
+    --font-serif:'Source Serif 4',Georgia,'Times New Roman',serif;
+    --font-body:'Source Serif 4',Georgia,serif;
+    --font-ui:'IBM Plex Sans',system-ui,sans-serif;
+    --font-display:'Source Serif 4',Georgia,serif;
     --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+    /* Type scale — one measured ramp, used everywhere. */
+    --t-fig:12px; --t-cap:12.5px; --t-body:16px; --t-lead:17px; --t-verdict:22px;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);
-    font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding:28px 20px 60px}
+  /* The body default is the SERIF — because the page is mostly the agent's written reply, and the
+     reply is the product. UI chrome (nav, composer, chips) opts into the sans via --font-ui. */
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-serif);
+    font-size:var(--t-body);line-height:1.55;-webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;padding:0;height:100vh;overflow:hidden}
   .shell{max-width:820px;margin:0 auto}
   .mono{font-family:var(--font-mono)}
-  h1,h2,h3{font-family:var(--font-display);letter-spacing:-.01em;margin:0}
+  h1,h2,h3{font-family:var(--font-serif);letter-spacing:-.005em;margin:0}
+  /* Nav + composer chrome read as software, not prose — the sans keeps small labels crisp. */
+  .nav,.nav-item,.nav-gene,.composer-box,.cchip,.mode{font-family:var(--font-ui)}
+
+  /* ── Claude Science 3-pane shell ──────────────────────────────────────────────────────
+     left nav · center conversation · right artifacts. Full-height, no page scroll; each
+     pane scrolls independently. */
+  .workspace{display:grid;grid-template-columns:232px minmax(0,1fr) 400px;height:100vh}
+  @media(max-width:1100px){.workspace{grid-template-columns:64px minmax(0,1fr) 340px}}
+  @media(max-width:860px){.workspace{grid-template-columns:1fr}}
+  /* Artifacts collapsed: drop the third column and hide the rail; the thread reclaims the width. */
+  .workspace.arts-collapsed{grid-template-columns:232px minmax(0,1fr)}
+  @media(max-width:1100px){.workspace.arts-collapsed{grid-template-columns:64px minmax(0,1fr)}}
+  .workspace.arts-collapsed .arts{display:none}
+
+  /* left nav */
+  .nav{background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:14px 12px;gap:3px;min-width:0}
+  .nav-top{display:flex;align-items:center;gap:9px;padding:5px 8px 12px;font-family:var(--font-display);font-weight:500;font-size:14px}
+  .nav-top .merge{display:inline-flex}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:13.5px;color:var(--ink-soft);cursor:pointer;border:none;background:transparent;text-align:left;width:100%;transition:.12s}
+  .nav-item:hover{background:var(--surface-2);color:var(--ink)}
+  .nav-item.on{background:var(--surface-2);color:var(--ink)}
+  .nav-item svg{width:16px;height:16px;stroke:currentColor;flex-shrink:0}
+  .nav-sec{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);padding:14px 10px 6px;font-family:var(--font-mono)}
+  .nav-gene{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:.12s}
+  .nav-gene:hover{background:var(--surface-2);color:var(--ink)}
+  .nav-gene.on{background:var(--surface-2);color:var(--ink)}
+  .nav-gene .dot{width:6px;height:6px;border-radius:50%;background:var(--line-strong);flex-shrink:0}
+  .nav-gene.on .dot{background:var(--mrna)}
+  /* New chat + recent chat sessions (replaces the old gene list) */
+  .newchat{margin:2px 0 4px;border:1px solid var(--line-strong)!important;color:var(--ink)!important}
+  .newchat:hover{background:var(--surface-2)!important;border-color:var(--ink-faint)!important}
+  .newchat svg{width:15px;height:15px;stroke:currentColor;flex-shrink:0}
+  .sessions{display:flex;flex-direction:column;gap:1px;overflow-y:auto;min-height:0;flex:1}
+  .sessions-empty{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);padding:6px 10px}
+  .session{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:13px;
+    color:var(--ink-soft);cursor:pointer;transition:.12s;border:none;background:transparent;text-align:left;width:100%}
+  .session:hover{background:var(--surface-2);color:var(--ink)}
+  .session.on{background:var(--surface-2);color:var(--ink)}
+  .session .s-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-ui)}
+  .session .s-del{flex:none;width:20px;height:20px;border-radius:5px;border:none;background:transparent;
+    color:var(--ink-faint);cursor:pointer;display:none;align-items:center;justify-content:center}
+  .session:hover .s-del{display:flex}
+  .session .s-del:hover{background:var(--line);color:var(--ink)}
+  .session .s-del svg{width:13px;height:13px;stroke:currentColor}
+  @media(max-width:1100px){.sessions,.sessions-empty,.newchat .lbl{display:none}}
+  .nav-foot{margin-top:auto;padding-top:10px;border-top:1px solid var(--line)}
+  @media(max-width:1100px){.nav .lbl,.nav-sec,.nav-top small{display:none}.nav-top .txt{display:none}}
+
+  /* center conversation column */
+  .convo{display:flex;flex-direction:column;min-width:0;height:100vh;background:var(--bg)}
+  .convo-head{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--line);flex-shrink:0}
+  .convo-head .title{font-family:var(--font-display);font-weight:500;font-size:15px}
+  .convo-head .crumb{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint)}
+  .convo-scroll{flex:1;overflow-y:auto;padding:8px 24px 20px}
+  .convo-scroll::-webkit-scrollbar{width:10px}
+  .convo-scroll::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:6px;border:3px solid var(--bg)}
+
+  /* chat composer, pinned at the bottom */
+  .composer{flex-shrink:0;padding:12px 24px 20px;border-top:1px solid var(--line);background:var(--bg)}
+  .composer-box{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;padding:10px 12px 10px 16px;transition:border-color .15s}
+  .composer-box:focus-within{border-color:var(--ink-faint)}
+  .composer-box input{flex:1;border:none;background:transparent;color:var(--ink);font-family:var(--font-body);font-size:14.5px;outline:none}
+  .composer-box input::placeholder{color:var(--ink-faint)}
+  .send{width:32px;height:32px;border-radius:9px;border:none;background:var(--accent);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .send:hover{filter:brightness(1.08)} .send:active{transform:scale(.96)}
+  .send svg{width:16px;height:16px;stroke:#fff}
+  .composer-hint{font-size:11px;color:var(--ink-faint);margin-top:8px;padding-left:4px;font-family:var(--font-mono)}
+  .composer-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .cchip{font-size:12px;font-family:var(--font-mono);color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px 11px;cursor:pointer;transition:.12s}
+  .cchip:hover{border-color:var(--line-strong);color:var(--ink)}
+  .cchip.on{background:var(--surface-2);border-color:var(--line-strong);color:var(--ink)}
+
+  /* right artifacts panel */
+  .arts{background:var(--sidebar);border-left:1px solid var(--line);display:flex;flex-direction:column;min-width:0;height:100vh}
+  @media(max-width:860px){.arts{display:none}}
+  .arts-head{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line);flex-shrink:0}
+  .arts-head .h{font-family:var(--font-display);font-weight:500;font-size:14px;display:flex;align-items:center;gap:8px}
+  .arts-head .h svg{width:15px;height:15px;stroke:var(--ink-soft)}
+  .arts-count{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)}
+  .arts-body{flex:1;overflow-y:auto;padding:12px}
+  .art-group{font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);padding:12px 8px 7px;display:flex;align-items:center;gap:7px}
+  .art{border:1px solid var(--line);border-radius:11px;background:var(--surface);padding:12px 13px;margin-bottom:9px;cursor:default;transition:.14s}
+  .art:hover{border-color:var(--line-strong)}
+  .art-t{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink);font-weight:500}
+  .art-t svg{width:15px;height:15px;stroke:var(--ink-soft);flex-shrink:0}
+  .art-d{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);margin-top:6px;line-height:1.55;word-break:break-word}
+  .art .badge{margin-left:auto;font-family:var(--font-mono);font-size:9px;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:5px}
+  .art .badge.ok{background:var(--mrna-soft);color:var(--mrna)}
+  .art .badge.warn{background:var(--warn-soft);color:var(--warn)}
+  .art a{color:var(--lock);text-decoration:none;border-bottom:1px solid var(--lock-soft)}
+  .arts-empty{padding:24px 16px;text-align:center;color:var(--ink-faint);font-size:12.5px;line-height:1.6}
+  .arts-empty code{font-family:var(--font-mono);font-size:11px;background:var(--surface);padding:1px 5px;border-radius:5px}
+  /* rail collapse controls */
+  .arts-close{margin-left:8px;width:26px;height:26px;border-radius:7px;border:1px solid var(--line);
+    background:transparent;color:var(--ink-faint);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s}
+  .arts-close:hover{border-color:var(--line-strong);color:var(--ink)}
+  .arts-close svg{width:14px;height:14px;stroke:currentColor}
+  .arts-toggle{margin-left:auto;width:30px;height:30px;border-radius:8px;border:1px solid var(--line);
+    background:transparent;color:var(--ink-faint);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s;font-family:var(--font-ui)}
+  .arts-toggle:hover{border-color:var(--line-strong);color:var(--ink)}
+  .arts-toggle svg{width:15px;height:15px;stroke:currentColor}
+  .arts-toggle[aria-pressed="true"]{color:var(--ink);border-color:var(--line-strong)}
+
+  /* ── Append-only transcript ───────────────────────────────────────────────────────────
+     The thread holds many turns. Each turn = a user bubble + an agent reply; new turns append
+     below and the view scrolls like a chat. A hairline separates consecutive turns. */
+  /* ── Landing (empty agentic start) ─────────────────────────────────────────────────────── */
+  .landing{max-width:640px;margin:0 auto;padding:8vh 0 40px;text-align:center;
+    animation:rise .5s cubic-bezier(.16,1,.3,1) both}
+  .landing.hidden{display:none}
+  .landing-mark{display:inline-flex;margin-bottom:22px}
+  .landing-mark .merge{width:40px;height:24px;position:relative;display:inline-block}
+  .landing-mark .merge i{position:absolute;top:2px;width:18px;height:18px;border-radius:50%;mix-blend-mode:screen}
+  .landing-mark .merge i.g{left:0;background:var(--mrna)} .landing-mark .merge i.m{left:12px;background:var(--protein)}
+  .landing-h{font-family:var(--font-serif);font-size:30px;font-weight:600;letter-spacing:-.015em;margin:0 0 12px}
+  .landing-sub{font-family:var(--font-serif);font-size:16px;line-height:1.65;color:var(--ink-soft);
+    max-width:56ch;margin:0 auto 30px}
+  .landing-prompts{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:left}
+  @media(max-width:640px){.landing-prompts{grid-template-columns:1fr}}
+  .lprompt{display:flex;flex-direction:column;gap:4px;background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:15px 16px;cursor:pointer;transition:.14s;font-family:var(--font-ui)}
+  .lprompt:hover{border-color:var(--line-strong);background:var(--surface-2)}
+  .lprompt .lp-k{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+  .lprompt .lp-t{font-family:var(--font-serif);font-size:14.5px;color:var(--ink);line-height:1.35}
+  .lprompt .lp-ex{font-family:var(--font-mono);font-size:11.5px;color:var(--accent);margin-top:2px}
+  /* The reconcile card is the hero — full-width, accent-tinted, so the one job leads. */
+  .lprompt-hero{grid-column:1/-1;border-color:var(--accent);background:var(--surface-2)}
+  .lprompt-hero:hover{border-color:var(--accent)}
+  .lprompt-hero .lp-k{color:var(--accent)}
+  .lprompt-hero .lp-t{font-size:16px}
+
+  .thread{display:flex;flex-direction:column}
+  .turn{max-width:680px;margin:0 auto;width:100%;padding:22px 0}
+  .turn+.turn{border-top:1px solid var(--line)}
+  .turn:first-child{padding-top:8px}
+  .reply-turn.user-row{justify-content:flex-end;margin-bottom:18px}
+  .reply-turn.user-row .user-msg{max-width:70%}
+  /* follow-up chips — ask the agent for the plan / known-biology check, appended as a new turn */
+  .followups{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px;padding-top:16px;border-top:1px dashed var(--line)}
+  .fchip{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-ui);font-size:13px;
+    color:var(--ink-soft);background:var(--surface);border:1px solid var(--line-strong);border-radius:9px;
+    padding:8px 13px;cursor:pointer;transition:.12s}
+  .fchip:hover{border-color:var(--ink-faint);color:var(--ink);background:var(--surface-2)}
+  /* the "did you mean" suggestion — accent-outlined so it reads as the obvious next click */
+  .fchip-hero{border-color:var(--accent);color:var(--ink)}
+  .fchip-hero:hover{border-color:var(--accent)}
+  .fchip svg{width:14px;height:14px;stroke:currentColor;flex:none}
+  .fchip[disabled]{opacity:.45;cursor:default}
+  .fchip[disabled]:hover{border-color:var(--line-strong);color:var(--ink-soft);background:var(--surface)}
+  .turn-follow .reply-body{animation:rise .5s cubic-bezier(.16,1,.3,1) both}
+  /* help / no-match turn: the message always shows, then quick-action chips of what the tool can do */
+  .js-helpLead{max-width:60ch}
+  .help-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .help-actions .fchip{cursor:pointer}
+  /* a scoped facet lead sentence sits a touch larger, like the reconcile opener */
+  .js-facetLead{font-size:var(--t-lead);color:var(--ink);max-width:60ch}
+  .js-facetLead b{font-weight:600}
+  .js-facetCard .ct{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px}
 
   /* ── Conversational thread ────────────────────────────────────────────────────────────
      The single-gene view IS a reasoning transcript. Two agents narrate their real steps
      (from the provenance receipt) around a locked deterministic verdict they cannot edit.
      Editorial monochrome + the existing pastel accents; no dashboard panels. */
-  .thread{max-width:720px;margin:6px auto 0;display:flex;flex-direction:column;gap:2px}
-  .turn{display:grid;grid-template-columns:34px 1fr;gap:14px;padding:16px 4px;position:relative}
-  .turn+.turn{border-top:1px solid var(--line)}
-  .turn.enter{animation:rise .5s cubic-bezier(.16,1,.3,1) both}
-  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-  .av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .av svg{width:17px;height:17px}
-  .av.a{background:var(--protein-soft)} .av.a svg{stroke:var(--protein)}
-  .av.b{background:var(--mrna-soft)} .av.b svg{stroke:var(--mrna)}
-  .av.hub{background:var(--lock-soft)} .av.hub svg{stroke:var(--lock)}
-  .who{font-size:12px;color:var(--ink-soft);margin-bottom:6px;display:flex;align-items:center;gap:7px}
-  .who .n{font-weight:500;color:var(--ink)}
-  .who .defers{font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)}
-  .say{font-size:14.5px;line-height:1.6;color:var(--ink)}
-  .say b{font-weight:500}
-  .meta{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);margin-top:6px;line-height:1.6}
-  .flag{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.04em;
-    padding:1px 7px;border-radius:5px;background:var(--warn-soft);color:var(--warn);white-space:nowrap}
-  .steps{margin-top:8px;display:flex;flex-direction:column;gap:5px}
-  .step{display:flex;align-items:baseline;gap:9px;font-size:12.5px;color:var(--ink-soft)}
-  .step .tick{color:var(--mrna);font-size:11px;flex-shrink:0}
-  .step .sd{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint)}
+  /* The agent's reply — a written answer with an inline manuscript figure. No card, no badge. */
+  .reply{max-width:680px;margin:10px auto 0;display:flex;flex-direction:column;gap:20px}
+  .reply-turn{display:flex}
+  .user-msg{background:var(--surface-2);border:1px solid var(--line);border-radius:14px 14px 4px 14px;
+    padding:9px 15px;font-size:14px;color:var(--ink-soft)}
+  .reply-turn.agent{gap:14px}
+  .ava{width:28px;height:28px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+  .ava .merge{width:16px;height:11px;position:relative;display:inline-block}
+  .ava .merge i{position:absolute;top:1px;width:9px;height:9px;border-radius:50%}
+  .ava .merge i.g{left:0;background:var(--mrna)} .ava .merge i.m{left:6px;background:var(--protein);mix-blend-mode:screen}
+  .reply-body{flex:1;min-width:0;animation:rise .5s cubic-bezier(.16,1,.3,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .cond-row{display:flex;margin-bottom:14px}
 
-  /* the locked verdict, dropped into the thread as a document-style block */
-  .verdict-drop{grid-column:1 / -1;margin:2px 0 2px;border:1px solid var(--line-strong);border-radius:14px;
-    background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
-  .vd-lock{display:flex;align-items:center;gap:8px;padding:9px 16px;background:var(--surface-2);
-    border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:10px;text-transform:uppercase;
-    letter-spacing:.06em;color:var(--ink-faint)}
-  .vd-lock svg{width:13px;height:13px;stroke:var(--ink-faint)}
-  .vd-body{padding:16px 18px}
-  .vd-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .vd-top .g{font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-.01em}
-  .vd-nums{display:flex;gap:22px;margin-top:13px;font-family:var(--font-mono);font-size:13px}
-  .vd-nums .lab{color:var(--ink-soft)} .vd-nums .lab b{color:var(--ink);font-weight:600;margin-left:5px}
-  .vd-nums .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:1px}
-  .vd-plot{margin-top:14px}
-  .vd-why{margin-top:14px;padding-top:13px;border-top:1px solid var(--line);font-size:13.5px;line-height:1.6;color:var(--ink-soft)}
+  /* prose — the agent writing, streamed. Serif, generous measure, journal-like leading. */
+  .prose{font-family:var(--font-serif);font-size:var(--t-body);line-height:1.68;color:var(--ink);
+    margin:0 0 4px;max-width:60ch}
+  .prose+.prose{margin-top:15px}
+  .prose b{font-weight:600}
+  /* The opening line is the agent framing the comparison — set it a touch larger, softened, as a lead. */
+  .prose#proseOpen{font-size:var(--t-lead);line-height:1.6;color:var(--ink-soft)}
+  /* The verdict sentence is the SIGNATURE moment: the coloured verdict word is the climax of the
+     page. Larger, serif, weighted — it reads as the conclusion of an argument, not a status badge. */
+  .prose#proseVerdict{font-size:var(--t-verdict);line-height:1.4;letter-spacing:-.01em;margin-top:22px}
+  .prose#proseVerdict #explainText{display:block;font-size:var(--t-body);line-height:1.68;
+    color:var(--ink-soft);margin-top:8px;font-weight:400;letter-spacing:0}
+  .prose .v-rep{color:var(--lock)} .prose .v-mo{color:var(--mrna)} .prose .v-po{color:var(--protein)}
+  .prose .v-disc{color:var(--warn)} .prose .v-no{color:var(--ink-faint)}
+  .prose#proseVerdict b{font-weight:700}
+  .prose.interp{color:var(--ink-soft);font-size:var(--t-body);margin-top:22px}
+  .prose.interp:empty{margin-top:0}
+  .stream::after{content:"▍";color:var(--ink-faint);animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
 
-  /* Node B hypotheses as replies in the thread */
-  .hyp-list{margin-top:10px;display:flex;flex-direction:column;gap:9px}
-  .hcard{border-left:2px solid var(--line-strong);padding:2px 0 2px 13px}
-  .hcard p{margin:0;font-size:13.5px;line-height:1.55}
+  /* the manuscript figure — framed as a real paper panel: a mono figure-number eyebrow, a hairline
+     provenance border, and a caption set like a journal caption (mono label, serif text). */
+  .fig{margin:22px 0 20px;padding:0}
+  .fig-frame{border:1px solid var(--prov);border-radius:12px;background:var(--surface);
+    padding:18px 20px 14px;max-width:540px}
+  .fig-eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .fig-eyebrow::before{content:"";width:10px;height:1px;background:var(--line-strong)}
+  .fig svg{width:100%;max-width:500px;display:block;margin:0 auto}
+  .cap{font-family:var(--font-serif);font-size:var(--t-cap);color:var(--ink-soft);line-height:1.6;
+    border-top:1px solid var(--prov);padding-top:11px;margin-top:14px;max-width:540px}
+  .cap b{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink-faint);font-weight:500;margin-right:2px}
+
+  /* cited hypotheses — as inline references, not cards */
+  .hyp-list{margin-top:6px;display:flex;flex-direction:column;gap:11px}
+  .hcard{border-left:2px solid var(--line-strong);padding:1px 0 1px 14px}
+  .hcard p{margin:0;font-size:14px;line-height:1.55;color:var(--ink)}
   .hcard .src{margin-top:5px;font-family:var(--font-mono);font-size:11px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
   .hcard .src a{color:var(--lock);text-decoration:none;border-bottom:1px solid var(--lock-soft)}
   .hcard .src .st{font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:var(--mrna);background:var(--mrna-soft);padding:1px 6px;border-radius:5px}
   .hcard .src .tt{color:var(--ink-faint)}
-  .exp{margin-top:11px;padding:11px 14px;background:var(--lock-soft);border-radius:11px;font-size:12.5px;line-height:1.55;color:var(--lock)}
-  .exp b{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px}
-  .say-empty{font-size:13.5px;line-height:1.55;color:var(--ink-faint)}
-  /* condition switch, restyled inline for the thread header */
-  .cond-inline{display:flex;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px}
+  .exp{margin-top:14px;font-family:var(--font-serif);font-size:14.5px;line-height:1.62;color:var(--ink-soft);border-left:2px solid var(--lock);padding-left:15px}
+  .exp b{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--lock);font-weight:500;margin-bottom:5px}
+  .say-empty{font-size:14px;line-height:1.6;color:var(--ink-faint)}
+
+  /* provenance footnote — the receipt. Quiet, monospaced, at the end of the reply. The left rule
+     ties it visually to the chain-of-custody strip: both are "the audit trail" in --prov. */
+  .foot{margin-top:22px;padding:10px 0 10px 14px;border-left:2px solid var(--prov);
+    font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);line-height:1.7;max-width:60ch}
+  .foot b{color:var(--ink-soft);font-weight:500}
+
+  /* chain-of-custody strip — the enterprise signature. Sits under the figure and traces, inline,
+     how this verdict was earned: each screen READ (with sign status) → the deterministic verdict.
+     Provenance made visible in the reply itself, not hidden in the right rail. */
+  .chain{display:flex;align-items:stretch;gap:0;max-width:540px;margin:16px 0 4px;
+    border:1px solid var(--prov);border-radius:10px;overflow:hidden;background:var(--surface)}
+  .chain-node{flex:1;padding:10px 13px;min-width:0}
+  .chain-node+.chain-node{border-left:1px solid var(--prov)}
+  .chain-k{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:5px}
+  .chain-v{font-family:var(--font-mono);font-size:12px;color:var(--ink);display:flex;align-items:center;gap:7px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chain-v .cdot{width:7px;height:7px;border-radius:50%;flex:none}
+  .chain-node.verdict{background:var(--surface-2)}
+  .chain-node.verdict .chain-v{font-weight:600}
+  .chain-v.v-rep{color:var(--lock)} .chain-v.v-mo{color:var(--mrna)} .chain-v.v-po{color:var(--protein)}
+  .chain-v.v-disc{color:var(--warn)} .chain-v.v-no{color:var(--ink-faint)}
+  .chain-flag{font-family:var(--font-mono);font-size:8.5px;letter-spacing:.04em;text-transform:uppercase;
+    padding:1px 5px;border-radius:4px;margin-left:auto}
+  .chain-flag.clean{background:var(--mrna-soft);color:var(--mrna)}
+  .chain-flag.fixed{background:var(--warn-soft);color:var(--warn)}
+  @media(max-width:560px){.chain{flex-direction:column}.chain-node+.chain-node{border-left:none;border-top:1px solid var(--prov)}}
+
+  /* condition switch, inline above the reply */
+  .cond-inline{display:inline-flex;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px}
   .cond-inline button{font-family:var(--font-mono);font-size:11.5px;border:none;background:transparent;color:var(--ink-soft);padding:5px 11px;border-radius:6px;cursor:pointer;transition:.15s}
-  .cond-inline button[aria-selected="true"]{background:var(--ink);color:#fff}
+  .cond-inline button[aria-selected="true"]{background:var(--surface);color:var(--ink)}
 
   /* app frame */
   .app{background:var(--surface);border:1px solid var(--line-strong);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
@@ -111,7 +329,9 @@
   .search{display:flex;gap:10px;align-items:center;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:6px 6px 6px 16px}
   .search svg{flex:none;color:var(--ink-faint)}
   .search input{flex:1;border:none;background:transparent;font-family:var(--font-mono);font-size:15px;color:var(--ink);padding:10px 0;outline:none}
-  .search .go{font-family:var(--font-body);font-weight:500;font-size:14px;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:10px 16px;cursor:pointer}
+  /* Action buttons speak in the UI sans, not the serif — a button label is a control, not prose. */
+  .go{font-family:var(--font-ui);font-weight:600;font-size:14px;background:var(--ink);color:var(--bg);border:none;border-radius:8px;padding:10px 16px;cursor:pointer;transition:filter .12s}
+  .go:hover{filter:brightness(1.06)}
   .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
   .chip{font-family:var(--font-mono);font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-soft);cursor:pointer;transition:all .12s}
   .chip:hover{border-color:var(--ink);color:var(--ink)}
@@ -174,7 +394,7 @@
   .conf .meter i{display:block;height:100%;border-radius:99px}
   .ev{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
   .ev:first-of-type{border-top:none}
-  .ev .k{color:var(--ink-soft)}
+  .ev .k{font-family:var(--font-serif);font-size:14px;color:var(--ink-soft)}
   .ev .v{font-family:var(--font-mono);font-size:12.5px;display:flex;align-items:center;gap:7px}
   .sdot{width:9px;height:9px;border-radius:50%;flex:none}
   .s-strong{background:var(--lock)} .s-mix{background:var(--warn)} .s-weak{background:var(--absent)}
@@ -184,9 +404,9 @@
   .gtag{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:12px;padding:6px 11px;border-radius:8px;margin-bottom:10px}
   .gtag.yes{background:var(--protein-soft);color:#8f2568}
   .gtag.no{background:var(--absent-soft);color:#59636f}
-  .glist{font-size:13.5px;color:var(--ink);line-height:1.55}
+  .glist{font-family:var(--font-serif);font-size:14.5px;color:var(--ink);line-height:1.5}
   .glist .dis{font-family:var(--font-mono);font-size:12px}
-  .gnote{margin-top:8px;font-size:12.5px;color:var(--ink-soft)}
+  .gnote{font-family:var(--font-serif);margin-top:8px;font-size:13.5px;line-height:1.5;color:var(--ink-soft)}
 
   /* druggability */
   .drow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
@@ -196,7 +416,7 @@
   .p-clin{background:var(--lock);color:#fff}
   .p-disc{background:var(--warn-soft);color:#7a561b}
   .p-none{background:var(--absent-soft);color:#59636f}
-  .dnote{margin-top:11px;font-size:12.5px;color:var(--ink-soft)}
+  .dnote{font-family:var(--font-serif);margin-top:11px;font-size:13.5px;line-height:1.5;color:var(--ink-soft)}
 
   .srcline{margin-top:16px;text-align:right;font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint)}
 
@@ -219,30 +439,33 @@
   .echip{font-family:var(--font-mono);font-size:12px;padding:6px 11px;border-radius:8px;background:var(--surface);border:1px solid var(--line-strong);color:var(--ink)}
   .echip b{color:var(--ink-soft);font-weight:500}
 
+  /* Hit list = a ranked data table. Machine voice (mono) for the header, gene names, tags and
+     priority; serif only for the "why chase it" column, which is reasoning prose, not data. */
   table.shortlist{width:100%;border-collapse:collapse;margin-top:22px;font-size:13.5px}
   .shortlist th{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line-strong)}
   .shortlist td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
   .shortlist tr:hover td{background:var(--surface-2)}
-  .shortlist .gname{font-family:var(--font-mono);font-weight:600}
+  .shortlist .gname{font-family:var(--font-mono);font-weight:600;font-size:13.5px}
   .vtag{font-family:var(--font-mono);font-size:11px;padding:4px 9px;border-radius:7px;white-space:nowrap}
   .vtag.rep{background:var(--lock);color:#fff}.vtag.mo{background:var(--mrna-soft);color:#0a6a55}
   .vtag.po{background:var(--protein-soft);color:#8f2568}.vtag.no{background:var(--absent-soft);color:#59636f}
   .ctag{font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:6px}
   .ctag.High{background:var(--lock);color:#fff}.ctag.Medium{background:var(--warn-soft);color:#7a561b}.ctag.Low{background:var(--absent-soft);color:#59636f}
   .drugcell{font-family:var(--font-mono);font-size:12px}
-  .chase{color:var(--ink-soft);font-size:12.5px}
+  /* "why chase it" — the one reasoning column; serif so it reads as a written judgement, not data. */
+  .chase{font-family:var(--font-serif);color:var(--ink-soft);font-size:14px;line-height:1.5;max-width:34ch}
   .prio{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);text-align:center}
-
-  .demo-flag{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);text-align:center;margin-top:16px;letter-spacing:.03em}
 
   /* ground-truth (known biology) view */
   .gt-claim{border:1px solid var(--line);border-left:4px solid var(--lock);border-radius:12px;background:var(--surface-2);padding:18px 20px;margin-top:22px}
   .gt-claim .gt-h{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:9px}
-  .gt-claim p{margin:0;font-size:15px;line-height:1.6;max-width:82ch}
-  .gt-stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
+  /* Known biology — the claim is a scientific statement (serif, journal-like measure); the stat
+     numbers are measurements (mono, so they read as data); labels/rows stay mono. */
+  .gt-claim p{font-family:var(--font-serif);margin:0;font-size:16px;line-height:1.65;max-width:70ch}
+  .gt-stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px}
   .gt-stat{border:1px solid var(--line);border-radius:11px;background:var(--surface);padding:12px 16px;min-width:120px}
-  .gt-stat .n{font-family:var(--font-display);font-weight:600;font-size:24px;color:var(--ink)}
-  .gt-stat .l{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);margin-top:2px}
+  .gt-stat .n{font-family:var(--font-mono);font-weight:600;font-size:23px;color:var(--ink);letter-spacing:-.01em}
+  .gt-stat .l{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px}
   .gt-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
   @media(max-width:780px){.gt-grid{grid-template-columns:1fr}}
   .gt-col .gt-ct{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
@@ -252,9 +475,11 @@
   .gtrow .gz{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
   .note{max-width:1080px;margin:20px auto 0;font-size:13px;color:var(--ink-soft);text-align:center}
 
-  /* validation plan view */
+  /* validation plan view — the most prose-heavy surface. The plan IS the argument for spending
+     bench time, so rationale, readouts and the go/no-go rule are all serif; the 01–04 step numbers,
+     verdict tags and readout chips stay mono. Titles are serif but retuned for Source Serif. */
   .planbar{display:flex;justify-content:space-between;align-items:center;margin-top:22px;flex-wrap:wrap;gap:12px}
-  .pt-title{font-family:var(--font-display);font-weight:600;font-size:18px}
+  .pt-title{font-family:var(--font-serif);font-weight:600;font-size:21px;letter-spacing:-.01em}
   .exports{display:flex;gap:8px;flex-wrap:wrap}
   .xbtn{font-family:var(--font-mono);font-size:12px;padding:8px 12px;border-radius:8px;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-soft);cursor:pointer}
   .xbtn:hover{border-color:var(--ink);color:var(--ink)}
@@ -262,14 +487,15 @@
   .rec{border:1px solid var(--line);border-left:4px solid var(--lock);border-radius:12px;background:var(--surface-2);padding:18px 20px;margin-top:14px}
   .rec.mo{border-left-color:var(--mrna)} .rec.po{border-left-color:var(--protein)} .rec.no{border-left-color:var(--absent)}
   .rec-l{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .rec-action{font-family:var(--font-display);font-weight:600;font-size:20px}
-  .rec-why{margin:12px 0 0;font-size:14.5px;color:var(--ink-soft);line-height:1.6;max-width:78ch}
+  .rec-action{font-family:var(--font-serif);font-weight:600;font-size:22px;letter-spacing:-.01em}
+  .rec-why{font-family:var(--font-serif);margin:13px 0 0;font-size:15.5px;color:var(--ink-soft);line-height:1.65;max-width:70ch}
   .plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
   @media(max-width:780px){.plan-grid{grid-template-columns:1fr}}
   .pcard{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px}
-  .pnum{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)}
-  .pk{font-family:var(--font-display);font-weight:600;font-size:15px;margin:2px 0 9px}
-  .pv{font-size:14px;color:var(--ink);line-height:1.55}
+  /* step number — a mono index eyebrow, styled like the figure eyebrow for cross-view consistency. */
+  .pnum{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;color:var(--ink-faint)}
+  .pk{font-family:var(--font-serif);font-weight:600;font-size:16px;margin:3px 0 9px;letter-spacing:-.005em}
+  .pv{font-family:var(--font-serif);font-size:15px;color:var(--ink);line-height:1.6}
   .pv p{margin:0} .pv .muted,.muted{color:var(--ink-faint)}
   .rchips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:9px}
   .rchip{font-family:var(--font-mono);font-size:12px;padding:5px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:7px}
@@ -277,23 +503,33 @@
   .rchip.m{background:var(--protein-soft);color:#8f2568}.rchip.m::before{background:var(--protein)}
   .rchip.g{background:var(--mrna-soft);color:#0a6a55}.rchip.g::before{background:var(--mrna)}
   .rchip em{font-style:normal;font-size:10px;opacity:.65;letter-spacing:.04em}
-  .decision{border:1px solid var(--line-strong);border-radius:12px;background:var(--lock);color:#fff;padding:16px 20px;margin-top:16px}
-  .decision .dh{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#9db8d1;margin-bottom:7px}
-  .decision p{margin:0;font-size:14.5px;line-height:1.6}
-  .corrob{margin-top:16px;font-size:13.5px;color:var(--ink-soft);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  /* Go/no-go rule — a dark surface with a lock-blue left accent, matching how --lock is used
+     everywhere else (the single-gene chain, the rec border). The old light-blue fill was the one
+     element breaking the dark register and its pale eyebrow was near-invisible. */
+  .decision{border:1px solid var(--line-strong);border-left:4px solid var(--lock);border-radius:12px;background:var(--surface-2);color:var(--ink);padding:16px 20px;margin-top:16px}
+  .decision .dh{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--lock);margin-bottom:7px}
+  .decision p{font-family:var(--font-serif);margin:0;font-size:15.5px;line-height:1.62;color:var(--ink)}
+  .corrob{font-family:var(--font-serif);margin-top:16px;font-size:14.5px;color:var(--ink-soft);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
   .corrob .cb{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);white-space:nowrap}
 
   .hidden{display:none}
   :focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-  /* print: a clean one-page validation plan (the ELN/PDF export). Hide chrome, nav, other
-     views, and the paste/export controls; print only the recommendation + the four cards. */
+  /* print: a clean one-page validation plan (the ELN/PDF export — the handoff artifact). The app
+     is dark on screen; on paper it must be black-on-white. Force light surfaces, keep the serif/mono
+     voice split, and hide all chrome, nav, and the other three views. */
   @media print{
-    body{background:#fff;padding:0}
-    .app-chrome,.bar,.search,#chips,.exports,.demo-flag,
+    :root{--ink:#111;--ink-soft:#333;--ink-faint:#666;--line:#d8d5cf;--line-strong:#bdb9b1;
+      --surface:#fff;--surface-2:#f6f4f0;--lock:#3a5f86;--prov:#c9c5bd}
+    body{background:#fff;color:#111;padding:0}
+    .workspace{display:block;height:auto}
+    .nav,.arts,.convo-head,.composer,.demo-flag,.exports,.srcline{display:none!important}
+    .convo,.convo-scroll{height:auto;overflow:visible;background:#fff}
     #singleView,#batchView,#truthView{display:none!important}
-    .app{border:none;box-shadow:none;border-radius:0}
+    .decision{background:#f6f4f0;color:#111;border-left:4px solid var(--lock)}
+    .decision .dh{color:var(--lock)}
+    .pcard,.rec{background:#fff}
     .planbar{margin-top:0}
     .rec,.pcard,.decision{break-inside:avoid}
     a[href]:after{content:""}
@@ -301,150 +537,65 @@
 </style>
 </head>
 <body>
-<div class="shell">
-  <div class="app">
-    <div class="app-chrome">
-      <span class="tl"></span><span class="tl"></span><span class="tl"></span>
-      <span class="url">concord.app / <span id="urlPath">gene/ITK</span></span>
+<div class="workspace">
+
+  <!-- LEFT NAV — one primary surface (Chat) + a secondary Hit-list tool. Validation plan and
+       Known biology are no longer destinations; they're produced inside the thread on request. -->
+  <nav class="nav" aria-label="Workspace">
+    <div class="nav-top"><span class="merge"><i class="g"></i><i class="m"></i></span><span class="txt">Concord <small style="color:var(--ink-faint);font-family:var(--font-mono);font-size:10px">mRNA × protein</small></span></div>
+    <button class="nav-item newchat" id="newChat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">New chat</span></button>
+    <div class="modes" role="tablist" style="display:contents">
+      <button class="nav-item mode on" id="mChat" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="lbl">Chat</span></button>
+      <button class="nav-item mode" id="mBatch" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="lbl">Hit list</span></button>
     </div>
-
-    <div class="bar">
-      <div class="brand"><span class="merge"><i class="g"></i><i class="m"></i></span> Concord <small>working name</small></div>
-      <div class="modes" role="tablist">
-        <button class="mode" id="mSingle" aria-selected="true">Single gene</button>
-        <button class="mode" id="mBatch" aria-selected="false">Hit list</button>
-        <button class="mode" id="mPlan" aria-selected="false">Validation plan</button>
-        <button class="mode" id="mTruth" aria-selected="false">Known biology</button>
-      </div>
+    <div class="nav-sec">Recent</div>
+    <div class="sessions" id="sessions">
+      <div class="sessions-empty" id="sessionsEmpty">No chats yet</div>
     </div>
+    <div class="nav-foot"><button class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="lbl">Customize</span></button></div>
+  </nav>
 
-    <div class="body">
-      <div class="search">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input id="geneInput" value="ITK" aria-label="Enter a gene symbol" spellcheck="false">
-        <button class="go" id="goBtn">Reconcile</button>
-      </div>
-      <div class="chips" id="chips">
-        <button class="chip" data-gene="ITK" aria-pressed="true">ITK</button>
-        <button class="chip" data-gene="TSC1" aria-pressed="false">TSC1</button>
-        <button class="chip" data-gene="VPS37B" aria-pressed="false">VPS37B</button>
-        <button class="chip" data-gene="LCP2" aria-pressed="false">LCP2</button>
-        <button class="chip" data-gene="ZNF250" aria-pressed="false">ZNF250</button>
-      </div>
+  <!-- CENTER CONVERSATION -->
+  <div class="convo">
+    <div class="convo-head">
+      <span class="title" id="convoTitle">Chat</span>
+      <span class="crumb" id="urlPath">gene/ITK</span>
+      <button class="arts-toggle" id="artsToggle" aria-label="Toggle artifacts" title="Show/hide artifacts" aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M15 4v16"/></svg>
+      </button>
+    </div>
+    <div class="convo-scroll" id="convoScroll">
 
-      <!-- SINGLE GENE VIEW — a reasoning transcript (Direction 1) -->
-      <div id="singleView">
-        <div class="thread" id="thread">
-
-          <!-- TURN 1 · Ingestion agent (Node A) narrates how it read the screens -->
-          <div class="turn enter" style="animation-delay:0ms">
-            <div class="av a" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 5h18M3 12h18M3 19h18"/><path d="M8 5v14"/></svg></div>
-            <div>
-              <div class="who"><span class="n">Ingestion agent</span><span class="defers">· Node A on the rim</span></div>
-              <div class="say" id="ingestSay">Reading the screens onto the shared schema…</div>
-              <div class="steps" id="ingestSteps"></div>
-            </div>
-          </div>
-
-          <!-- TURN 2 · the deterministic verdict, dropped in locked -->
-          <div class="turn enter" style="animation-delay:90ms">
-            <div class="av hub" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
-            <div>
-              <div class="who"><span class="n">Concord</span><span class="defers">· deterministic core</span>
-                <span class="cond-inline" id="tabs" role="tablist" style="margin-left:auto">
-                  <button data-cond="Rest" role="tab" aria-selected="false">Rest</button>
-                  <button data-cond="Stim8h" role="tab" aria-selected="false">Stim 8h</button>
-                  <button data-cond="Stim48h" role="tab" aria-selected="true">Stim 48h</button>
-                </span>
-              </div>
-              <div class="verdict-drop">
-                <div class="vd-lock"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> the verdict — agents cannot edit it</div>
-                <div class="vd-body">
-                  <div class="vd-top">
-                    <span class="g" id="resGene">ITK</span>
-                    <span class="verdict-badge vb rep" id="verdictBadge"><span class="vdot"></span><span id="verdictText">Replicated</span></span>
-                    <span class="role" id="resRole" style="margin-left:auto">IL2 concordance</span>
-                  </div>
-                  <div class="vd-nums">
-                    <span class="lab"><span class="sw" style="background:var(--protein)"></span>protein · FACS<b id="zProt">−4.2</b><span class="q mono" id="qProt" style="margin-left:6px;color:var(--ink-faint);font-size:11px"></span></span>
-                    <span class="lab"><span class="sw" style="background:var(--mrna)"></span>mRNA · Perturb-seq<b id="zRna">−5.1</b><span class="q mono" id="qRna" style="margin-left:6px;color:var(--ink-faint);font-size:11px"></span></span>
-                  </div>
-                  <div class="vd-plot">
-                    <svg class="gate-svg" viewBox="0 0 300 300" role="img" aria-label="Gate plot" style="max-width:230px">
-                      <rect x="40" y="20" width="120" height="120" fill="#F7E1EF"/>
-                      <rect x="160" y="20" width="120" height="120" fill="#DDE7F0"/>
-                      <rect x="40" y="140" width="120" height="120" fill="#EEF2F5"/>
-                      <rect x="160" y="140" width="120" height="120" fill="#DCF1EB"/>
-                      <line x1="40" y1="140" x2="280" y2="140" stroke="#B9C4CF" stroke-width="1.4"/>
-                      <line x1="160" y1="20" x2="160" y2="260" stroke="#B9C4CF" stroke-width="1.4"/>
-                      <text x="100" y="86" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#8f2568">protein-only</text>
-                      <text x="220" y="86" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" font-weight="600" fill="#173049">replicated</text>
-                      <text x="100" y="206" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#59636f">neither</text>
-                      <text x="220" y="206" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#0a6a55">mRNA-only</text>
-                      <text x="160" y="284" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#0f9b7c">mRNA →</text>
-                      <text x="20" y="140" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#c0398b" transform="rotate(-90 20 140)">protein →</text>
-                      <circle id="plotDot" cx="220" cy="60" r="9" fill="#173049" stroke="#fff" stroke-width="2.5"/>
-                    </svg>
-                    <span id="plotGene" class="hidden"></span><span id="plotCond" class="hidden"></span>
-                  </div>
-                  <div class="vd-why"><p id="explainText" style="margin:0"></p><span class="mechtag hidden" id="mechTag"></span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TURN 3 · Interpretation agent (Node B) proposes cited hypotheses -->
-          <div class="turn enter" style="animation-delay:180ms" id="interpTurn">
-            <div class="av b" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
-            <div>
-              <div class="who"><span class="n">Interpretation agent</span><span class="defers">· Node B — proposes, never decides</span>
-                <span class="flag" style="margin-left:auto">hypothesis · not the verdict</span>
-              </div>
-              <div id="sources">
-                <div class="say" id="interpSay"></div>
-                <div id="sourcesBody"></div>
-              </div>
-            </div>
-          </div>
-
+      <!-- LANDING — the empty agentic start. Shown until the first message; hidden the moment a
+           turn is appended. A greeting + example prompts that teach what the tool can be asked. -->
+      <div id="landing" class="landing">
+        <div class="landing-mark" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+        <h1 class="landing-h">When two screens disagree, which do you believe?</h1>
+        <p class="landing-sub">When your mRNA screen and your protein screen point different ways about a
+          gene, Concord tells you which to believe — and why. It catches the post-transcriptional hits
+          a transcript-only screen throws away. Ask it to reconcile a gene.</p>
+        <div class="landing-prompts" id="landingPrompts">
+          <button class="lprompt lprompt-hero" data-q="Reconcile TSC1">
+            <span class="lp-k">Start here · Reconcile</span><span class="lp-t">Do the two screens agree on this gene — and if not, which wins?</span>
+            <span class="lp-ex">"Reconcile TSC1"</span></button>
+          <button class="lprompt" data-q="Is PTPN2 druggable?">
+            <span class="lp-k">Druggability</span><span class="lp-t">Is a gene a viable drug target?</span>
+            <span class="lp-ex">"Is PTPN2 druggable?"</span></button>
+          <button class="lprompt" data-q="What does discordant mean?">
+            <span class="lp-k">Explain</span><span class="lp-t">Ask about the biology or the method</span>
+            <span class="lp-ex">"What does discordant mean?"</span></button>
+          <button class="lprompt" data-q="Does Concord recover known biology?">
+            <span class="lp-k">Validate</span><span class="lp-t">Does the tool recover known biology?</span>
+            <span class="lp-ex">"Does it recover known biology?"</span></button>
         </div>
-
-        <!-- dossier -->
-        <div class="dossier">
-          <!-- evidence & quality -->
-          <div class="card soft">
-            <div class="ct">Evidence &amp; quality</div>
-            <div class="conf">
-              <span class="tier High" id="confTier">High</span>
-              <span class="meter"><i id="confBar" style="width:88%;background:var(--lock)"></i></span>
-            </div>
-            <div class="ev"><span class="k">Cross-donor agreement</span><span class="v"><span class="sdot s-strong" id="dDonor"></span><span id="vDonor">ρ 0.71 · 4/4</span></span></div>
-            <div class="ev"><span class="k">Cross-guide agreement</span><span class="v"><span class="sdot s-strong" id="dGuide"></span><span id="vGuide">ρ 0.66</span></span></div>
-            <div class="ev"><span class="k">On-target knockdown</span><span class="v"><span class="sdot s-strong" id="dKd"></span><span id="vKd">82%</span></span></div>
-            <div class="ev"><span class="k">Off-target / neighbor</span><span class="v"><span class="sdot s-strong" id="dOff"></span><span id="vOff">clean</span></span></div>
-          </div>
-
-          <!-- disease genetics -->
-          <div class="card soft">
-            <div class="ct">Disease genetics</div>
-            <span class="gtag yes" id="gwasTag">◆ Autoimmune-linked</span>
-            <div class="glist" id="gwasList"></div>
-            <div class="gnote" id="gwasNote"></div>
-          </div>
-
-          <!-- druggability -->
-          <div class="card soft">
-            <div class="ct">Druggability · Open Targets</div>
-            <div class="drow"><span class="mod">SMALL MOLECULE</span><span class="pill p-clin" id="dSm">Advanced clinical</span></div>
-            <div class="drow"><span class="mod">ANTIBODY</span><span class="pill p-none" id="dAb">—</span></div>
-            <div class="drow"><span class="mod">CLINICAL PRECEDENCE</span><span class="pill p-clin" id="dClin">Phase II</span></div>
-            <div class="dnote" id="dNote"></div>
-          </div>
-        </div>
-        <div class="srcline">sources · Zhu 2025 DE_stats + QC · Schmidt 2022 FACS · Open Targets · GWAS Catalog</div>
       </div>
 
-      <!-- BATCH / HIT LIST VIEW -->
+      <!-- The transcript: an append-only thread. Each sent gene appends a turn (user bubble +
+           agent reply) cloned from #turnTpl. Validation plan / Known biology are appended as
+           extra agent turns via the follow-up chips under each reply. -->
+      <div id="thread" class="thread"></div>
+
+      <!-- HIT LIST — kept as a distinct tool (it takes a pasted list, not a single message). -->
       <div id="batchView" class="hidden">
         <div class="btop" style="margin-top:22px">
           <div>
@@ -471,72 +622,220 @@ ZNF250</div>
           <tbody id="batchRows"></tbody>
         </table>
       </div>
+    </div><!-- /convo-scroll -->
 
-      <!-- VALIDATION PLAN VIEW -->
-      <div id="planView" class="hidden">
-        <div class="planbar">
-          <div class="pt-title">Validation plan · <span id="planGene">ITK</span></div>
-          <div class="exports">
-            <button class="xbtn" data-x="Exported ✓">⤓ Export PDF</button>
-            <button class="xbtn" data-x="Copied ✓">⧉ Copy protocol</button>
-            <button class="xbtn" data-x="Added ✓">+ Add to ELN</button>
+    <!-- ══ TEMPLATES (cloned per turn; use CLASSES not ids so many can coexist in the thread) ══ -->
+
+    <!-- A gene-reconciliation turn: user bubble + agent reply with figure, chain, verdict, sources. -->
+    <template id="turnTpl">
+      <div class="turn" data-gene="">
+        <div class="reply-turn user-row">
+          <div class="user-msg js-user"></div>
+        </div>
+        <div class="reply-turn agent">
+          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="reply-body">
+            <div class="cond-row">
+              <span class="cond-inline js-tabs" role="tablist">
+                <button data-cond="Rest" role="tab" aria-selected="false">Rest</button>
+                <button data-cond="Stim8h" role="tab" aria-selected="false">Stim 8h</button>
+                <button data-cond="Stim48h" role="tab" aria-selected="true">Stim 48h</button>
+              </span>
+            </div>
+            <p class="prose js-proseOpen"></p>
+            <figure class="fig">
+              <div class="fig-frame">
+                <div class="fig-eyebrow js-figEyebrow">Figure 1 · paired effect on IL-2</div>
+                <svg class="js-effectFig" viewBox="0 0 560 210" role="img" aria-label="Paired effect figure" font-family="IBM Plex Mono, monospace"></svg>
+                <figcaption class="cap js-figCap"></figcaption>
+              </div>
+            </figure>
+            <div class="chain js-chain" aria-label="Chain of custody"></div>
+            <p class="prose js-proseVerdict"><span class="js-verdictLead"></span><span class="js-explainText"></span></p>
+            <p class="prose interp js-interpSay"></p>
+            <div class="js-sourcesBody"></div>
+            <div class="foot js-provFoot"></div>
+
+            <!-- dossier -->
+            <div class="dossier">
+              <div class="card soft">
+                <div class="ct">Evidence &amp; quality</div>
+                <div class="conf">
+                  <span class="tier High js-confTier">High</span>
+                  <span class="meter"><i class="js-confBar" style="width:88%;background:var(--lock)"></i></span>
+                </div>
+                <div class="ev"><span class="k">Cross-donor agreement</span><span class="v"><span class="sdot s-strong js-dDonor"></span><span class="js-vDonor">—</span></span></div>
+                <div class="ev"><span class="k">Cross-guide agreement</span><span class="v"><span class="sdot s-strong js-dGuide"></span><span class="js-vGuide">—</span></span></div>
+                <div class="ev"><span class="k">On-target knockdown</span><span class="v"><span class="sdot s-strong js-dKd"></span><span class="js-vKd">—</span></span></div>
+                <div class="ev"><span class="k">Off-target / neighbor</span><span class="v"><span class="sdot s-strong js-dOff"></span><span class="js-vOff">—</span></span></div>
+              </div>
+              <div class="card soft">
+                <div class="ct">Disease genetics</div>
+                <span class="gtag yes js-gwasTag">◆ Immune-linked</span>
+                <div class="glist js-gwasList"></div>
+                <div class="gnote js-gwasNote"></div>
+              </div>
+              <div class="card soft">
+                <div class="ct">Druggability · Open Targets</div>
+                <div class="drow"><span class="mod">SMALL MOLECULE</span><span class="pill p-none js-dSm">—</span></div>
+                <div class="drow"><span class="mod">ANTIBODY</span><span class="pill p-none js-dAb">—</span></div>
+                <div class="drow"><span class="mod">CLINICAL PRECEDENCE</span><span class="pill p-none js-dClin">—</span></div>
+                <div class="dnote js-dNote"></div>
+              </div>
+            </div>
+            <div class="srcline">sources · Zhu 2025 DE_stats + QC · Schmidt 2022 FACS · Open Targets · GWAS Catalog</div>
+
+            <!-- follow-up chips: ask the agent to produce the plan or the known-biology check inline -->
+            <div class="followups js-followups">
+              <button class="fchip" data-follow="plan"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Validation plan</button>
+              <button class="fchip" data-follow="truth"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>Known biology</button>
+            </div>
           </div>
         </div>
-
-        <div class="rec rep" id="planRec">
-          <div class="rec-l">
-            <span class="rec-action" id="recAction">Confirm &amp; advance</span>
-            <span class="verdict-badge vb rep" id="planVerdict"><span class="vdot"></span><span id="planVerdictTxt">Replicated</span></span>
-            <span class="ctag High" id="planConf">High confidence</span>
-          </div>
-          <p class="rec-why" id="recWhy"></p>
-        </div>
-
-        <div class="plan-grid">
-          <div class="pcard"><div class="pnum">01</div><div class="pk">Perturbation &amp; controls</div><div class="pv" id="pPert"></div></div>
-          <div class="pcard"><div class="pnum">02</div><div class="pk">Condition to assay</div><div class="pv" id="pCond"></div></div>
-          <div class="pcard"><div class="pnum">03</div><div class="pk">Readout</div><div class="pv" id="pRead"></div></div>
-          <div class="pcard"><div class="pnum">04</div><div class="pk">QC &amp; caveats</div><div class="pv" id="pQc"></div></div>
-        </div>
-
-        <div class="decision">
-          <div class="dh">Go / no-go rule</div>
-          <p id="pDecision"></p>
-        </div>
-
-        <div class="corrob">
-          <span class="cb">Why it's worth the bench time</span>
-          <span id="pCorrob"></span>
-        </div>
-        <div class="srcline">plan built from · verdict + context-dependence + QC columns (Zhu 2025) · guide-library metadata · Open Targets · GWAS Catalog</div>
       </div>
+    </template>
 
-      <!-- GROUND-TRUTH (KNOWN BIOLOGY) VIEW -->
-      <div id="truthView" class="hidden">
-        <div class="gt-claim">
-          <div class="gt-h">Does Concord recover known biology?</div>
-          <p id="gtClaim">—</p>
-          <div class="gt-stats" id="gtStats"></div>
-        </div>
-        <div class="gt-grid">
-          <div class="gt-col">
-            <div class="gt-ct">Canonical IL-2 positive regulators · KO lowers IL-2</div>
-            <div id="gtPositives"></div>
+    <!-- A validation-plan turn (appended when the user clicks the Validation plan chip). -->
+    <template id="planTpl">
+      <div class="turn turn-follow">
+        <div class="reply-turn user-row"><div class="user-msg js-user"></div></div>
+        <div class="reply-turn agent">
+          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="reply-body">
+            <div class="planbar">
+              <div class="pt-title">Validation plan · <span class="js-planGene"></span></div>
+              <div class="exports">
+                <button class="xbtn" data-x="Exported ✓">⤓ Export PDF</button>
+                <button class="xbtn" data-x="Copied ✓">⧉ Copy protocol</button>
+              </div>
+            </div>
+            <div class="rec rep js-planRec">
+              <div class="rec-l">
+                <span class="rec-action js-recAction"></span>
+                <span class="verdict-badge vb rep js-planVerdict"><span class="vdot"></span><span class="js-planVerdictTxt"></span></span>
+                <span class="ctag High js-planConf"></span>
+              </div>
+              <p class="rec-why js-recWhy"></p>
+            </div>
+            <div class="plan-grid">
+              <div class="pcard"><div class="pnum">01</div><div class="pk">Perturbation &amp; controls</div><div class="pv js-pPert"></div></div>
+              <div class="pcard"><div class="pnum">02</div><div class="pk">Condition to assay</div><div class="pv js-pCond"></div></div>
+              <div class="pcard"><div class="pnum">03</div><div class="pk">Readout</div><div class="pv js-pRead"></div></div>
+              <div class="pcard"><div class="pnum">04</div><div class="pk">QC &amp; caveats</div><div class="pv js-pQc"></div></div>
+            </div>
+            <div class="decision"><div class="dh">Go / no-go rule</div><p class="js-pDecision"></p></div>
+            <div class="srcline">plan built from · verdict + context-dependence + QC columns (Zhu 2025) · guide-library metadata · Open Targets · GWAS Catalog</div>
           </div>
-          <div class="gt-col">
-            <div class="gt-ct">Known brakes · KO raises IL-2</div>
-            <div id="gtBrakes"></div>
-          </div>
         </div>
-        <div class="srcline">recovered independently from · Zhu 2025 Perturb-seq (mRNA) × Schmidt 2022 FACS (protein) · no wet-lab table fetched (would be a different phenotype)</div>
       </div>
+    </template>
 
-      <div class="demo-flag" id="demoFlag">Every view runs on real data · Zhu 2025 Perturb-seq (mRNA) × Schmidt 2022 FACS (protein) × Open Targets · Enrichr · grounded explanations (Claude, numbers-only).</div>
+    <!-- A known-biology turn (appended when the user clicks the Known biology chip). -->
+    <template id="truthTpl">
+      <div class="turn turn-follow">
+        <div class="reply-turn user-row"><div class="user-msg js-user">Does Concord recover known biology?</div></div>
+        <div class="reply-turn agent">
+          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="reply-body">
+            <div class="gt-claim">
+              <div class="gt-h">Does Concord recover known biology?</div>
+              <p class="js-gtClaim">—</p>
+              <div class="gt-stats js-gtStats"></div>
+            </div>
+            <div class="gt-grid">
+              <div class="gt-col">
+                <div class="gt-ct">Canonical IL-2 positive regulators · KO lowers IL-2</div>
+                <div class="js-gtPositives"></div>
+              </div>
+              <div class="gt-col">
+                <div class="gt-ct">Known brakes · KO raises IL-2</div>
+                <div class="js-gtBrakes"></div>
+              </div>
+            </div>
+            <div class="srcline">recovered independently from · Zhu 2025 Perturb-seq (mRNA) × Schmidt 2022 FACS (protein) · no wet-lab table fetched (would be a different phenotype)</div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- A SCOPED facet turn: answers ONE question (druggability / genetics / quality) with a lead
+         line + a single focused card, not the whole reconciliation. Filled by renderFacet(). -->
+    <template id="facetTpl">
+      <div class="turn turn-follow">
+        <div class="reply-turn user-row"><div class="user-msg js-user"></div></div>
+        <div class="reply-turn agent">
+          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="reply-body">
+            <p class="prose js-facetLead"></p>
+            <div class="card soft js-facetCard" style="max-width:540px;margin-top:14px"></div>
+            <div class="foot js-facetFoot"></div>
+            <div class="followups js-followups">
+              <button class="fchip" data-follow="reconcile"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Full reconciliation</button>
+              <button class="fchip" data-follow="plan"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Validation plan</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- A help / no-match turn: always shows the user's message, then what the tool can do. -->
+    <template id="helpTpl">
+      <div class="turn turn-follow">
+        <div class="reply-turn user-row"><div class="user-msg js-user"></div></div>
+        <div class="reply-turn agent">
+          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="reply-body">
+            <p class="prose js-helpLead"></p>
+            <div class="help-actions js-helpActions"></div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- A conversational ANSWER turn: a streamed written reply (no card). The "answer the question"
+         half of the agentic split. Filled token-by-token from /api/answer by appendAnswerTurn(). -->
+    <template id="answerTpl">
+      <div class="turn turn-follow">
+        <div class="reply-turn user-row"><div class="user-msg js-user"></div></div>
+        <div class="reply-turn agent">
+          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="reply-body">
+            <p class="prose js-answerText"></p>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- CHAT COMPOSER -->
+    <div class="composer">
+      <div class="composer-chips" id="composerChips">
+        <button class="cchip on" data-gene="ITK" aria-pressed="true">ITK</button>
+        <button class="cchip" data-gene="TSC1" aria-pressed="false">TSC1</button>
+        <button class="cchip" data-gene="VPS37B" aria-pressed="false">VPS37B</button>
+        <button class="cchip" data-gene="LCP2" aria-pressed="false">LCP2</button>
+        <button class="cchip" data-gene="ZNF250" aria-pressed="false">ZNF250</button>
+      </div>
+      <div class="composer-box">
+        <input id="geneInput" value="" placeholder="Reconcile a gene — type a symbol like PTPN2, then Enter" aria-label="Enter a gene symbol" spellcheck="false" autocomplete="off">
+        <button class="send" id="goBtn" aria-label="Reconcile"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+      </div>
+      <div class="composer-hint">the verdict is deterministic · the agents narrate and cite, they don't decide</div>
     </div>
-  </div>
+  </div><!-- /convo -->
 
-  <p class="note">Three views — single-gene dossier, hit-list triage, and a per-gene validation plan — over five stacked evidence layers. Switch modes top-right; in Single gene and Validation plan, click the gene chips.</p>
-</div>
+  <!-- RIGHT ARTIFACTS PANEL — collapsible (toggled from the convo header). -->
+  <aside class="arts" id="artsPanel" aria-label="Artifacts">
+    <div class="arts-head">
+      <span class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg> Artifacts</span>
+      <span class="arts-count" id="artsCount"></span>
+      <button class="arts-close" id="artsClose" aria-label="Hide artifacts" title="Hide artifacts">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+    <div class="arts-body" id="artsBody"></div>
+  </aside>
+
+</div><!-- /workspace -->
 
 <script>
 (function(){
@@ -546,40 +845,212 @@ ZNF250</div>
   // Gate-plot geometry per verdict. discordant has NO quadrant (the two screens point to
   // different corners), so it sits on the diagonal midline — an honest "the axes disagree".
   var VMAP={
-    replicated:{cls:"rep",txt:"Replicated",x:220,y:60,fill:"#173049"},
-    mrna_only:{cls:"mo",txt:"mRNA-only",x:220,y:200,fill:"#0F9B7C"},
-    protein_only:{cls:"po",txt:"Protein-only",x:100,y:60,fill:"#C0398B"},
-    neither:{cls:"no",txt:"Neither",x:100,y:200,fill:"#93A0AD"},
-    discordant:{cls:"disc",txt:"Discordant",x:160,y:130,fill:"#B8863B"}
+    replicated:{cls:"rep",txt:"Replicated",x:220,y:60,fill:"#9DB4CC"},
+    mrna_only:{cls:"mo",txt:"mRNA-only",x:220,y:200,fill:"#4FC7A5"},
+    protein_only:{cls:"po",txt:"Protein-only",x:100,y:60,fill:"#E07BB6"},
+    neither:{cls:"no",txt:"Neither",x:100,y:200,fill:"#8A867E"},
+    discordant:{cls:"disc",txt:"Discordant",x:160,y:130,fill:"#D8A85A"}
   };
   // API condition keys -> UI tab keys (backend uses Stim8hr/Stim48hr; tabs use Stim8h/Stim48h).
   var COND_API={Rest:"Rest",Stim8h:"Stim8hr",Stim48h:"Stim48hr"};
   var COND_LABEL={Rest:"Rest",Stim8h:"Stim 8h",Stim48h:"Stim 48h"};
-  var state={gene:"ITK",cond:"Stim48h",byCondition:null,enrichment:null};
+  var state={gene:null,cond:"Stim48h",byCondition:null,enrichment:null};
   function $(id){return document.getElementById(id);}
   function fmt(x){return (x===null||x===undefined)?"—":(x>=0?"+":"")+Number(x).toFixed(2);}
-  // Strip the light markdown the grounded explanations use, and drop a leading bold title line
-  // so the panel reads as one clean paragraph.
+
+  // Landing (empty-state) control. Shown on a fresh no-deep-link load; hidden the instant any turn
+  // is created, so it never coexists with the transcript.
+  function showLanding(){ var l=$("landing"); if(l) l.classList.remove("hidden"); }
+  function hideLanding(){ var l=$("landing"); if(l) l.classList.add("hidden"); }
+  // Strip the light markdown the grounded explanations use so the reply reads as clean prose.
+  // ORDER MATTERS: line-anchored cleanups (headings, a leading title line) must run BEFORE we
+  // flatten newlines to spaces — once "\n" becomes " ", a "## Heading" line is indistinguishable
+  // from body text. So: (1) drop ATX heading markers and any leading heading/title line, then
+  // (2) unwrap inline emphasis, then (3) collapse remaining newlines into one paragraph.
   function stripMd(s){
-    return s.replace(/\*\*(.+?)\*\*/g,"$1").replace(/\*(.+?)\*/g,"$1")
-            .replace(/^\s*[^.\n]{0,80}:\s*\n+/,"").replace(/\s*\n+\s*/g," ").trim();
+    return String(s||"")
+      // drop a leading markdown heading line ("# ...", "## ..."), title-cased or ending in ":"
+      .replace(/^\s*#{1,6}\s+.*(?:\n+|$)/,"")
+      // strip any remaining inline heading markers left mid-text
+      .replace(/#{1,6}\s+/g,"")
+      // drop a leading short title line that ends in a colon (no sentence punctuation)
+      .replace(/^\s*[^.\n]{0,80}:\s*\n+/,"")
+      // unwrap bold / italic
+      .replace(/\*\*(.+?)\*\*/g,"$1").replace(/\*(.+?)\*/g,"$1")
+      // collapse newlines into a single flowing paragraph
+      .replace(/\s*\n+\s*/g," ")
+      .trim();
   }
 
-  // Fetch one gene's concordance across conditions + its dossier enrichment, then render.
-  async function loadGene(gene){
+  // Per-turn DOM helper: find a .js-* element WITHIN one turn (not globally). This is what lets many
+  // reconciliation turns coexist in the thread — each turn owns its own figure, verdict, chain, etc.
+  function q(root,cls){ return root?root.querySelector("."+cls):null; }
+  var thread=$("thread");
+
+  // ── Chat sessions ─────────────────────────────────────────────────────────────────────────
+  // A session is a persisted list of turn descriptors ({role,text,intent,gene}). We create one on
+  // the first message of a chat, append a descriptor per message, and list/reopen them in the nav.
+  // Reopening REPLAYS the descriptors through the same dispatch functions that built them live.
+  var currentSession=null;   // {id,title,...} of the active chat, or null before the first message
+  var _replaying=false;      // guard: while replaying, don't persist (would duplicate turns)
+
+  // Ensure a session exists for the current chat; create one lazily on the first message.
+  async function ensureSession(){
+    if(currentSession) return currentSession;
+    try{
+      var r=await fetch("api/sessions",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+      if(r.ok){ currentSession=await r.json(); }
+    }catch(e){ currentSession=null; }
+    return currentSession;
+  }
+
+  // Persist one turn descriptor to the current session (no-op while replaying or if the store is
+  // unavailable — persistence is best-effort and must never block the chat).
+  async function persistTurn(desc){
+    if(_replaying) return;
+    var s=await ensureSession(); if(!s) return;
+    try{
+      var r=await fetch("api/sessions/"+encodeURIComponent(s.id),{
+        method:"PATCH",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({turn:desc})});
+      if(r.ok){ var sum=await r.json(); if(sum&&sum.title) currentSession.title=sum.title; loadSessions(); }
+    }catch(e){ /* best-effort */ }
+  }
+
+  // Render the recent-sessions list in the nav (newest first).
+  async function loadSessions(){
+    var box=$("sessions"); if(!box) return;
+    var list=[];
+    try{ var r=await fetch("api/sessions"); if(r.ok){ list=(await r.json()).sessions||[]; } }catch(e){}
+    if(!list.length){ box.innerHTML='<div class="sessions-empty" id="sessionsEmpty">No chats yet</div>'; return; }
+    box.innerHTML=list.map(function(s){
+      var on=currentSession&&currentSession.id===s.id;
+      return '<button class="session'+(on?" on":"")+'" data-sid="'+esc(s.id)+'" title="'+esc(s.title)+'">'
+        +'<span class="s-title">'+esc(s.title||"New chat")+'</span>'
+        +'<span class="s-del" data-del="'+esc(s.id)+'" role="button" aria-label="Delete chat">'
+        +'<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>'
+        +'</span></button>';
+    }).join("");
+    box.querySelectorAll(".session").forEach(function(b){
+      b.addEventListener("click",function(e){
+        if(e.target.closest("[data-del]")) return;   // delete handled below
+        openSession(b.dataset.sid);
+      });
+    });
+    box.querySelectorAll("[data-del]").forEach(function(d){
+      d.addEventListener("click",function(e){ e.stopPropagation(); deleteSession(d.dataset.del); });
+    });
+  }
+
+  // Start a brand-new chat: clear the thread, drop the session, show the landing.
+  function newSession(){
+    currentSession=null;
+    thread.innerHTML="";
+    state.gene=null; state.byCondition=null; state.enrichment=null;
+    setMode("chat");
+    showLanding(); $("urlPath").textContent="chat"; $("convoTitle").textContent="Chat";
+    renderArtifacts(null);
+    loadSessions();
+  }
+
+  // Reopen a saved chat: fetch its descriptors and REPLAY them to rebuild the exact transcript.
+  async function openSession(sid){
+    var s=null;
+    try{ var r=await fetch("api/sessions/"+encodeURIComponent(sid)); if(r.ok){ s=await r.json(); } }catch(e){}
+    if(!s){ return; }
+    currentSession={id:s.id,title:s.title};
+    thread.innerHTML=""; hideLanding(); setMode("chat");
+    $("convoTitle").textContent="Chat";
+    _replaying=true;
+    try{
+      // Replay each user turn through the normal dispatch path — descriptors already carry the
+      // resolved {intent,gene}, so no re-routing (and no LLM call) is needed on reopen.
+      for(var i=0;i<(s.turns||[]).length;i++){
+        var t=s.turns[i];
+        if(t.role!=="user") continue;
+        await dispatchIntent(t.text, {gene:t.gene||null, intent:t.intent||"answer", known:!!t.gene, source:"replay"});
+      }
+    } finally { _replaying=false; }
+    loadSessions();
+  }
+
+  async function deleteSession(sid){
+    try{ await fetch("api/sessions/"+encodeURIComponent(sid),{method:"DELETE"}); }catch(e){}
+    if(currentSession&&currentSession.id===sid){ newSession(); return; }
+    loadSessions();
+  }
+
+  // Append a fresh gene-reconciliation turn cloned from #turnTpl, return its .turn root element.
+  function appendTurn(gene){
+    var frag=$("turnTpl").content.cloneNode(true);
+    var turn=frag.querySelector(".turn");
+    turn.dataset.gene=gene;
+    thread.appendChild(frag);
+    return thread.lastElementChild;   // the just-appended .turn
+  }
+  // Scroll the thread so a new turn's TOP (the user bubble + verdict lead) is in view — chat
+  // convention. Instant, not smooth: smooth-scroll on a tall thread can stall the renderer.
+  //
+  // A turn keeps GROWING after it's appended: the SVG figure lays out, the dossier renders, and the
+  // explanation streams in token-by-token. A single rAF measures offsetTop BEFORE that growth, so the
+  // anchor drifts and the user lands in blank space below the reply — the "message didn't appear" bug.
+  // Fix: re-anchor to the turn's top across the settle window (immediate + a few delayed passes).
+  // Guard: if the user has scrolled the turn's top well above the viewport (they're reading up), stop
+  // re-anchoring so we never yank them back.
+  function scrollToTurn(turn){
+    var sc=$("convoScroll"); if(!sc||!turn) return;
+    function anchor(){
+      // Anchor on the USER BUBBLE, not the turn box: the turn has a sticky condition-tab row and
+      // spacing above the bubble, so turn.offsetTop lands the bubble above the fold. Measure the
+      // bubble's position within the scroll content and pin it ~16px below the viewport top.
+      var bubble=turn.querySelector(".js-user")||turn;
+      var top=bubble.getBoundingClientRect().top - sc.getBoundingClientRect().top + sc.scrollTop;
+      // stop if the user scrolled UP past this turn on purpose (bubble is well above the viewport)
+      if(top < sc.scrollTop - 60) return false;
+      sc.scrollTop=Math.max(0,top-16);
+      return true;
+    }
+    requestAnimationFrame(anchor);
+    // catch the SVG layout + first stream tokens as the turn inflates
+    [80,220,500].forEach(function(ms){ setTimeout(anchor, ms); });
+  }
+
+  // Fetch one gene's concordance across conditions + its dossier enrichment, then APPEND a turn.
+  // existingTurn set means "re-render into that turn" (condition tabs), not a new turn.
+  // customMsg overrides the user bubble text (so a routed question shows the user's real words).
+  async function loadGene(gene, existingTurn, customMsg, hideUser){
+    if(!existingTurn) hideLanding();   // a fresh gene turn leaves the empty state
     try{
       var r=await fetch("api/concordance/"+encodeURIComponent(gene));
-      if(!r.ok){ $("geneInput").value=state.gene; return false; }
+      if(!r.ok){ if(!existingTurn) appendHelpTurn(customMsg||gene, {gene:null,intent:"help"}); return false; }
       var d=await r.json();
-      state.gene=d.gene; state.byCondition=d.by_condition||{}; state.enrichment=d.enrichment||null;
-      render();
-      renderSources(d.gene);
-      replayTurns();
-      if(!$("planView").classList.contains("hidden")) renderPlan();
+      var turn = existingTurn || appendTurn(d.gene);
+      if(customMsg) turn._userMsg=customMsg;
+      if(hideUser) turn._hideUser=true;   // agent-driven: the agent bubble already showed the message
+      // per-turn state lives ON the element, so each turn keeps its own gene/conditions/enrichment.
+      turn._gene=d.gene; turn._byCondition=d.by_condition||{}; turn._enrichment=d.enrichment||null;
+      if(!turn._cond) turn._cond="Stim48h";
+      // also mirror into the global `state` so the artifacts rail / recent-gene highlight follow focus.
+      state.gene=d.gene; state.byCondition=turn._byCondition; state.enrichment=turn._enrichment;
+      renderTurn(turn);
+      renderSources(turn, d.gene);
+      renderArtifacts(d.gene);
+      highlightGene(d.gene);
+      $("convoTitle").textContent="Chat"; $("urlPath").textContent="gene/"+d.gene;
+      wireTurn(turn);
+      if(!existingTurn) scrollToTurn(turn);
       // shareable deep-link: reflect the focused gene in ?gene= without reloading.
-      try{ var u=new URL(window.location); u.searchParams.set("gene",state.gene); history.replaceState(null,"",u); }catch(e){}
+      try{ var u=new URL(window.location); u.searchParams.set("gene",d.gene); history.replaceState(null,"",u); }catch(e){}
       return true;
     }catch(e){ return false; }
+  }
+
+  // highlight the focused gene in the composer quick-chips.
+  function highlightGene(gene){
+    document.querySelectorAll("#composerChips [data-gene]").forEach(function(ch){
+      var on=ch.dataset.gene===gene;
+      ch.setAttribute("aria-pressed",on?"true":"false"); ch.classList.toggle("on",on);
+    });
   }
 
   // ---- Agent Activity rail + Sources: views of the provenance receipt (Node A + Node B) --------
@@ -587,23 +1058,21 @@ ZNF250</div>
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
   // Node B's turn in the thread: an opening line + cited hypotheses, or an honest "nothing to say".
-  async function renderSources(gene){
-    var box=$("sourcesBody"), say=$("interpSay"); if(!box) return;
+  async function renderSources(turn, gene){
+    var box=q(turn,"js-sourcesBody"), say=q(turn,"js-interpSay"); if(!box) return;
     try{
       var r=await fetch("api/sources/"+encodeURIComponent(gene)); var d=await r.json();
       var claims=(d&&d.claims)||[];
       if(!claims.length){
-        if(say) say.className="say-empty",
-          say.textContent="Nothing to add for "+gene+". I only speak where the two screens disagree "
-            +"(protein-only, mRNA-only, or discordant) and a supporting paper turned up — this gene "
-            +"is neither, so proposing a mechanism would be narration, not evidence.";
+        if(say) say.textContent="I'm not proposing a mechanism for "+gene+". I only speak where the "
+          +"two screens disagree — protein-only, mRNA-only, or discordant — and a supporting paper "
+          +"turned up; otherwise a mechanism would be narration, not evidence.";
         box.innerHTML="";
         return;
       }
-      if(say) say.className="say",
-        say.innerHTML="Retrieved papers on "+esc(gene)+" and found "+claims.length
-          +" mechanism"+(claims.length>1?"s":"")+" that could explain why the two screens split "
-          +"&mdash; each one cited, none of it touching the verdict above:";
+      if(say) say.innerHTML="I searched the literature for what could explain the split, and found "
+        +claims.length+" mechanism"+(claims.length>1?"s":"")+" — each grounded in a real paper, none of "
+        +"it changing the verdict above:";
       var exp=claims[0].distinguishing_experiment;
       box.innerHTML='<div class="hyp-list">'+claims.map(function(c){
         var ci=c.citation||{};
@@ -615,63 +1084,85 @@ ZNF250</div>
     }catch(err){ box.innerHTML=""; if(say) say.textContent=""; }
   }
 
-  // Node A's turn: narrate how the screens were actually read, from the provenance receipt.
-  // One line of prose + the real ingestion steps (the sign-correction called out when it fired).
+  // Cached once — the gene-independent ingestion receipt, used by the artifacts panel.
   var _ingestCache=null;
-  async function renderIngest(){
-    var say=$("ingestSay"), steps=$("ingestSteps"); if(!say||!steps) return;
-    try{
-      if(!_ingestCache){ var r=await fetch("api/agent_activity"); _ingestCache=await r.json(); }
-      var d=_ingestCache;
-      if(!d.built || !d.events.length){
-        say.className="say-empty";
-        say.innerHTML="No screens ingested yet. Build the receipt with <span class=\"mono\">"
-          +"python pipeline/06_ingest.py</span>, then reload &mdash; I&rsquo;ll narrate how each "
-          +"screen was read.";
-        steps.innerHTML=""; return;
-      }
-      var aEvents=d.events.filter(function(e){return e.node==="A";});
-      var flipped=aEvents.some(function(e){return e.kind==="sign";});
-      say.className="say";
-      say.innerHTML="Read "+d.n_screens+" screens onto the shared schema. "
-        +(flipped?"One of them &mdash; the Freimer protein screen &mdash; was <b>sign-inverted</b> "
-          +"in the source: its on-target rows ran positive. I caught it from the data and corrected "
-          +"the signs before handing off, so the verdict below is built on the right polarity."
-          :"Each mapping was validated by code before anything reached the verdict.");
-      steps.innerHTML=aEvents.map(function(e){
-        var isSign=e.kind==="sign";
-        return '<div class="step">'+(isSign
-            ? '<span class="tick" style="color:var(--warn)">⚠</span>'
-            : '<span class="tick">✓</span>')
-          +'<span>'+esc(e.title)+(e.detail?' <span class="sd">'+esc(e.detail)+'</span>':'')+'</span></div>';
-      }).join("");
-    }catch(err){ say.textContent=""; steps.innerHTML=""; }
-  }
 
-  // Re-run the turn entry animation so switching genes reads as the thread rebuilding, not a
-  // silent value swap. Cosmetic only; the data is already in place by the time this runs.
-  function replayTurns(){
-    var turns=document.querySelectorAll("#thread .turn");
-    turns.forEach(function(t){ t.classList.remove("enter"); void t.offsetWidth; t.classList.add("enter"); });
+  // Right panel: the provenance receipt as browsable artifacts. Two groups — how each screen was
+  // READ (Node A: mapping + sign status) and the cited hypotheses for the current gene (Node B).
+  // Every card is backed by a field in the receipt; nothing here is decorative.
+  async function renderArtifacts(gene){
+    var body=$("artsBody"), count=$("artsCount"); if(!body) return;
+    // Empty landing (no gene yet): a quiet placeholder, not a fetch for `null`.
+    if(!gene){
+      count.textContent="";
+      body.innerHTML='<div class="arts-empty">Screens and citations appear here once you ask about a gene.</div>';
+      return;
+    }
+    try{
+      if(!_ingestCache){ var r0=await fetch("api/agent_activity"); _ingestCache=await r0.json(); }
+      var act=_ingestCache;
+      var sr=await fetch("api/sources/"+encodeURIComponent(gene)); var src=await sr.json();
+      var claims=(src&&src.claims)||[];
+
+      if(!act.built){
+        count.textContent="";
+        body.innerHTML='<div class="arts-empty">No receipt yet. Build it with '
+          +'<code>python pipeline/06_ingest.py</code> and reload.</div>';
+        return;
+      }
+
+      // one artifact per screen (Node A)
+      var screens={};
+      act.events.filter(function(e){return e.node==="A";}).forEach(function(e){
+        var s=screens[e.screen]||(screens[e.screen]={id:e.screen,map:"",rows:"",sign:false});
+        if(e.kind==="ingest") s.map=e.detail;
+        if(e.kind==="validate") s.rows=e.title;
+        if(e.kind==="sign") s.sign=true;
+      });
+      var screenCards=Object.keys(screens).map(function(k){
+        var s=screens[k];
+        return '<div class="art"><div class="art-t">'
+          +'<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16"/></svg>'
+          +esc(s.id)+(s.sign?'<span class="badge warn">sign-fixed</span>':'<span class="badge ok">clean</span>')+'</div>'
+          +'<div class="art-d">'+esc(s.map||s.rows)+'</div></div>';
+      }).join("");
+
+      // one artifact per cited hypothesis (Node B)
+      var hypCards=claims.map(function(c){
+        var ci=c.citation||{};
+        return '<div class="art"><div class="art-t">'
+          +'<svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>'
+          +'PMID '+esc(ci.accession)+'<span class="badge ok">'+esc(ci.status)+'</span></div>'
+          +'<div class="art-d">'+esc(ci.title)+'<br><a href="'+esc(ci.url)+'" target="_blank" rel="noopener">open ↗</a></div></div>';
+      }).join("");
+
+      count.textContent=(Object.keys(screens).length)+" screens · "+claims.length+" cited";
+      body.innerHTML='<div class="art-group">Screens read · Node A</div>'+screenCards
+        +'<div class="art-group">Cited for '+esc(gene)+' · Node B</div>'
+        +(hypCards||'<div class="arts-empty" style="padding:12px 8px;text-align:left">No hypotheses — '
+          +esc(gene)+' is not a discordance Node B interprets.</div>');
+    }catch(err){ body.innerHTML='<div class="arts-empty">Receipt unavailable.</div>'; }
   }
 
   // Build the plain-language "why" from the numbers only (grounded; no invented figures).
   // Phase 4 replaces this deterministic sentence with a cached Claude explanation.
-  function whyText(row){
+  // gene-parameterized (not state.gene) so an OLD turn re-rendered by a condition tab still names
+  // its own gene, not whatever gene currently has focus.
+  function whyText2(gene,row){
     if(!row) return "No measurement for this gene at this condition.";
     var v=row.verdict;
     // The protein screen's library is smaller than the transcriptome — a gene it never assayed
     // is UNTESTED, not a tested-negative. Say so honestly rather than imply a confident negative.
     var protUntested=(row.prot_tested===false);
     if(protUntested){
-      if(row.hit_rna) return state.gene+" is a hit in the Perturb-seq (mRNA) screen, but the FACS (protein) screen never assayed it — so its protein effect is UNTESTED, not negative. Treat as an mRNA-only lead pending a protein check.";
-      return state.gene+" shows no mRNA effect here, and the protein screen never assayed it — so this is 'no mRNA signal, protein untested', not a concordant negative.";
+      if(row.hit_rna) return gene+" is a hit in the Perturb-seq (mRNA) screen, but the FACS (protein) screen never assayed it — so its protein effect is UNTESTED, not negative. Treat as an mRNA-only lead pending a protein check.";
+      return gene+" shows no mRNA effect here, and the protein screen never assayed it — so this is 'no mRNA signal, protein untested', not a concordant negative.";
     }
-    if(v==="replicated") return "Both screens independently flag "+state.gene+" at this condition, moving the same direction — the strongest kind of hit.";
-    if(v==="discordant") return state.gene+" is significant in BOTH screens but they DISAGREE on direction: it "+(row.rna_promotes?"lowers":"raises")+" the transcript while it "+(row.prot_promotes?"lowers":"raises")+" the protein. A real mRNA/protein decoupling, not a clean replication.";
-    if(v==="mrna_only") return "The mRNA screen calls "+state.gene+" a hit; the protein screen does not. It shifts the transcriptome without moving secreted cytokine — a lead to confirm at the protein level.";
-    if(v==="protein_only") return "The protein screen fires but the mRNA screen stays flat. "+state.gene+" changes protein output without changing transcript — a post-transcriptional regulator a transcriptome-only search would miss.";
-    return "Neither screen sees "+state.gene+" doing much at this condition. Concordant absence — safe to deprioritise for this phenotype.";
+    if(v==="replicated") return "Both screens independently flag "+gene+" at this condition, moving the same direction — the strongest kind of hit.";
+    if(v==="discordant") return gene+" is significant in BOTH screens but they DISAGREE on direction: it "+(row.rna_promotes?"lowers":"raises")+" the transcript while it "+(row.prot_promotes?"lowers":"raises")+" the protein. A real mRNA/protein decoupling, not a clean replication.";
+    if(v==="mrna_only") return "The mRNA screen calls "+gene+" a hit; the protein screen does not. It shifts the transcriptome without moving secreted cytokine — a lead to confirm at the protein level.";
+    if(v==="protein_only") return "The protein screen fires but the mRNA screen stays flat. "+gene+" changes protein output without changing transcript — a post-transcriptional regulator a transcriptome-only search would miss.";
+    return "Neither screen sees "+gene+" doing much at this condition. Concordant absence — safe to deprioritise for this phenotype.";
   }
   function mechText(row){
     if(!row) return "";
@@ -681,41 +1172,132 @@ ZNF250</div>
     return "";
   }
 
-  function render(){
-    var apiCond=COND_API[state.cond];
-    var row=(state.byCondition||{})[apiCond];
-    var vm=row?VMAP[row.verdict]:VMAP.neither;
+  // Verdict → prose-span class + human label, so the verdict reads as a coloured WORD in a sentence.
+  var VLABEL={replicated:{cls:"v-rep",w:"replicated"},mrna_only:{cls:"v-mo",w:"mRNA-only"},
+    protein_only:{cls:"v-po",w:"protein-only"},discordant:{cls:"v-disc",w:"discordant"},
+    neither:{cls:"v-no",w:"neither"}};
 
-    $("urlPath").textContent="gene/"+state.gene;
-    $("plotGene").textContent=state.gene; $("plotCond").textContent=COND_LABEL[state.cond];
-    $("resGene").textContent=state.gene; $("resRole").textContent=(row&&row.cytokine?("IL2 concordance"):"—"); $("geneInput").value=state.gene;
+  // The opening line — the agent framing the comparison in plain language before the figure.
+  function openingProse2(gene,row){
+    if(!row) return "I don't have a measurement for "+gene+" at this condition.";
+    if(row.prot_tested===false)
+      return "The Perturb-seq screen measured "+gene+", but it isn't in the FACS library, so "
+        +"I only have the transcript side here. That makes this a one-sided read, not a concordance.";
+    return "Both screens measured "+gene+", so I can compare them directly. Here is the "
+      +"knockdown's effect on IL-2 on each side, on one axis.";
+  }
 
-    // Was the protein side actually assayed? A gene absent from Schmidt's library is UNTESTED,
-    // not a tested-negative — the badge and metric say "untested" rather than imply a negative.
-    var protUntested=(row&&row.prot_tested===false);
-    $("verdictBadge").className="verdict-badge vb "+vm.cls; $("verdictText").textContent=vm.txt+(protUntested?" · protein untested":"");
-    // Channel metrics: protein = Schmidt lfc/q; mRNA = Zhu z/q. hit flags drive the tag.
-    var zP=row?row.lfc_prot:null, qP=row?row.q_prot:null, hP=row?row.hit_prot:false;
-    var zR=row?row.z_rna:null, qR=row?row.q_rna:null, hR=row?row.hit_rna:false;
-    $("zProt").textContent=protUntested?"untested":fmt(zP); $("zRna").textContent=fmt(zR);
-    $("qProt").innerHTML=protUntested?'<span class="hit-n">not in FACS library</span>'
-      :("q="+(qP===null?"—":Number(qP).toPrecision(2))+" "+(hP?'<span class="hit-y">hit</span>':'<span class="hit-n">n.s.</span>'));
-    $("qRna").innerHTML="q="+(qR===null?"—":Number(qR).toPrecision(2))+" "+(hR?'<span class="hit-y">hit</span>':'<span class="hit-n">n.s.</span>');
-    // The explanation is now generated LIVE by Claude on every gene/condition change and streamed
-    // token-by-token (see streamExplanation). We seed the panel with the deterministic template so
-    // there is never a blank frame, then the live stream overwrites it as tokens arrive. If the
-    // live call can't run, streamExplanation falls back to the precomputed cached paragraph.
-    $("explainText").textContent=whyText(row);
-    streamExplanation(row);
-    var mt=$("mechTag"), mech=mechText(row);
-    if(mech){mt.textContent="⌥ "+mech; mt.classList.remove("hidden");} else {mt.classList.add("hidden");}
+  // Draw the paired-effect figure from the REAL numbers. mRNA (z) and protein (lfc) as two rows on a
+  // shared "raises ← no effect → lowers" axis; filled marker = significant hit, open = n.s.
+  function drawEffectFig(turn,row){
+    var svg=q(turn,"js-effectFig"); if(!svg) return;
+    var W=560, cx=280;
+    function px(v,max){ if(v==null) return cx; var c=Math.max(-1,Math.min(1,v/max)); return cx + c*200; }
+    var zR=row?row.z_rna:null, zP=(row&&row.prot_tested!==false)?row.lfc_prot:null;
+    var xR=px(zR,8), xP=px(zP,3);
+    var hR=row&&row.hit_rna, hP=row&&row.hit_prot;
+    function marker(x,y,on,col){
+      return on ? '<circle cx="'+x+'" cy="'+y+'" r="7" fill="'+col+'"/>'
+                : '<circle cx="'+x+'" cy="'+y+'" r="6" fill="none" stroke="'+col+'" stroke-width="2"/>';
+    }
+    var mRow = zR==null ? '' :
+      '<line x1="'+cx+'" y1="70" x2="'+xR+'" y2="70" stroke="#4FC7A5" stroke-width="2.5"/>'
+      +marker(xR,70,hR,"#4FC7A5")
+      +'<text x="'+(xR+(xR>cx?12:-12))+'" y="74" text-anchor="'+(xR>cx?"start":"end")+'" fill="#4FC7A5" font-size="11" font-weight="500">z='+fmt(zR)+'</text>'
+      +'<text x="'+xR+'" y="56" text-anchor="middle" fill="#4FC7A5" font-size="8.5">q='+(row.q_rna==null?"—":Number(row.q_rna).toPrecision(2))+' · '+(hR?"hit":"n.s.")+'</text>';
+    var pRow;
+    if(row&&row.prot_tested===false){
+      pRow='<text x="'+cx+'" y="140" text-anchor="middle" fill="#8A867E" font-size="10">not in the FACS library — untested</text>';
+    } else {
+      pRow='<line x1="'+cx+'" y1="140" x2="'+xP+'" y2="140" stroke="'+(hP?"#E07BB6":"#8A867E")+'" stroke-width="2.5"/>'
+        +marker(xP,140,hP,hP?"#E07BB6":"#8A867E")
+        +'<text x="'+(xP+(xP>cx?12:-12))+'" y="144" text-anchor="'+(xP>cx?"start":"end")+'" fill="'+(hP?"#E07BB6":"#8A867E")+'" font-size="11" font-weight="500">lfc='+fmt(zP)+'</text>'
+        +'<text x="'+xP+'" y="126" text-anchor="middle" fill="#6B6862" font-size="8.5">q='+(row.q_prot==null?"—":Number(row.q_prot).toPrecision(2))+' · '+(hP?"hit":"n.s.")+'</text>';
+    }
+    svg.innerHTML=
+      '<line x1="'+cx+'" y1="34" x2="'+cx+'" y2="176" stroke="#4A4844" stroke-width="1"/>'
+      +'<text x="'+cx+'" y="26" text-anchor="middle" fill="#8A867E" font-size="9.5">no effect</text>'
+      +'<line x1="60" y1="176" x2="500" y2="176" stroke="#3A3835" stroke-width="1"/>'
+      +'<text x="66" y="192" fill="#6B6862" font-size="9">← knockdown lowers IL-2</text>'
+      +'<text x="494" y="192" text-anchor="end" fill="#6B6862" font-size="9">raises IL-2 →</text>'
+      +'<text x="52" y="68" text-anchor="end" fill="#B4B0A8" font-size="11">mRNA</text>'
+      +'<text x="52" y="80" text-anchor="end" fill="#6B6862" font-size="8">Perturb-seq</text>'
+      +'<text x="52" y="138" text-anchor="end" fill="#B4B0A8" font-size="11">protein</text>'
+      +'<text x="52" y="150" text-anchor="end" fill="#6B6862" font-size="8">FACS</text>'
+      +mRow+pRow;
+  }
 
-    var dot=$("plotDot"); dot.setAttribute("cx",vm.x); dot.setAttribute("cy",vm.y); dot.setAttribute("fill",vm.fill);
+  // Caption + the verdict sentence, both grounded in the numbers.
+  function figCaption(gene,cond,row){
+    if(!row) return "";
+    return '<b>Figure.</b> '+gene+' knockdown effect on IL-2 at '+COND_LABEL[cond]
+      +', mRNA (Perturb-seq z-score) vs protein (FACS log-fold-change) on a shared direction axis. '
+      +'Filled marker = significant; open marker = not significant. Effect sizes are each screen’s native units.';
+  }
 
-    renderDossier();
+  // Chain of custody — traces, inline, how the verdict was earned: each screen READ (mRNA, protein)
+  // with its sign status, then the deterministic verdict. Backed entirely by the row + VLABEL; the
+  // sign badge mirrors the ingest receipt (only the protein FACS screen is ever sign-fixed here).
+  function renderChain(turn,row){
+    var el=q(turn,"js-chain"); if(!el) return;
+    if(!row){ el.innerHTML=""; el.style.display="none"; return; }
+    el.style.display="";
+    var v=VLABEL[row.verdict]||VLABEL.neither;
+    var protUntested=(row.prot_tested===false);
+    // mRNA node (zhu2025 Perturb-seq) — always read.
+    var mrnaHit=row.hit_rna;
+    var mNode='<div class="chain-node"><div class="chain-k">mRNA read · zhu2025</div>'
+      +'<div class="chain-v"><span class="cdot" style="background:var(--mrna)"></span>'
+      +(mrnaHit?"hit z="+fmt(row.z_rna):"n.s.")
+      +'<span class="chain-flag clean">clean</span></div></div>';
+    // protein node (schmidt2022 FACS) — may be untested for this gene.
+    var pNode;
+    if(protUntested){
+      pNode='<div class="chain-node"><div class="chain-k">protein read · schmidt2022</div>'
+        +'<div class="chain-v"><span class="cdot" style="background:var(--absent)"></span>untested</div></div>';
+    } else {
+      var protHit=row.hit_prot;
+      pNode='<div class="chain-node"><div class="chain-k">protein read · schmidt2022</div>'
+        +'<div class="chain-v"><span class="cdot" style="background:'+(protHit?"var(--protein)":"var(--absent)")+'"></span>'
+        +(protHit?"hit lfc="+fmt(row.lfc_prot):"n.s.")+'</div></div>';
+    }
+    // verdict node — the deterministic output.
+    var vNode='<div class="chain-node verdict"><div class="chain-k">verdict · deterministic</div>'
+      +'<div class="chain-v '+v.cls+'"><span class="cdot" style="background:currentColor"></span>'+v.w+'</div></div>';
+    el.innerHTML=mNode+pNode+vNode;
+  }
 
-    document.querySelectorAll("#tabs .tab").forEach(function(t){t.setAttribute("aria-selected",t.dataset.cond===state.cond?"true":"false");});
-    document.querySelectorAll("#chips .chip").forEach(function(ch){ch.setAttribute("aria-pressed",ch.dataset.gene===state.gene?"true":"false");});
+  // Render one turn from its own per-turn state (turn._gene / _byCondition / _cond). Everything
+  // scopes to `turn` via q(), so re-rendering one turn (e.g. a condition-tab click) never touches
+  // any other turn in the thread.
+  function renderTurn(turn){
+    var gene=turn._gene, cond=turn._cond||"Stim48h";
+    var row=(turn._byCondition||{})[COND_API[cond]];
+
+    q(turn,"js-user").textContent=turn._userMsg||("Reconcile "+gene+" at "+COND_LABEL[cond]+".");
+    if(turn._hideUser){ var _ur=q(turn,"js-user"); var _row=_ur&&_ur.closest(".user-row"); if(_row||_ur)(_row||_ur).style.display="none"; }
+
+    // 1 · opening prose, 2 · figure, 3 · verdict sentence (streamed live, seeded deterministic)
+    q(turn,"js-proseOpen").textContent=openingProse2(gene,row);
+    drawEffectFig(turn,row);
+    q(turn,"js-figCap").innerHTML=figCaption(gene,cond,row);
+    var fe=q(turn,"js-figEyebrow"); if(fe) fe.textContent="Figure 1 · "+gene+" knockdown on IL-2 · "+COND_LABEL[cond];
+    renderChain(turn,row);
+    // The verdict WORD (coloured, always shown) + the grounded body (seeded, then streamed live).
+    var v=row?(VLABEL[row.verdict]||VLABEL.neither):VLABEL.neither;
+    q(turn,"js-verdictLead").innerHTML=row?('So this is <b class="'+v.cls+'">'+v.w+'</b>: '):"";
+    q(turn,"js-explainText").textContent=whyText2(gene,row);
+    streamExplanation(turn,row);   // overwrites .js-explainText live with the grounded Claude paragraph
+
+    // provenance footnote — the honest scope note.
+    q(turn,"js-provFoot").innerHTML='<b>Narration only.</b> The paragraph above is written live by Claude '
+      +'from the numbers in the figure — it explains the verdict, it does not decide it. '
+      +'The verdict itself is computed by code from the two screens'
+      +(row&&row.prot_tested===false?', with the protein side untested for this gene':'')+'.';
+
+    renderDossier(turn);
+
+    turn.querySelectorAll(".js-tabs [data-cond]").forEach(function(t){t.setAttribute("aria-selected",t.dataset.cond===cond?"true":"false");});
   }
 
   // ---- live explanation streaming --------------------------------------------------------
@@ -727,16 +1309,15 @@ ZNF250</div>
   // _explainSeq guards against a race: if the user switches gene/condition mid-stream, the stale
   // stream's tokens must NOT append to the panel now showing a different gene. Each call bumps the
   // sequence; a reader whose captured seq no longer matches the current one aborts and discards.
-  var _explainSeq=0;
-  var _explainAbort=null;
-  async function streamExplanation(row){
-    // Cancel any in-flight stream and claim this generation.
-    if(_explainAbort){ try{_explainAbort.abort();}catch(e){} }
-    var seq=++_explainSeq;
+  // Per-turn streaming: the race-guard (seq) and abort controller live ON the turn, so switching the
+  // condition WITHIN a turn cancels only that turn's stale stream — other turns keep streaming.
+  async function streamExplanation(turn,row){
+    if(turn._explainAbort){ try{turn._explainAbort.abort();}catch(e){} }
+    var seq=(turn._explainSeq=(turn._explainSeq||0)+1);
     if(!row||!row.gene||!row.cytokine||!row.condition){ return; }  // nothing to explain
-    var el=$("explainText");
+    var el=q(turn,"js-explainText");
     var ctrl=("AbortController" in window)?new AbortController():null;
-    _explainAbort=ctrl;
+    turn._explainAbort=ctrl;
     var url="api/explanation/"+encodeURIComponent(row.gene)+"/"+encodeURIComponent(row.cytokine)+"/"+encodeURIComponent(row.condition);
     var started=false;          // have we cleared the seed text and begun showing live tokens?
     var acc="";                 // accumulated live markdown, stripped for display
@@ -748,7 +1329,7 @@ ZNF250</div>
       while(true){
         var chunk=await reader.read();
         if(chunk.done) break;
-        if(seq!==_explainSeq) return;      // a newer request superseded us — drop everything
+        if(seq!==turn._explainSeq) return;      // a newer request for THIS turn superseded us
         buf+=dec.decode(chunk.value,{stream:true});
         // SSE frames are separated by a blank line; each carries one "data: {json}" line.
         var frames=buf.split("\n\n"); buf=frames.pop();
@@ -756,22 +1337,23 @@ ZNF250</div>
           var line=frames[i].split("\n").find(function(l){return l.indexOf("data:")===0;});
           if(!line) continue;
           var ev; try{ ev=JSON.parse(line.slice(5).trim()); }catch(e){ continue; }
-          if(seq!==_explainSeq) return;
+          if(seq!==turn._explainSeq) return;
           if(ev.type==="token"){
             if(!started){ el.textContent=""; started=true; }   // first live token clears the seed
             acc+=ev.text; el.textContent=stripMd(acc);
           } else if(ev.type==="error"){
-            // Live call couldn't run / failed before any token: prefer the precomputed cache,
-            // else leave the deterministic template already on screen. Never blank the panel.
-            if(!started && ev.fallback){ el.textContent=stripMd(ev.fallback); }
+            // Keyless / failed call: KEEP the deterministic whyText2 seed (already in the
+            // experimentalist voice — no z-scores/LFC/FDR). We deliberately do NOT swap in
+            // ev.fallback: that cached paragraph predates the voice rewrite and leaks statistics.
+            // (The seed is already shown from render(); do nothing here.)
           }
           // {type:"done"} needs no action; the reader loop ends when the body closes.
         }
       }
     }catch(e){
-      // AbortError (gene switched) is expected and silent; any other error keeps the seed text.
+      // AbortError (condition switched) is expected and silent; any other error keeps the seed text.
     }finally{
-      if(seq===_explainSeq){ el.classList.remove("streaming"); _explainAbort=null; }
+      if(seq===turn._explainSeq){ el.classList.remove("streaming"); turn._explainAbort=null; }
     }
   }
 
@@ -786,53 +1368,268 @@ ZNF250</div>
     return ["—", "p-none"];
   }
 
-  function renderDossier(){
-    var e=state.enrichment;
+  function renderDossier(turn){
+    var e=turn._enrichment;
     // --- Evidence & quality ---
-    var q=e&&e.quality?e.quality:null;
-    var tier=q&&q.confidence?q.confidence:"—";
-    $("confTier").textContent=tier; $("confTier").className="tier "+(tier==="—"?"Low":tier);
+    var ql=e&&e.quality?e.quality:null;
+    var tier=ql&&ql.confidence?ql.confidence:"—";
+    var cTier=q(turn,"js-confTier"); cTier.textContent=tier; cTier.className="tier "+(tier==="—"?"Low":tier)+" js-confTier";
     var barPct=tier==="High"?88:tier==="Medium"?52:tier==="Low"?22:0;
     var barColor=tier==="High"?"var(--lock)":tier==="Medium"?"var(--warn)":"var(--absent)";
-    $("confBar").style.width=barPct+"%"; $("confBar").style.background=barColor;
-    $("vDonor").textContent=corrTxt(q?q.donor_corr:null); $("dDonor").className="sdot "+corrDot(q?q.donor_corr:null);
-    $("vGuide").textContent=corrTxt(q?q.guide_corr:null); $("dGuide").className="sdot "+corrDot(q?q.guide_corr:null);
-    $("vKd").textContent=q?(q.ontarget_significant?"significant":"n.s."):"—"; $("dKd").className="sdot "+(q&&q.ontarget_significant?"s-strong":"s-weak ring");
-    $("vOff").textContent=q?(q.offtarget_flag?"flagged":"clean"):"—"; $("dOff").className="sdot "+(q&&!q.offtarget_flag?"s-strong":"s-mix");
+    var cBar=q(turn,"js-confBar"); cBar.style.width=barPct+"%"; cBar.style.background=barColor;
+    q(turn,"js-vDonor").textContent=corrTxt(ql?ql.donor_corr:null); q(turn,"js-dDonor").className="sdot "+corrDot(ql?ql.donor_corr:null)+" js-dDonor";
+    q(turn,"js-vGuide").textContent=corrTxt(ql?ql.guide_corr:null); q(turn,"js-dGuide").className="sdot "+corrDot(ql?ql.guide_corr:null)+" js-dGuide";
+    q(turn,"js-vKd").textContent=ql?(ql.ontarget_significant?"significant":"n.s."):"—"; q(turn,"js-dKd").className="sdot "+(ql&&ql.ontarget_significant?"s-strong":"s-weak ring")+" js-dKd";
+    q(turn,"js-vOff").textContent=ql?(ql.offtarget_flag?"flagged":"clean"):"—"; q(turn,"js-dOff").className="sdot "+(ql&&!ql.offtarget_flag?"s-strong":"s-mix")+" js-dOff";
 
     // --- Druggability (Open Targets: SM + AB modalities) ---
     var dr=e&&e.druggability?e.druggability:null;
     var sm=dr?drugPill(dr.sm_score, dr.sm_stage):["—","p-none"];
     var ab=dr?drugPill(dr.ab_score, dr.ab_stage):["—","p-none"];
-    $("dSm").textContent=sm[0]; $("dSm").className="pill "+sm[1];
-    $("dAb").textContent=ab[0]; $("dAb").className="pill "+ab[1];
+    q(turn,"js-dSm").textContent=sm[0]; q(turn,"js-dSm").className="pill "+sm[1]+" js-dSm";
+    q(turn,"js-dAb").textContent=ab[0]; q(turn,"js-dAb").className="pill "+ab[1]+" js-dAb";
     var clin=dr&&(dr.sm_stage||dr.ab_stage)?(dr.sm_stage||dr.ab_stage):"None";
-    $("dClin").textContent=clin; $("dClin").className="pill "+(clin==="None"?"p-none":"p-clin");
-    $("dNote").textContent=dr?("Small-molecule tractability "+(dr.sm_score||0).toFixed(2)+" · antibody "+(dr.ab_score||0).toFixed(2)+" (Open Targets)."):"Open Targets tractability unavailable for this gene.";
+    q(turn,"js-dClin").textContent=clin; q(turn,"js-dClin").className="pill "+(clin==="None"?"p-none":"p-clin")+" js-dClin";
+    q(turn,"js-dNote").textContent=dr?("Small-molecule tractability "+(dr.sm_score||0).toFixed(2)+" · antibody "+(dr.ab_score||0).toFixed(2)+" (Open Targets)."):"Open Targets tractability unavailable for this gene.";
 
     // --- Disease genetics (OT immune genetic-association) ---
     var dis=e&&e.disease?e.disease:null;
     var linked=dis&&dis.score>0&&dis.top_disease;
-    $("gwasTag").textContent=linked?"◆ Immune-linked":"○ No immune association";
-    $("gwasTag").className="gtag "+(linked?"yes":"no");
-    $("gwasList").innerHTML='<span class="dis">'+(linked?dis.top_disease:"None reported")+'</span>';
-    $("gwasNote").textContent=linked?("Best immune genetic-association score "+dis.score.toFixed(2)+" (Open Targets)."):"No colocalizing immune-disease signal in Open Targets.";
+    var gt=q(turn,"js-gwasTag"); gt.textContent=linked?"◆ Immune-linked":"○ No immune association"; gt.className="gtag "+(linked?"yes":"no")+" js-gwasTag";
+    q(turn,"js-gwasList").innerHTML='<span class="dis">'+(linked?dis.top_disease:"None reported")+'</span>';
+    q(turn,"js-gwasNote").textContent=linked?("Best immune genetic-association score "+dis.score.toFixed(2)+" (Open Targets)."):"No colocalizing immune-disease signal in Open Targets.";
   }
 
-  document.querySelectorAll("#chips .chip").forEach(function(ch){ch.addEventListener("click",function(){loadGene(ch.dataset.gene);});});
-  document.querySelectorAll("#tabs .tab").forEach(function(t){t.addEventListener("click",function(){state.cond=t.dataset.cond;render();});});
-  function submitGene(){var v=$("geneInput").value.trim().toUpperCase(); if(v) loadGene(v);}
+  // Wire one turn's own controls: its condition tabs (re-render IN PLACE) and its follow-up chips
+  // (append a plan / known-biology turn). Called once per turn, right after it's rendered.
+  function wireTurn(turn){
+    turn.querySelectorAll(".js-tabs [data-cond]").forEach(function(t){
+      t.addEventListener("click",function(){
+        turn._cond=t.dataset.cond;
+        state.gene=turn._gene; state.byCondition=turn._byCondition; state.enrichment=turn._enrichment;
+        renderTurn(turn);   // re-render THIS turn only; the thread above/below is untouched
+      });
+    });
+    wireFollowups(turn);
+  }
+
+  // Follow-up chips on any turn: append the requested facet as a NEW turn, sourced from THIS turn's
+  // gene/conditions. reconcile→full turn, plan→plan turn, truth→known-biology, druggability/…→facet.
+  function wireFollowups(turn){
+    var fu=q(turn,"js-followups"); if(!fu) return;
+    fu.querySelectorAll(".fchip").forEach(function(chip){
+      chip.addEventListener("click",function(){
+        if(chip.disabled) return;
+        chip.disabled=true;   // one of each follow-up per source turn
+        var f=chip.dataset.follow, g=turn._gene, bc=turn._byCondition, en=turn._enrichment;
+        if(f==="plan") appendPlanTurn(g,bc);
+        else if(f==="truth") appendTruthTurn();
+        else if(f==="reconcile") loadGene(g);
+        else appendFacetTurn(f, g, bc, en, "Show me "+g+" "+f+".");
+      });
+    });
+  }
+
+  // Composer quick-chips: clicking a gene appends a NEW reconciliation turn (routed like a message
+  // so it persists to the session).
+  document.querySelectorAll("#composerChips [data-gene]").forEach(function(ch){
+    ch.addEventListener("click",function(){ handleMessage("Reconcile "+ch.dataset.gene); });
+  });
+
+  // ── Client-side intent fallback ─────────────────────────────────────────────────────────
+  // Mirrors the backend keyword classifier so routing STILL WORKS if /api/route is unreachable
+  // (e.g. the server predates the endpoint, or is offline). Same closed intent set; the gene is
+  // validated against the real concordance symbols, so it can never invent one.
+  var _geneSetCache=null;
+  async function clientGeneSet(){
+    if(_geneSetCache) return _geneSetCache;
+    try{
+      var r=await fetch("api/concordance?limit=100000");
+      var d=await r.json();
+      _geneSetCache={};
+      (d.rows||[]).forEach(function(row){ if(row.gene) _geneSetCache[row.gene]=1; });
+    }catch(e){ _geneSetCache={}; }
+    return _geneSetCache;
+  }
+  var _INTENT_KEYWORDS=[
+    // definitional / conversational first — so "what does discordant mean" → answer, not reconcile.
+    [["what does","what is","what's","explain","how does","why do","why does","what do you","difference between","mean","meaning","how do you","what can you","who are you","how are you"],"answer"],
+    [["known biology","ground truth","recover","canonical","positive regulator"],"known_biology"],
+    [["validation plan","validate","experiment","protocol","bench","assay","how to test","how do i test","wet lab","wet-lab"],"plan"],
+    [["druggable","druggability","drug","tractab","small molecule","antibody","clinical","open targets"],"druggability"],
+    [["genetics","gwas","disease","autoimmune","immune-linked","association"],"genetics"],
+    [["quality","qc","confidence","donor","guide","off-target","off target","knockdown","reliable","trust"],"quality"],
+    [["reconcile","concordance","concordant","discordant","verdict","mrna","protein","screens","compare"],"reconcile"]
+  ];
+  function clientClassifyKeywords(text){
+    var low=text.toLowerCase();
+    for(var i=0;i<_INTENT_KEYWORDS.length;i++){
+      var phrases=_INTENT_KEYWORDS[i][0];
+      for(var j=0;j<phrases.length;j++){ if(low.indexOf(phrases[j])>=0) return _INTENT_KEYWORDS[i][1]; }
+    }
+    return "reconcile";
+  }
+  function clientExtractGene(text, geneSet){
+    // longest alnum tokens first, so 'PTPN2' beats a stray 'PT'
+    var toks=(text.match(/[A-Za-z][A-Za-z0-9]{1,}/g)||[]).slice();
+    toks=toks.filter(function(t,i){return toks.indexOf(t)===i;}).sort(function(a,b){return b.length-a.length;});
+    for(var i=0;i<toks.length;i++){ if(geneSet[toks[i].toUpperCase()]) return toks[i].toUpperCase(); }
+    return null;
+  }
+  async function clientRoute(text){
+    var geneSet=await clientGeneSet();
+    var gene=clientExtractGene(text, geneSet);
+    var intent=clientClassifyKeywords(text);
+    var t=(text||"").trim();
+    // truly empty/greeting → help; a gene-view intent with no gene → answer (never a dead end).
+    if(!t || /^(hi|hey|hello|yo|sup)\b/i.test(t)) intent="help";
+    else if(gene===null && intent!=="known_biology" && intent!=="answer") intent="answer";
+    return {gene:gene, intent:intent, known:gene!==null, source:"client"};
+  }
+
+  // ── The composer: route a free-text message, then render the SCOPED reply. ─────────────────
+  // No longer "treat the whole box as a gene symbol". We (1) always show the user's message, (2) ask
+  // /api/route what they meant, (3) dispatch to the matching scoped view. If /api/route is missing
+  // or fails, fall back to the client classifier so routing still works — never a blank/generic
+  // reply just because the endpoint is unavailable.
+  // AGENTIC chat: the message goes to the REAL reasoning agent (POST /api/chat mode:concord). The
+  // agent DECIDES what to do — reconcile a gene, pull evidence, or just answer — and streams back
+  // tool_call / view_update / text events. A view_update renders the matching reconciliation turn
+  // (the agent's tool call IS the UI action); text streams as the agent's narration; a tool_call
+  // shows a live "working" line. This replaces the old fixed /api/route dispatch — the chat reasons.
+  async function handleMessage(text){
+    text=(text||"").trim(); if(!text) return;
+    hideLanding();
+    persistTurn({role:"user", text:text, intent:"agent", gene:null});
+    await runAgent(text);
+  }
+
+  // Drive one agent turn: append a user bubble + an agent bubble, stream the SSE, and let the agent's
+  // tool calls render the reconciliation view. The agent's narration streams into the agent bubble.
+  async function runAgent(text){
+    var frag=$("answerTpl").content.cloneNode(true);
+    var turn=frag.querySelector(".turn");
+    q(turn,"js-user").textContent=text;
+    thread.appendChild(frag);
+    var added=thread.lastElementChild;
+    var el=q(added,"js-answerText");
+    el.classList.add("streaming");
+    el.textContent="Thinking…";
+    scrollToTurn(added);
+
+    var startedText=false, acc="", renderedGene=null;
+    try{
+      var resp=await fetch("api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({message:text, mode:"concord"})});
+      if(!resp.ok||!resp.body){ el.classList.remove("streaming"); el.textContent="The agent is unavailable right now."; return; }
+      var reader=resp.body.getReader(), dec=new TextDecoder(), buf="";
+      while(true){
+        var chunk=await reader.read(); if(chunk.done) break;
+        buf+=dec.decode(chunk.value,{stream:true});
+        var frames=buf.split("\n\n"); buf=frames.pop();
+        for(var i=0;i<frames.length;i++){
+          var line=frames[i].split("\n").find(function(l){return l.indexOf("data:")===0;});
+          if(!line) continue;
+          var ev; try{ ev=JSON.parse(line.slice(5).trim()); }catch(e){ continue; }
+          if(ev.type==="tool_call"){
+            if(ev.tool==="ToolSearch") continue;            // internal SDK discovery — not user-facing
+            // A real tool call fired: drop any "I'll call the tool…" preamble text and show a live
+            // working line. The narration that matters is what the agent writes AFTER the tool result.
+            acc=""; startedText=false;
+            el.textContent="Working — "+prettyTool(ev.tool, ev.input)+"…";
+          }
+          else if(ev.type==="view_update"){
+            var g=applyAgentView(ev.update, text); if(g) renderedGene=g;
+          }
+          else if(ev.type==="text"){
+            if(!startedText){ el.textContent=""; startedText=true; }
+            acc+=ev.text; el.textContent=stripMd(acc);
+          }
+          else if(ev.type==="error"){ if(!startedText){ el.textContent="The agent hit an error: "+(ev.detail||"unknown")+"."; } }
+        }
+      }
+      if(!startedText && !renderedGene){ el.textContent="I didn't get a response — try rephrasing, or name a gene like TSC1."; }
+    }catch(e){
+      el.classList.remove("streaming"); if(!startedText) el.textContent="The agent is unavailable (network error).";
+    }
+    el.classList.remove("streaming");
+    // Keep the agent's narration bubble visible ABOVE the rendered reconciliation turn, then scroll
+    // so the whole exchange (user bubble → agent narration → figure) reads top-to-bottom.
+    scrollToTurn(added);
+    persistTurn({role:"agent", text:acc||"", intent:"agent", gene:renderedGene||null});
+  }
+
+  // Human label for a tool call while it runs.
+  function prettyTool(tool, input){
+    var g=(input&&input.gene)?String(input.gene).toUpperCase():"";
+    if(tool==="reconcile_gene") return "reconciling "+g;
+    if(tool==="gene_evidence") return "pulling evidence for "+g;
+    return "running "+(tool||"analysis");
+  }
+
+  // A tool's view_update renders a view. reconcile → append the full figure+chain+dossier turn via
+  // the existing loadGene renderer; evidence → populate the artifacts rail. Returns the gene shown.
+  function applyAgentView(update, userMsg){
+    if(!update||!update.action) return null;
+    if(update.action==="reconcile" && update.gene){
+      // Append the reconciliation turn (figure+chain+dossier). hideUser=true suppresses its user
+      // bubble — the agent turn above already showed the user's message. Race-free: the flag is set
+      // ON the turn before its bubble renders, inside loadGene (which is async).
+      loadGene(update.gene, null, "", true);
+      return update.gene;
+    }
+    if(update.action==="evidence" && update.gene){
+      renderArtifacts(update.gene);
+      return update.gene;
+    }
+    return null;
+  }
+
+  // Map a routed {gene,intent} to a concrete turn. Every branch shows the user's `text` as the
+  // bubble, so the message ALWAYS appears — the core of the reported bug.
+  async function dispatchIntent(text, routed){
+    var intent=routed.intent, gene=routed.gene;
+    // Gene-independent branches first.
+    if(intent==="answer"){ appendAnswerTurn(text); return; }        // conversational: stream prose
+    if(intent==="known_biology"){ appendTruthTurn(text); return; }  // corpus-wide view
+    if(intent==="help"){ appendHelpTurn(text, routed); return; }
+    // Everything else needs a gene. If we somehow got a gene-view intent without a gene, answer it
+    // conversationally rather than dead-ending on help.
+    if(!gene){ appendAnswerTurn(text); return; }
+    // gene-bearing intents: fetch the gene's data once, then render the scoped view.
+    var d;
+    try{ var rr=await fetch("api/concordance/"+encodeURIComponent(gene)); d=rr.ok?await rr.json():null; }
+    catch(e){ d=null; }
+    if(!d){ appendHelpTurn(text, routed); return; }
+    var bc=d.by_condition||{}, en=d.enrichment||null;
+    if(intent==="reconcile"){ loadGene(gene, null, text); }
+    else if(intent==="plan"){ appendPlanTurn(gene, bc, text); }
+    else { appendFacetTurn(intent, gene, bc, en, text); }   // druggability | genetics | quality
+  }
+
+  function submitGene(){
+    var v=$("geneInput").value.trim(); if(!v) return;
+    $("geneInput").value="";
+    handleMessage(v);
+  }
   $("goBtn").addEventListener("click",submitGene);
   $("geneInput").addEventListener("keydown",function(e){if(e.key==="Enter")submitGene();});
 
+  // Landing example prompts: clicking one sends it exactly as if the user typed it.
+  document.querySelectorAll("#landingPrompts .lprompt").forEach(function(b){
+    b.addEventListener("click",function(){ handleMessage(b.dataset.q); });
+  });
+
+  // New chat: start a fresh empty conversation.
+  $("newChat").addEventListener("click", newSession);
+
   // ---- validation plan builder (verdict-driven; templates keyed on the real verdict) ----
-  // Phase 4 replaces the deterministic prose with cached Claude explanations and fills the
-  // corroboration footer from real genetics/druggability (dossier cards, Phase 3).
-  function renderPlan(){
-    var bc=state.byCondition||{};
+  // Appends a plan turn to the thread from the source gene's own conditions (passed in, so it's
+  // independent of whatever gene currently has focus).
+  function appendPlanTurn(gene, byCondition, customMsg){
+    var bc=byCondition||{};
     var row=bc.Stim48hr||bc.Stim8hr||bc.Rest||null;
     var v=row?row.verdict:"neither";
-    var gene=state.gene;
     var hc=[]; ["Stim8hr","Stim48hr"].forEach(function(k){var c=bc[k]; if(c&&(c.hit_prot||c.hit_rna)) hc.push(k==="Stim8hr"?"Stim 8h":"Stim 48h");});
     var hcTxt=hc.length?hc.join(" and "):"the stimulated conditions";
     var T;
@@ -878,19 +1675,25 @@ ZNF250</div>
         decision:"Recommend dropping "+gene+" from the current shortlist."};
     }
     var vm=VMAP[v]||VMAP.neither;
-    $("planGene").textContent=gene;
-    $("urlPath").textContent="plan/"+gene;
-    $("planRec").className="rec "+T.cls;
-    $("recAction").textContent=T.action;
-    $("planVerdict").className="verdict-badge vb "+vm.cls; $("planVerdictTxt").textContent=vm.txt;
-    $("planConf").textContent="IL2 · Stim 48h"; $("planConf").className="ctag High";
-    $("recWhy").textContent=T.why;
-    $("pPert").textContent=T.pert;
-    $("pCond").textContent=T.cond;
-    $("pRead").innerHTML=T.read;
-    $("pQc").textContent=T.qc;
-    $("pDecision").textContent=T.decision;
-    $("pCorrob").textContent="Genetics + druggability corroboration lands with the dossier cards (Phase 3).";
+    // clone the plan template, fill it, append as a new agent turn.
+    var frag=$("planTpl").content.cloneNode(true);
+    var turn=frag.querySelector(".turn");
+    q(turn,"js-user").textContent=customMsg||("Draft a validation plan for "+gene+".");
+    q(turn,"js-planGene").textContent=gene;
+    var pr=q(turn,"js-planRec"); pr.className="rec "+T.cls+" js-planRec";
+    q(turn,"js-recAction").textContent=T.action;
+    var pv=q(turn,"js-planVerdict"); pv.className="verdict-badge vb "+vm.cls+" js-planVerdict"; q(turn,"js-planVerdictTxt").textContent=vm.txt;
+    var pc=q(turn,"js-planConf"); pc.textContent="IL2 · Stim 48h"; pc.className="ctag High js-planConf";
+    q(turn,"js-recWhy").textContent=T.why;
+    q(turn,"js-pPert").textContent=T.pert;
+    q(turn,"js-pCond").textContent=T.cond;
+    q(turn,"js-pRead").innerHTML=T.read;
+    q(turn,"js-pQc").textContent=T.qc;
+    q(turn,"js-pDecision").textContent=T.decision;
+    thread.appendChild(frag);
+    var added=thread.lastElementChild;
+    wirePlanExports(added, gene);
+    scrollToTurn(added);
   }
 
   // ---- hit-list (batch) reconciliation ----
@@ -981,24 +1784,30 @@ ZNF250</div>
     }catch(e){ box.innerHTML='<span class="echip">Pathway enrichment unavailable.</span>'; }
   }
 
-  // ---- ground-truth (known biology) panel ----
-  var _truthLoaded=false;
-  async function renderTruth(){
-    if(_truthLoaded) return; _truthLoaded=true;
+  // ---- known biology — appended as an in-thread turn (corpus-wide, gene-independent) ----
+  // Clone the template first (so the turn appears immediately with its "—" seed), then fill it once
+  // the fetch resolves. No global latch needed now that each request paints its own fresh turn.
+  async function appendTruthTurn(customMsg){
+    var frag=$("truthTpl").content.cloneNode(true);
+    var turn=frag.querySelector(".turn");
+    if(customMsg) turn.querySelector(".js-user").textContent=customMsg;
+    thread.appendChild(frag);
+    var added=thread.lastElementChild;
+    scrollToTurn(added);
     try{
       var r=await fetch("api/ground_truth");
-      if(!r.ok){ $("gtClaim").textContent="Ground-truth artifact not built."; return; }
+      if(!r.ok){ q(added,"js-gtClaim").textContent="Ground-truth artifact not built."; return; }
       var d=await r.json();
-      $("gtClaim").textContent=d.claim;
+      q(added,"js-gtClaim").textContent=d.claim;
       var s=d.summary;
-      $("gtStats").innerHTML=
+      q(added,"js-gtStats").innerHTML=
         stat(s.n_recovered+"/"+s.n_positive,"regulators recovered")+
         stat(s.n_replicated,"replicated")+
         stat(s.n_protein_only,"protein-only")+
         stat(d.aggregate_spearman,"aggregate ρ (mRNA vs protein)");
-      $("gtPositives").innerHTML=d.positive_regulators.map(gtRow).join("");
-      $("gtBrakes").innerHTML=d.brakes.map(gtRow).join("");
-    }catch(e){ $("gtClaim").textContent="Ground-truth panel unavailable."; }
+      q(added,"js-gtPositives").innerHTML=d.positive_regulators.map(gtRow).join("");
+      q(added,"js-gtBrakes").innerHTML=d.brakes.map(gtRow).join("");
+    }catch(e){ q(added,"js-gtClaim").textContent="Ground-truth panel unavailable."; }
   }
   function stat(n,l){ return '<div class="gt-stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
   function gtRow(x){
@@ -1008,56 +1817,231 @@ ZNF250</div>
            '<span class="vtag '+vt[0]+'">'+vt[1]+'</span></div>';
   }
 
-  // ---- mode toggle (4 modes) ----
-  function setMode(m){
-    var isSingle=m==="single", isBatch=m==="batch", isPlan=m==="plan", isTruth=m==="truth";
-    $("mSingle").setAttribute("aria-selected",String(isSingle));
-    $("mBatch").setAttribute("aria-selected",String(isBatch));
-    $("mPlan").setAttribute("aria-selected",String(isPlan));
-    $("mTruth").setAttribute("aria-selected",String(isTruth));
-    $("singleView").classList.toggle("hidden",!isSingle);
-    $("batchView").classList.toggle("hidden",!isBatch);
-    $("planView").classList.toggle("hidden",!isPlan);
-    $("truthView").classList.toggle("hidden",!isTruth);
-    document.querySelector(".search").style.display=isSingle?"":"none";
-    document.getElementById("chips").style.display=(isBatch||isTruth)?"none":"";
-    if(isPlan){renderPlan();}
-    else if(isBatch){ $("urlPath").textContent="list"; if(!$("batchRows").children.length) renderBatch(); }
-    else if(isTruth){ $("urlPath").textContent="known-biology"; renderTruth(); }
-    else{$("urlPath").textContent="gene/"+state.gene;}
+  // ── SCOPED facet turns — answer ONE question with a lead sentence + one focused card. ────────
+  // Each builder returns {lead, card, foot} HTML from the gene's real enrichment (deterministic;
+  // the LLM only routed us here). No figure, no chain, no dossier — just the facet asked about.
+  function facetContent(intent, gene, en){
+    var e=en||{};
+    if(intent==="druggability"){
+      var dr=e.druggability||null;
+      if(!dr) return {lead:"I don't have Open Targets tractability for <b>"+esc(gene)+"</b>.",
+        card:'<div class="ct">Druggability · Open Targets</div><div class="dnote">Not available for this gene.</div>', foot:""};
+      var sm=drugPill(dr.sm_score, dr.sm_stage), ab=drugPill(dr.ab_score, dr.ab_stage);
+      var clin=dr.sm_stage||dr.ab_stage||"None";
+      var tractable=(dr.sm_score>=0.34)||(dr.ab_score>=0.34)||!!clin&&clin!=="None";
+      var lead=tractable
+        ? "<b>"+esc(gene)+"</b> looks tractable — "+(dr.sm_stage||dr.ab_stage?("it already has clinical precedence ("+esc(clin)+")."):("Open Targets flags it as a discovery-stage target."))
+        : "<b>"+esc(gene)+"</b> has limited tractability in Open Targets — no strong small-molecule or antibody handle.";
+      var card='<div class="ct">Druggability · Open Targets</div>'
+        +'<div class="drow"><span class="mod">SMALL MOLECULE</span><span class="pill '+sm[1]+'">'+esc(sm[0])+'</span></div>'
+        +'<div class="drow"><span class="mod">ANTIBODY</span><span class="pill '+ab[1]+'">'+esc(ab[0])+'</span></div>'
+        +'<div class="drow"><span class="mod">CLINICAL PRECEDENCE</span><span class="pill '+(clin==="None"?"p-none":"p-clin")+'">'+esc(clin)+'</span></div>'
+        +'<div class="dnote">Small-molecule tractability '+(dr.sm_score||0).toFixed(2)+' · antibody '+(dr.ab_score||0).toFixed(2)+' (Open Targets).</div>';
+      return {lead:lead, card:card, foot:"<b>Deterministic.</b> Pulled from the Open Targets tractability record for "+esc(gene)+" — not written by the agent."};
+    }
+    if(intent==="genetics"){
+      var dis=e.disease||null;
+      var linked=dis&&dis.score>0&&dis.top_disease;
+      var lead=linked
+        ? "<b>"+esc(gene)+"</b> has an immune-disease genetic association — strongest with <b>"+esc(dis.top_disease)+"</b>."
+        : "<b>"+esc(gene)+"</b> has no colocalizing immune-disease signal in Open Targets.";
+      var card='<div class="ct">Disease genetics · Open Targets</div>'
+        +'<span class="gtag '+(linked?"yes":"no")+'">'+(linked?"◆ Immune-linked":"○ No immune association")+'</span>'
+        +'<div class="glist"><span class="dis">'+esc(linked?dis.top_disease:"None reported")+'</span></div>'
+        +'<div class="gnote">'+(linked?("Best immune genetic-association score "+dis.score.toFixed(2)+" (Open Targets)."):"No colocalizing immune-disease signal in Open Targets.")+'</div>';
+      return {lead:lead, card:card, foot:"<b>Deterministic.</b> From the Open Targets genetic-association record."};
+    }
+    // quality
+    var ql=e.quality||null;
+    var tier=ql&&ql.confidence?ql.confidence:"—";
+    var reliable=tier==="High";
+    var lead=ql
+      ? "<b>"+esc(gene)+"</b> is a <b>"+esc(tier)+"</b>-confidence hit — "+(reliable?"cross-donor and cross-guide agreement are strong and knockdown is on-target.":"read the QC below before trusting it.")
+      : "I don't have QC metrics for <b>"+esc(gene)+"</b>.";
+    var barPct=tier==="High"?88:tier==="Medium"?52:tier==="Low"?22:0;
+    var barColor=tier==="High"?"var(--lock)":tier==="Medium"?"var(--warn)":"var(--absent)";
+    var card='<div class="ct">Evidence &amp; quality</div>'
+      +'<div class="conf"><span class="tier '+(tier==="—"?"Low":tier)+'">'+esc(tier)+'</span>'
+      +'<span class="meter"><i style="width:'+barPct+'%;background:'+barColor+'"></i></span></div>'
+      +'<div class="ev"><span class="k">Cross-donor agreement</span><span class="v"><span class="sdot '+corrDot(ql?ql.donor_corr:null)+'"></span>'+corrTxt(ql?ql.donor_corr:null)+'</span></div>'
+      +'<div class="ev"><span class="k">Cross-guide agreement</span><span class="v"><span class="sdot '+corrDot(ql?ql.guide_corr:null)+'"></span>'+corrTxt(ql?ql.guide_corr:null)+'</span></div>'
+      +'<div class="ev"><span class="k">On-target knockdown</span><span class="v"><span class="sdot '+(ql&&ql.ontarget_significant?"s-strong":"s-weak ring")+'"></span>'+(ql?(ql.ontarget_significant?"significant":"n.s."):"—")+'</span></div>'
+      +'<div class="ev"><span class="k">Off-target / neighbor</span><span class="v"><span class="sdot '+(ql&&!ql.offtarget_flag?"s-strong":"s-mix")+'"></span>'+(ql?(ql.offtarget_flag?"flagged":"clean"):"—")+'</span></div>';
+    return {lead:lead, card:card, foot:"<b>Deterministic.</b> QC metrics from the Zhu 2025 screen — donor/guide correlations and on-target knockdown."};
   }
-  $("mSingle").addEventListener("click",function(){setMode("single");});
+
+  function appendFacetTurn(intent, gene, byCondition, enrichment, customMsg){
+    var frag=$("facetTpl").content.cloneNode(true);
+    var turn=frag.querySelector(".turn");
+    turn._gene=gene; turn._byCondition=byCondition||{}; turn._enrichment=enrichment||null;
+    q(turn,"js-user").textContent=customMsg||("Tell me about "+gene+" ("+intent+").");
+    var c=facetContent(intent, gene, enrichment);
+    q(turn,"js-facetLead").innerHTML=c.lead;
+    q(turn,"js-facetCard").innerHTML=c.card;
+    q(turn,"js-facetFoot").innerHTML=c.foot;
+    thread.appendChild(frag);
+    var added=thread.lastElementChild;
+    wireFollowups(added);
+    scrollToTurn(added);
+  }
+
+  // Nearest real gene to a typed token, when the input looks like a MISTYPED symbol (e.g. "ITKL"
+  // -> "ITK"). Returns a symbol from the screens or null. Cheap edit-distance ≤ 1 on the raw token
+  // plus prefix/substring hits, so a near-miss redirects instead of dead-ending on generic help.
+  function nearestGene(text, geneSet){
+    var tok=((text||"").match(/[A-Za-z][A-Za-z0-9]{1,}/g)||[]).sort(function(a,b){return b.length-a.length;})[0];
+    if(!tok) return null;
+    tok=tok.toUpperCase();
+    if(geneSet[tok]) return tok;                       // exact (shouldn't reach here, but safe)
+    var best=null;
+    for(var g in geneSet){
+      if(g===tok) return g;
+      // one-char insertion/deletion/substitution, or the typed token contains a real gene
+      if(Math.abs(g.length-tok.length)<=1 && (g.indexOf(tok)===0 || tok.indexOf(g)===0)){ best=g; break; }
+    }
+    return best;
+  }
+
+  // Help / no-match: always show the message. If it looks like a mistyped gene, offer the closest
+  // real one prominently (the common case — "ITKL" means ITK). Otherwise, a short conversational
+  // line + quick-start chips. No capability brochure.
+  async function appendHelpTurn(customMsg, routed){
+    var frag=$("helpTpl").content.cloneNode(true);
+    var turn=frag.querySelector(".turn");
+    q(turn,"js-user").textContent=customMsg||"…";
+    var geneSet=await clientGeneSet();
+    var near=nearestGene(customMsg, geneSet);
+    if(near){
+      q(turn,"js-helpLead").innerHTML=
+        "I don't have <b>"+(customMsg||"").trim().toUpperCase()+"</b> in the screens. Did you mean "
+        +"<b>"+near+"</b>? — it's in the data. Or pick another gene below.";
+    }else{
+      q(turn,"js-helpLead").innerHTML=
+        "I only have the genes that are in the two screens. Pick one to reconcile, or ask me what a "
+        +"verdict means (try “what does discordant mean?”).";
+    }
+    // Lead the chips with the near-miss suggestion when we have one, so it's the obvious next click.
+    var order=near?[near].concat(["ITK","TSC1","VPS37B","LCP2","ZNF250"].filter(function(g){return g!==near;})):["ITK","TSC1","VPS37B","LCP2","ZNF250"];
+    var chips=order.map(function(g){
+      return '<button class="fchip'+(g===near?' fchip-hero':'')+'" data-gene="'+g+'">'+g+'</button>';
+    }).join("")
+      +'<button class="fchip" data-truth="1"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg>Known biology</button>';
+    q(turn,"js-helpActions").innerHTML=chips;
+    thread.appendChild(frag);
+    var added=thread.lastElementChild;
+    added.querySelectorAll("[data-gene]").forEach(function(b){ b.addEventListener("click",function(){ handleMessage("Reconcile "+b.dataset.gene); }); });
+    var tb=added.querySelector("[data-truth]"); if(tb) tb.addEventListener("click",function(){ handleMessage("Does Concord recover known biology?"); });
+    scrollToTurn(added);
+  }
+
+  // Conversational answer: append a turn, then STREAM a grounded prose reply from /api/answer
+  // token-by-token (same SSE contract as the explanation endpoint). On any failure, show the
+  // event's `fallback` sentence — never a blank bubble. This is the "answer, don't run a view" path.
+  async function appendAnswerTurn(text){
+    var frag=$("answerTpl").content.cloneNode(true);
+    var turn=frag.querySelector(".turn");
+    q(turn,"js-user").textContent=text;
+    thread.appendChild(frag);
+    var added=thread.lastElementChild;
+    var el=q(added,"js-answerText");
+    el.classList.add("streaming");
+    scrollToTurn(added);
+    var started=false, acc="";
+    try{
+      var resp=await fetch("api/answer?q="+encodeURIComponent(text));
+      if(!resp.ok||!resp.body){ el.classList.remove("streaming"); el.textContent=clientAnswerFallback(text); return; }
+      var reader=resp.body.getReader(), dec=new TextDecoder(), buf="";
+      while(true){
+        var chunk=await reader.read(); if(chunk.done) break;
+        buf+=dec.decode(chunk.value,{stream:true});
+        var frames=buf.split("\n\n"); buf=frames.pop();
+        for(var i=0;i<frames.length;i++){
+          var line=frames[i].split("\n").find(function(l){return l.indexOf("data:")===0;});
+          if(!line) continue;
+          var ev; try{ ev=JSON.parse(line.slice(5).trim()); }catch(e){ continue; }
+          if(ev.type==="token"){ if(!started){ el.textContent=""; started=true; } acc+=ev.text; el.textContent=stripMd(acc); }
+          else if(ev.type==="error"){ if(!started && ev.fallback){ el.textContent=stripMd(ev.fallback); started=true; } }
+        }
+      }
+      if(!started) el.textContent=clientAnswerFallback(text);   // stream produced nothing
+    }catch(e){
+      if(!started) el.textContent=clientAnswerFallback(text);   // endpoint missing / network error
+    }finally{ el.classList.remove("streaming"); }
+  }
+
+  // Offline answer when /api/answer is unreachable: a short, honest, grounded reply about the tool.
+  // Covers the common definitional questions so the app still answers without an API key.
+  function clientAnswerFallback(text){
+    var low=(text||"").toLowerCase();
+    if(/discordant/.test(low)) return "Discordant means both screens are significant for the gene but DISAGREE on direction — it moves the mRNA one way and the secreted protein the other. That's a real mRNA/protein decoupling, not a clean replication. Ask me to reconcile a gene to see its verdict.";
+    if(/protein.?only/.test(low)) return "Protein-only means the FACS (protein) screen fires but the mRNA screen stays flat — a post-transcriptional regulator a transcriptome-only search would miss.";
+    if(/mrna.?only|mrna only/.test(low)) return "mRNA-only means the Perturb-seq (mRNA) screen calls it a hit but the protein screen doesn't — a lead to confirm at the protein level.";
+    if(/replicat/.test(low)) return "Replicated means both screens are significant AND agree on direction — the strongest kind of hit.";
+    if(/how.*(work|does this)|what (can you|do you)|who are you/.test(low)) return "I reconcile a gene's mRNA vs protein CRISPR screens into a deterministic verdict — replicated, discordant, mRNA-only, protein-only, or neither — and add druggability, disease genetics, and a validation plan. The verdict is computed by code; I narrate and cite, I don't decide. Ask me to reconcile a gene like TSC1.";
+    return "I compare a gene's mRNA and protein screens and give a deterministic verdict (replicated, discordant, mRNA-only, protein-only, or neither), plus druggability, disease genetics, and a validation plan. Ask me to reconcile a gene like TSC1 to see it in action.";
+  }
+
+  // ---- mode toggle (2 modes: the chat thread, and the hit-list tool) ----
+  function setMode(m){
+    var isChat=m==="chat", isBatch=m==="batch";
+    $("mChat").setAttribute("aria-selected",String(isChat));
+    $("mBatch").setAttribute("aria-selected",String(isBatch));
+    $("thread").classList.toggle("hidden",!isChat);
+    $("batchView").classList.toggle("hidden",!isBatch);
+    // the landing only belongs to an empty chat: hide it in the hit-list tool, and only show it
+    // back in chat mode if no turn has been created yet.
+    var l=$("landing"); if(l){ l.classList.toggle("hidden", isBatch || thread.children.length>0); }
+    // the composer is a chat control — hide it in the hit-list tool.
+    document.querySelector(".composer").style.display=isChat?"":"none";
+    if(isBatch){ $("convoTitle").textContent="Hit list"; $("urlPath").textContent="list"; if(!$("batchRows").children.length) renderBatch(); }
+    else{ $("convoTitle").textContent="Chat"; $("urlPath").textContent=state.gene?("gene/"+state.gene):"chat"; }
+  }
+  $("mChat").addEventListener("click",function(){setMode("chat");});
   $("mBatch").addEventListener("click",function(){setMode("batch");});
-  $("mPlan").addEventListener("click",function(){setMode("plan");});
-  $("mTruth").addEventListener("click",function(){setMode("truth");});
   $("batchGo").addEventListener("click",renderBatch);
 
-  document.querySelectorAll(".xbtn").forEach(function(b){
-    b.addEventListener("click",function(){
-      // Export PDF actually prints (the @media print stylesheet renders a clean one-page plan);
-      // Copy protocol puts the plan text on the clipboard. Others flash a confirmation for now.
-      if(/Export PDF/.test(b.textContent)){ window.print(); return; }
-      if(/Copy protocol/.test(b.textContent)){ copyProtocol(); }
-      var o=b.textContent; b.textContent=b.dataset.x; b.disabled=true;
-      setTimeout(function(){b.textContent=o;b.disabled=false;},1400);
-    });
+  // ---- collapsible artifacts rail ----
+  function setArts(open){
+    document.querySelector(".workspace").classList.toggle("arts-collapsed",!open);
+    $("artsToggle").setAttribute("aria-pressed",String(open));
+  }
+  $("artsToggle").addEventListener("click",function(){
+    setArts(document.querySelector(".workspace").classList.contains("arts-collapsed"));
   });
-  function copyProtocol(){
-    var parts=["Concord validation plan · "+$("planGene").textContent,
-      $("recAction").textContent+" ("+$("planVerdictTxt").textContent+")",
-      "Why: "+$("recWhy").textContent,
-      "01 Perturbation & controls: "+$("pPert").textContent,
-      "02 Condition: "+$("pCond").textContent,
-      "03 Readout: "+$("pRead").textContent.replace(/\s+/g," ").trim(),
-      "04 QC & caveats: "+$("pQc").textContent,
-      "Go / no-go: "+$("pDecision").textContent];
+  $("artsClose").addEventListener("click",function(){ setArts(false); });
+
+  // Per-plan-turn export buttons (Export PDF prints; Copy protocol copies THIS turn's plan text).
+  function wirePlanExports(turn, gene){
+    turn.querySelectorAll(".xbtn").forEach(function(b){
+      b.addEventListener("click",function(){
+        if(/Export PDF/.test(b.textContent)){ window.print(); return; }
+        if(/Copy protocol/.test(b.textContent)){ copyProtocol(turn, gene); }
+        var o=b.textContent; b.textContent=b.dataset.x; b.disabled=true;
+        setTimeout(function(){b.textContent=o;b.disabled=false;},1400);
+      });
+    });
+  }
+  function copyProtocol(turn, gene){
+    var parts=["Concord validation plan · "+gene,
+      q(turn,"js-recAction").textContent+" ("+q(turn,"js-planVerdictTxt").textContent+")",
+      "Why: "+q(turn,"js-recWhy").textContent,
+      "01 Perturbation & controls: "+q(turn,"js-pPert").textContent,
+      "02 Condition: "+q(turn,"js-pCond").textContent,
+      "03 Readout: "+q(turn,"js-pRead").textContent.replace(/\s+/g," ").trim(),
+      "04 QC & caveats: "+q(turn,"js-pQc").textContent,
+      "Go / no-go: "+q(turn,"js-pDecision").textContent];
     try{ navigator.clipboard.writeText(parts.join("\n\n")); }catch(e){}
   }
 
-  // deep-link: a ?gene=SYMBOL in the URL opens that gene directly (shareable link).
-  try{ var qg=new URL(window.location).searchParams.get("gene"); if(qg) state.gene=qg.toUpperCase(); }catch(e){}
-  loadGene(state.gene);   // fetch the (deep-linked or default) gene, then render the thread
-  renderIngest();         // Node A's turn — how the screens were read (gene-independent)
+  // ── First load: an EMPTY agentic chat. No pre-loaded example — the user asks, the agent decides
+  // whether to run a workflow or answer conversationally. A ?gene=SYMBOL deep-link still opens that
+  // gene directly (shareable link); only the no-param case shows the greeting landing. ──────────
+  (function init(){
+    loadSessions();   // populate the Recent list from persisted sessions
+    var qg=null; try{ qg=new URL(window.location).searchParams.get("gene"); }catch(e){}
+    if(qg){ hideLanding(); loadGene(qg.toUpperCase()); }
+    else{ showLanding(); $("urlPath").textContent="chat"; renderArtifacts(null); }
+  })();
 })();
 </script>
 </body>

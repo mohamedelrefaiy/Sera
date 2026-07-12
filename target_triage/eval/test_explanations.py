@@ -139,3 +139,21 @@ def test_all_cached_explanations_have_a_record():
     for key, entry in _load().items():
         assert "explanation" in entry and entry["explanation"].strip(), f"{key}: empty explanation"
         assert "grounded_from" in entry, f"{key}: no grounding record attached"
+
+
+@pytest.mark.parametrize("case", list(_load().items()) if os.path.exists(_CACHE) else [],
+                         ids=lambda c: c[0] if isinstance(c, tuple) else str(c))
+def test_explanation_speaks_experimentalist_voice(case):
+    """EXPERIMENTALIST VOICE (Option B, 2026-07-11): the prose is written for a bench biologist,
+    so it must NOT quote a statistic at all — z-scores, log-fold-changes, p/adj-p, q, and FDR
+    belong in the figure beside the text, not in the sentence. This is stricter than "invents no
+    numbers": even a CORRECT z-score in the prose now fails, because a stat readout is the wrong
+    register for this reader. (Bare name digits like LCP2 / CD3 / 48-hour are scrubbed by
+    `_prose_numbers`, so they don't trip this.)"""
+    key, entry = case
+    text = entry["explanation"]
+    stat_numbers = [n for n in _prose_numbers(text)
+                    if abs(n) >= 1e-12 and not (n == int(n) and abs(n) < 50)]
+    assert not stat_numbers, (
+        f"{key}: explanation quotes statistic(s) {sorted(stat_numbers)} in the prose — the "
+        f"experimentalist voice keeps numbers in the figure, not the sentence. Text: {text!r}")
