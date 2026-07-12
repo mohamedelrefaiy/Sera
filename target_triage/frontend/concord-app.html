@@ -241,6 +241,7 @@
   .agent-activity .act.verdict .adot{background:var(--accent)}
   .agent-activity .act .ak{color:var(--ink-soft)}
   @keyframes apulse{0%,100%{opacity:.4}50%{opacity:1}}
+  .agent-facet{margin-top:16px;max-width:540px}
 
   /* prose — the agent writing, streamed. Serif, generous measure, journal-like leading. */
   .prose{font-family:var(--font-serif);font-size:var(--t-body);line-height:1.68;color:var(--ink);
@@ -1590,11 +1591,15 @@ ZNF250</div>
           }
           else if(ev.type==="view_update"){
             act(actEl,"tool",null,"done");
-            var g=await applyAgentView(ev.update, text); if(g) renderedGene=g;
-            // Show that the VERDICT came from code, not the model — the product's core claim. Read
-            // after the awaited render so turn._byCondition is populated.
-            var vd=verdictOf(renderedGene);
-            if(vd) act(actEl,"verdict","verdict computed by code → "+vd,"verdict");
+            var g=await applyAgentView(ev.update, text, el.parentElement); if(g) renderedGene=g;
+            // For a reconcile, show that the VERDICT came from code — the product's core claim. Read
+            // after the awaited render so turn._byCondition is populated. (Evidence has no verdict.)
+            if(ev.update && ev.update.action==="reconcile"){
+              var vd=verdictOf(renderedGene);
+              if(vd) act(actEl,"verdict","verdict computed by code → "+vd,"verdict");
+            } else if(ev.update && ev.update.action==="evidence"){
+              act(actEl,"data","druggability read from Open Targets","done");
+            }
           }
           else if(ev.type==="text"){
             if(!startedText){ el.textContent=""; startedText=true; if(calledTool) act(actEl,"narrate","narrating the result","done"); }
@@ -1625,9 +1630,10 @@ ZNF250</div>
   }
 
   // A tool's view_update renders a view. reconcile → append the full figure+chain+dossier turn via
-  // the existing loadGene renderer; evidence → populate the artifacts rail. Returns a PROMISE of the
-  // gene shown (awaited so the activity trace can read the code-computed verdict once it's loaded).
-  async function applyAgentView(update, userMsg){
+  // the existing loadGene renderer; evidence → render the druggability dossier CARD into the agent
+  // turn (so the data backs the narration, not just prose). `agentBody` is the current turn's
+  // reply-body to inject the card into. Returns a PROMISE of the gene shown.
+  async function applyAgentView(update, userMsg, agentBody){
     if(!update||!update.action) return null;
     if(update.action==="reconcile" && update.gene){
       // hideUser=true suppresses the reconcile turn's user bubble — the agent turn above already
@@ -1636,7 +1642,23 @@ ZNF250</div>
       return update.gene;
     }
     if(update.action==="evidence" && update.gene){
-      renderArtifacts(update.gene);
+      // Fetch the gene's enrichment and render the deterministic druggability card inline, so the
+      // agent's druggability narration is backed by the actual scores (SM + antibody + disease).
+      try{
+        var r=await fetch("api/concordance/"+encodeURIComponent(update.gene));
+        var d=r.ok?await r.json():null;
+        var en=d?d.enrichment:null;
+        if(agentBody && en){
+          var c=facetContent("druggability", update.gene, en);
+          // Reuse the existing facet-card styles: .js-facetCard is the card shell, .card.soft its
+          // surface. Inject the deterministic druggability card below the agent's narration.
+          var card=document.createElement("div");
+          card.className="card soft js-facetCard agent-facet";
+          card.innerHTML=c.card;
+          agentBody.appendChild(card);
+        }
+      }catch(e){ /* narration still stands on its own */ }
+      renderArtifacts(update.gene);   // also refresh the rail for this gene
       return update.gene;
     }
     return null;
