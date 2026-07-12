@@ -228,6 +228,25 @@
   @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .cond-row{display:flex;margin-bottom:14px}
 
+  /* STAGED REVEAL — a reconcile turn's parts BUILD UP in sequence instead of slabbing in at once
+     (the "agent assembling the answer" feel). Pure CSS animation-delay on each component: no JS
+     timers, nothing to race-guard. The `.js-staged` class is added by renderTurn; total < ~1.1s so
+     it never feels padded. Reduced-motion users get it instantly (rule at :532). */
+  .js-staged > .cond-row,
+  .js-staged > .js-proseOpen,
+  .js-staged > figure.fig,
+  .js-staged > .js-chain,
+  .js-staged > .js-proseVerdict,
+  .js-staged > .js-provFoot,
+  .js-staged > .dossier{opacity:0;animation:rise .45s cubic-bezier(.16,1,.3,1) both}
+  .js-staged > .cond-row{animation-delay:.00s}
+  .js-staged > .js-proseOpen{animation-delay:.10s}
+  .js-staged > figure.fig{animation-delay:.28s}     /* the figure — the evidence — lands early */
+  .js-staged > .js-chain{animation-delay:.52s}
+  .js-staged > .js-proseVerdict{animation-delay:.70s}
+  .js-staged > .js-provFoot{animation-delay:.84s}
+  .js-staged > .dossier{animation-delay:.96s}
+
   /* agent activity — the MACHINE voice: what the agent decided and did, inline, before the prose.
      Mono, muted, a hairline left rail so it reads as the work-log behind the narration. */
   .agent-activity{font-family:var(--font-mono);font-size:11.5px;line-height:1.5;color:var(--ink-faint);
@@ -1293,25 +1312,36 @@ ZNF250</div>
     q(turn,"js-user").textContent=turn._userMsg||("Reconcile "+gene+" at "+COND_LABEL[cond]+".");
     if(turn._hideUser){ var _ur=q(turn,"js-user"); var _row=_ur&&_ur.closest(".user-row"); if(_row||_ur)(_row||_ur).style.display="none"; }
 
-    // 1 · opening prose, 2 · figure, 3 · verdict sentence (streamed live, seeded deterministic)
+    // The figure block is the MACHINE-VOICE artifact (the agent narrates it in prose above, in its
+    // own bubble — ONE narration voice). So this turn shows only the deterministic, terse labels that
+    // BELONG to the figure: a one-line lead, the figure itself, the chain-of-custody, the coloured
+    // verdict WORD. The long experimentalist paragraph is exclusively the agent's job — we do NOT run
+    // streamExplanation here (that was the duplicate second narration).
     q(turn,"js-proseOpen").textContent=openingProse2(gene,row);
     drawEffectFig(turn,row);
     q(turn,"js-figCap").innerHTML=figCaption(gene,cond,row);
     var fe=q(turn,"js-figEyebrow"); if(fe) fe.textContent="Figure 1 · "+gene+" knockdown on IL-2 · "+COND_LABEL[cond];
     renderChain(turn,row);
-    // The verdict WORD (coloured, always shown) + the grounded body (seeded, then streamed live).
+    // Just the verdict WORD as a terse machine label (no paragraph) — the coloured word IS the readout.
     var v=row?(VLABEL[row.verdict]||VLABEL.neither):VLABEL.neither;
-    q(turn,"js-verdictLead").innerHTML=row?('So this is <b class="'+v.cls+'">'+v.w+'</b>: '):"";
-    q(turn,"js-explainText").textContent=whyText2(gene,row);
-    streamExplanation(turn,row);   // overwrites .js-explainText live with the grounded Claude paragraph
+    q(turn,"js-verdictLead").innerHTML=row?('Verdict: <b class="'+v.cls+'">'+v.w+'</b>'):"";
+    var _ex=q(turn,"js-explainText"); if(_ex) _ex.textContent="";       // no duplicate paragraph
+    var _is=q(turn,"js-interpSay"); if(_is) _is.textContent="";         // (mechanism now in agent prose)
+    var _sb=q(turn,"js-sourcesBody"); if(_sb) _sb.innerHTML="";
 
-    // provenance footnote — the honest scope note.
-    q(turn,"js-provFoot").innerHTML='<b>Narration only.</b> The paragraph above is written live by Claude '
-      +'from the numbers in the figure — it explains the verdict, it does not decide it. '
-      +'The verdict itself is computed by code from the two screens'
-      +(row&&row.prot_tested===false?', with the protein side untested for this gene':'')+'.';
+    // provenance footnote — the honest scope note (short; the integrity claim).
+    q(turn,"js-provFoot").innerHTML='<b>Verdict computed by code</b> from the two screens'
+      +(row&&row.prot_tested===false?', with the protein side untested for this gene':'')
+      +'. Claude narrates it above — it does not decide it.';
 
     renderDossier(turn);
+
+    // Stage the reveal ONLY on first render (a fresh turn), not on condition-tab re-renders — a tab
+    // switch should update in place, not replay the whole build-up animation.
+    if(!turn._staged){
+      var body=turn.querySelector(".reply-body.agent, .reply-turn.agent .reply-body")||turn.querySelector(".reply-body");
+      if(body){ body.classList.add("js-staged"); turn._staged=true; }
+    }
 
     turn.querySelectorAll(".js-tabs [data-cond]").forEach(function(t){t.setAttribute("aria-selected",t.dataset.cond===cond?"true":"false");});
   }
@@ -1601,6 +1631,18 @@ ZNF250</div>
             if(ev.update && ev.update.action==="reconcile"){
               var vd=verdictOf(renderedGene);
               if(vd) act(actEl,"verdict","verdict computed by code → "+vd,"verdict");
+              // ORDER FIX: the figure turn was just appended BELOW this agent turn. Move the narration
+              // paragraph so it streams AFTER the figure — the words describe an artifact already on
+              // screen ("agent building the answer"), not a slab that lands after the prose. We relocate
+              // `el` into its own follow bubble placed right after the figure turn.
+              var figTurn=thread.lastElementChild;
+              if(figTurn && figTurn!==added){
+                var narrWrap=document.createElement("div");
+                narrWrap.className="turn narr-after";
+                narrWrap.innerHTML='<div class="reply-turn agent"><div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div><div class="reply-body"></div></div>';
+                narrWrap.querySelector(".reply-body").appendChild(el);   // move the streaming <p> here
+                figTurn.after(narrWrap);
+              }
             } else if(ev.update && ev.update.action==="evidence"){
               act(actEl,"data","druggability read from Open Targets","done");
             } else if(ev.update && ev.update.action==="known_biology"){
