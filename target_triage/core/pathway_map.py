@@ -235,10 +235,10 @@ def _build_topology_map(
     }
     label = curated.term
     caption = (
-        f"{gene} in the {label} cascade — signal flows from the receptor at the membrane down to "
-        f"IL-2 transcription in the nucleus. Solid nodes are confident hits in these screens; faded "
-        f"nodes are the surrounding biology (real pathway members, not hits here). Every arrow is a "
-        f"curated, cited interaction (Reactome {curated.reactome_id}), never inferred."
+        f"{gene} in the {label} cascade — signal direction follows the curated arrows from the "
+        f"membrane through cytoplasmic and nuclear effectors. Filled nodes are confident hits in "
+        f"these screens; open nodes are pathway context (real members, not hits here). Every edge is "
+        f"a curated, cited interaction (Reactome {curated.reactome_id}), never inferred."
     )
     return PathwayMap(
         focal_gene=gene, focal_verdict=verdict, focal_colour=colour,

@@ -238,6 +238,8 @@ def test_topology_svg_is_self_contained():
                 "<marker"):
         assert bad not in svg, f"topology SVG not self-contained: {bad!r}"
     assert "ITK" in svg and "TCR Signaling" in svg
+    assert "CURATED · REACTOME R-HSA-202403" in svg
+    assert "measured hit" in svg and "curated context" in svg
 
 
 def test_topology_spec_serialises_with_provenance_visible():
@@ -257,6 +259,21 @@ def test_verdict_still_drives_the_focal_ring_in_the_topology_figure():
     rep = _topo("ITK", "replicated")
     assert disc.focal_colour != rep.focal_colour
     assert disc.focal_colour in disc.svg and rep.focal_colour in rep.svg
+
+
+def test_hit_status_uses_open_vs_filled_nodes_and_is_accessible():
+    m = build_pathway_map(
+        _row("ITK", "discordant"), _tcr_pathways(),
+        node_status={"ITK": "hit", "ZAP70": "context"},
+    )
+    assert 'data-node="ITK" data-status="hit"' in m.svg
+    assert 'ITK; measured hit; focal target' in m.svg
+    assert 'data-node="ZAP70" data-status="context"' in m.svg
+    assert 'ZAP70; curated pathway context' in m.svg
+    # Context nodes stay fully legible: status is encoded by an open fill, not opacity.
+    zap70_group = m.svg.split('data-node="ZAP70"', 1)[1].split('</g>', 1)[0]
+    assert 'fill="#FFFFFF"' in zap70_group
+    assert 'opacity=' not in zap70_group
 
 
 def test_render_is_deterministic():

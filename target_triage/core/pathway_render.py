@@ -11,8 +11,8 @@ Two honesty features are baked into the drawing, not narrated on top of it:
 
 - **The focal gene** (the one the user asked about) gets a verdict-coloured ring, so the figure says
   which node this reconciliation is about and how its two layers landed.
-- **Hit-status shading** (optional, from `node_status`): a curated node that is a confident hit in the
-  screens is drawn solid; a context-only node (real biology, but not a hit here) is drawn faded. This
+- **Hit-status encoding** (optional, from `node_status`): a curated node that is a confident hit in
+  the screens is filled; a context-only node (real biology, but not a hit here) is open. This
   is a second axis of truth the starburst never had — it separates "the cascade" from "what THIS
   screen actually moved", straight from the concordance table.
 
@@ -25,36 +25,37 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from html import escape
 
 from .pathway_layout import Placed, layout
 from .pathway_topology import COMPARTMENTS, CuratedPathway, TopoEdge
 
-# --- palette (muted, professional, light-paper safe) -------------------------------------------
-_PAPER = "#FBFAF7"
-_INK = "#182023"
-_FAINT = "#68777B"
-_BAND_LABEL = "#9AA6AA"
+# --- palette (colour-blind-safe, print-safe, and deliberately restrained) -----------------------
+_PAPER = "#FFFFFF"
+_INK = "#172126"
+_FAINT = "#5E6D73"
+_BAND_LABEL = "#74848B"
 
 # family → (fill, border, label-colour). Cool for enzymes/receptors, warm for adaptors/TF/messengers.
 _FAMILY_STYLE: dict[str, tuple[str, str, str]] = {
-    "receptor":         ("#8FA8BF", "#5B7690", "#FFFFFF"),
-    "kinase":           ("#AEC8E0", "#6F97BD", "#1F2937"),
-    "adaptor":          ("#E3CFA4", "#B79A63", "#3A2F1A"),
-    "phospholipase":    ("#C9BCE0", "#8E79B8", "#241A33"),
-    "gtpase":           ("#B6D3A8", "#7FA76D", "#22331B"),
-    "second_messenger": ("#F0DCAE", "#CDB072", "#4A3D1A"),
-    "tf":               ("#E6B891", "#C68A5C", "#3A2416"),
-    "cytokine":         ("#D9A6C2", "#B56E96", "#331726"),
+    "receptor":         ("#DCEAF4", "#4C789B", "#172B3A"),
+    "kinase":           ("#C8E0F0", "#0072B2", "#173047"),
+    "adaptor":          ("#F3E2BE", "#B77A00", "#3B2B0D"),
+    "phospholipase":    ("#E4D9EF", "#8064A2", "#30223F"),
+    "gtpase":           ("#CEE7DD", "#009E73", "#17372D"),
+    "second_messenger": ("#F7E9B7", "#A88400", "#44370B"),
+    "tf":               ("#F3D1BF", "#D55E00", "#442311"),
+    "cytokine":         ("#E8D3E1", "#B05B8D", "#3E1D32"),
 }
-_FALLBACK_STYLE = ("#DCE3E6", "#9BAAB0", "#1F2937")
+_FALLBACK_STYLE = ("#E7ECEE", "#7F9198", "#1F2937")
 
 # compartment band tints (behind the nodes) — the "you are in the cytoplasm / nucleus" cue.
 _BAND_TINT: dict[str, str] = {
-    "extracellular": "#F4F1EA",
-    "membrane":      "#EFE7D8",
-    "cytoplasm":     "#FBFAF7",
-    "nucleus":       "#EEF1F4",
-    "output":        "#F5F0F3",
+    "extracellular": "#F7F9F9",
+    "membrane":      "#F6F1E8",
+    "cytoplasm":     "#FFFFFF",
+    "nucleus":       "#F1F5F7",
+    "output":        "#FAF6F9",
 }
 
 # edge-type → stroke colour. Direction/shape are drawn by geometry; colour reinforces meaning.
@@ -66,20 +67,21 @@ _EDGE_INK = {
     "transcription": "#8A6D3B",
 }
 
-_MEM_HEAD = "#D9C9B0"
-_MEM_TAIL = "#B9A888"
+_MEM_HEAD = "#E2D4BC"
+_MEM_TAIL = "#B8A17A"
 
-# canvas geometry (700×580). Band tops (extracellular, membrane, cytoplasm, nucleus, output) + a
+# canvas geometry (700×628; intended as a two-column figure). Band tops (extracellular, membrane,
+# cytoplasm, nucleus, output) + a
 # nominal band height for centring the thin bands; cytoplasm nodes spread down their own working area.
 # The cytoplasm gets the lion's share of height because the cascade is a long linear chain.
 _W = 700
-_H = 600
+_H = 628
 _BAND_TOP = (44, 96, 150, 470, 526)
 _BAND_H = 44
 _CYTO_TOP, _CYTO_BOT = 150, 466
 _ROW_GAP = 40                 # min vertical gap between adjacent cytoplasm depth rows
 
-_PILL_W, _PILL_H = 74, 26
+_PILL_W, _PILL_H = 82, 28
 
 
 @dataclass(frozen=True)
@@ -228,25 +230,36 @@ def _edge_svg(e: TopoEdge, pos: dict[str, Placed]) -> str:
 
 
 def _pill_svg(p: Placed, *, focal: bool, focal_colour: str, status: str | None) -> str:
-    """One node pill. `status` ∈ {'hit', 'context', None}: a hit is solid, a context node is faded
+    """One node pill. `status` ∈ {'hit', 'context', None}: a hit is filled, a context node is open
     (real biology, not a hit in these screens). The focal node gets a verdict-coloured ring."""
     fill, border, label_ink = _style(p.node.family)
     label = p.node.label or p.node.id
-    faded = status == "context"
-    opacity = "0.3" if faded else "1"
+    # Never encode context by fading the whole node: 30% text disappears at journal print size.
+    # Filled versus open is readable in greyscale; colour remains a redundant family cue.
+    context = status == "context"
+    visible_fill = "#FFFFFF" if context else fill
+    border_width = 1.45 if context else 1.25
     x, y = p.x - _PILL_W / 2, p.y - _PILL_H / 2
+    status_label = {
+        "hit": "measured hit",
+        "context": "curated pathway context",
+    }.get(status, "pathway node")
+    focal_label = "; focal target" if focal else ""
     parts = [
+        f'<g role="group" data-node="{escape(p.node.id)}" data-status="{escape(status or "unknown")}" '
+        f'aria-label="{escape(label)}; {status_label}{focal_label}">',
         f'<rect x="{x:.1f}" y="{y:.1f}" width="{_PILL_W}" height="{_PILL_H}" rx="13" '
-        f'fill="{fill}" stroke="{border}" stroke-width="1.3" opacity="{opacity}"/>',
+        f'fill="{visible_fill}" stroke="{border}" stroke-width="{border_width}"/>',
     ]
     if focal:
         parts.append(
             f'<rect x="{x - 4:.1f}" y="{y - 4:.1f}" width="{_PILL_W + 8}" height="{_PILL_H + 8}" '
             f'rx="16" fill="none" stroke="{focal_colour}" stroke-width="2.6"/>')
-    fs = 11 if len(label) <= 9 else 9.5
+    fs = 10.8 if len(label) <= 9 else 9.2
     parts.append(
         f'<text x="{p.x:.1f}" y="{p.y + 3.5:.1f}" text-anchor="middle" font-size="{fs}" '
-        f'fill="{label_ink}" font-weight="600" opacity="{opacity}">{label}</text>')
+        f'fill="{label_ink}" font-weight="600">{escape(label)}</text>')
+    parts.append('</g>')
     return "".join(parts)
 
 
@@ -288,9 +301,9 @@ def _bands_svg() -> str:
     for name, y0, y1 in strips:
         parts.append(f'<rect x="0" y="{y0}" width="{_W}" height="{y1 - y0}" '
                      f'fill="{_BAND_TINT[name]}"/>')
-        parts.append(f'<text x="{_W - 12}" y="{y0 + 15}" text-anchor="end" font-size="9.5" '
-                     f'fill="{_BAND_LABEL}" font-family="monospace" '
-                     f'letter-spacing="0.5">{name.upper()}</text>')
+        parts.append(f'<text x="{_W - 14}" y="{y0 + 15}" text-anchor="end" font-size="9" '
+                     f'fill="{_BAND_LABEL}" font-weight="700" '
+                     f'letter-spacing="1.1">{name.upper()}</text>')
     parts.append(f'<rect x="8" y="{_BAND_TOP[3] + 2}" width="{_W - 16}" '
                  f'height="{_BAND_TOP[4] - _BAND_TOP[3] - 4}" rx="14" fill="none" '
                  f'stroke="#C7CFD8" stroke-width="1.2"/>')
@@ -298,22 +311,21 @@ def _bands_svg() -> str:
 
 
 def _legend_svg() -> str:
-    """A small key: edge glossary so the arrow grammar is self-explanatory. Quiet — thin border,
-    monospace. A compact horizontal strip pinned to the bottom of the OUTPUT band, full clear of the
-    cascade above it."""
-    w = 366
-    x, y = (_W - w) / 2, _H - 26
+    """Edge grammar plus the measurement-status encoding, legible without relying on colour."""
+    w = 650
+    x, y = (_W - w) / 2, _H - 48
     rows = [
         ("activation", _EDGE_INK["activation"], "arrow"),
         ("inhibition", _EDGE_INK["inhibition"], "bar"),
-        ("2nd-messenger", _EDGE_INK["production"], "open"),
+        ("production", _EDGE_INK["production"], "open"),
         ("translocation", _EDGE_INK["translocation"], "dash"),
+        ("transcription", _EDGE_INK["transcription"], "arrow"),
     ]
-    parts = [f'<rect x="{x:.0f}" y="{y}" width="{w}" height="18" rx="5" fill="#FFFFFF" '
+    parts = [f'<rect x="{x:.0f}" y="{y}" width="{w}" height="38" rx="4" fill="#FFFFFF" '
              f'fill-opacity="0.9" stroke="#C7CFD8" stroke-width="1"/>']
     for i, (name, ink, kind) in enumerate(rows):
-        ry = y + 10
-        rx = x + 10 + i * 92
+        ry = y + 11
+        rx = x + 12 + i * 126
         dash = ' stroke-dasharray="4 2"' if kind == "dash" else ""
         parts.append(f'<line x1="{rx}" y1="{ry}" x2="{rx + 16}" y2="{ry}" stroke="{ink}" '
                      f'stroke-width="1.6"{dash}/>')
@@ -325,8 +337,17 @@ def _legend_svg() -> str:
                          f'stroke-width="1.3"/>')
         else:
             parts.append(f'<path d="M{rx + 16} {ry} l-4 -2.5 v5 z" fill="{ink}"/>')
-        parts.append(f'<text x="{rx + 21}" y="{ry + 3}" font-size="8.5" fill="{_FAINT}" '
-                     f'font-family="monospace">{name}</text>')
+        parts.append(f'<text x="{rx + 21}" y="{ry + 3}" font-size="8.4" fill="{_FAINT}">{name}</text>')
+    sy = y + 28
+    parts.append(f'<rect x="{x + 12:.0f}" y="{sy - 7}" width="18" height="10" rx="5" '
+                 f'fill="#C8E0F0" stroke="#0072B2" stroke-width="1.1"/>')
+    parts.append(f'<text x="{x + 36:.0f}" y="{sy + 1}" font-size="8.4" fill="{_FAINT}">measured hit</text>')
+    parts.append(f'<rect x="{x + 135:.0f}" y="{sy - 7}" width="18" height="10" rx="5" '
+                 f'fill="#FFFFFF" stroke="#0072B2" stroke-width="1.2"/>')
+    parts.append(f'<text x="{x + 159:.0f}" y="{sy + 1}" font-size="8.4" fill="{_FAINT}">curated context</text>')
+    parts.append(f'<rect x="{x + 283:.0f}" y="{sy - 9}" width="24" height="14" rx="7" '
+                 f'fill="none" stroke="#7C898D" stroke-width="2"/>')
+    parts.append(f'<text x="{x + 313:.0f}" y="{sy + 1}" font-size="8.4" fill="{_FAINT}">focal target (ring = verdict)</text>')
     return "".join(parts)
 
 
@@ -339,27 +360,31 @@ def render_topology(
     node_status: dict[str, str] | None = None,
 ) -> RenderResult:
     """Draw the whole CST-style figure. `node_status` maps a gene id → 'hit' | 'context' (a hit is
-    solid, context is faded); absent genes render solid. Returns the SVG and the flat node/edge lists
+    filled, context is open); absent genes render filled. Returns the SVG and the flat node/edge lists
     the honesty test pins."""
     status = {k.upper(): v for k, v in (node_status or {}).items()}
     focal = focal_gene.strip().upper()
     pos = _positions(pw)
 
-    font = "'Inter','Helvetica Neue',Arial,sans-serif"
+    font = "Arial,Helvetica,sans-serif"
     parts: list[str] = [
         f'<svg viewBox="0 0 {_W} {_H}" xmlns="http://www.w3.org/2000/svg" font-family="{font}" '
-        f'role="img" aria-label="Signalling-pathway map: {pw.term} around {focal}">',
-        f'<rect x="0" y="0" width="{_W}" height="{_H}" rx="12" fill="{_PAPER}"/>',
+        f'role="img" aria-label="Signalling-pathway map: {escape(pw.term)} around {escape(focal)}">',
+        f'<rect x="0" y="0" width="{_W}" height="{_H}" fill="{_PAPER}"/>',
     ]
     parts.append(_bands_svg())
     membrane_xs = tuple(p.x for p in pos.values() if COMPARTMENTS[p.band] == "membrane")
     parts.append(_membrane_svg(membrane_xs))
 
-    parts.append(f'<text x="16" y="26" font-size="15" fill="{_INK}" font-weight="700">'
-                 f'{focal} in {pw.term}</text>')
-    parts.append(f'<text x="16" y="41" font-size="10.5" fill="{_FAINT}">'
-                 f'signal flows down: membrane to cytoplasm to nucleus to output '
-                 f'· focal node ringed ({verdict_word})</text>')
+    parts.append(f'<text x="16" y="25" font-size="16.5" fill="{_INK}" font-weight="700">'
+                 f'{escape(focal)} in {escape(pw.term)}</text>')
+    parts.append(f'<text x="16" y="41" font-size="10.2" fill="{_FAINT}">'
+                 f'direction follows arrows · focal target ringed ({escape(verdict_word)})</text>')
+    parts.append(f'<text x="{_W - 16}" y="25" text-anchor="end" font-size="9.2" '
+                 f'fill="{_FAINT}" font-weight="700" letter-spacing="0.4">'
+                 f'CURATED · REACTOME {escape(pw.reactome_id)}</text>')
+    parts.append(f'<line x1="16" y1="48" x2="{_W - 16}" y2="48" stroke="#D8E0E3" '
+                 f'stroke-width="0.8"/>')
 
     drawn_edges: list[tuple[str, str, str]] = []
     for e in pw.edges:
