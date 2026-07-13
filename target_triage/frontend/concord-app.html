@@ -69,11 +69,36 @@
   .workspace.arts-collapsed{grid-template-columns:232px minmax(0,1fr)}
   @media(max-width:1100px){.workspace.arts-collapsed{grid-template-columns:64px minmax(0,1fr)}}
   .workspace.arts-collapsed .arts{display:none}
+  /* Nav collapsed: narrow the first column to an icon rail; hide labels/sections, keep the icons.
+     Mirrors the <=1100px responsive collapse so the two paths render identically. When BOTH the nav
+     and the arts rail are collapsed, only the icon rail + the thread remain. */
+  .workspace.nav-collapsed{grid-template-columns:56px minmax(0,1fr) 400px}
+  .workspace.nav-collapsed.arts-collapsed{grid-template-columns:56px minmax(0,1fr)}
+  @media(max-width:1100px){.workspace.nav-collapsed,.workspace.nav-collapsed.arts-collapsed{grid-template-columns:56px minmax(0,1fr)}}
+  .workspace.nav-collapsed .nav .lbl,
+  .workspace.nav-collapsed .nav-sec,
+  .workspace.nav-collapsed .nav-top .txt,
+  .workspace.nav-collapsed .sessions,
+  .workspace.nav-collapsed .sessions-empty{display:none}
+  .workspace.nav-collapsed .nav{padding:14px 8px;align-items:center}
+  .workspace.nav-collapsed .nav-item{justify-content:center;padding:8px}
+  /* Collapsed: the toggle stands alone as the expand affordance; hide the wordmark's dot pair so the
+     rail reads as a clean icon column. */
+  .workspace.nav-collapsed .nav-top{justify-content:center;padding:5px 0 12px}
+  .workspace.nav-collapsed .nav-top .merge{display:none}
+  .workspace.nav-collapsed .nav-collapse{margin-left:0}
+  .workspace.nav-collapsed .nav-collapse svg{transform:rotate(180deg)}
 
   /* left nav */
   .nav{background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:14px 12px;gap:3px;min-width:0}
   .nav-top{display:flex;align-items:center;gap:9px;padding:5px 8px 12px;font-family:var(--font-display);font-weight:500;font-size:14px}
   .nav-top .merge{display:inline-flex}
+  /* Collapse toggle: a quiet chevron pinned to the right of the logo row; becomes centered + flipped
+     when collapsed (rule above). Reuses .nav-item hover affordances. */
+  .nav-collapse{margin-left:auto;flex:none;width:26px;height:26px;padding:0;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--ink-faint);border-radius:6px;cursor:pointer;transition:.12s}
+  .nav-collapse:hover{background:var(--surface-2);color:var(--ink)}
+  .nav-collapse svg{width:15px;height:15px;stroke:currentColor;transition:transform .18s ease}
+  @media(max-width:1100px){.nav-collapse{display:none}}
   .nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:13.5px;color:var(--ink-soft);cursor:pointer;border:none;background:transparent;text-align:left;width:100%;transition:.12s}
   .nav-item:hover{background:var(--surface-2);color:var(--ink)}
   .nav-item.on{background:var(--surface-2);color:var(--ink)}
@@ -916,7 +941,7 @@
   <!-- LEFT NAV — one primary surface (Chat) + a secondary Hit-list tool. Validation plan and
        Known biology are no longer destinations; they're produced inside the thread on request. -->
   <nav class="nav" aria-label="Workspace">
-    <div class="nav-top"><span class="merge"><i class="g"></i><i class="m"></i></span><span class="txt">Concord <small style="color:var(--ink-faint);font-family:var(--font-mono);font-size:10px">mRNA × protein</small></span></div>
+    <div class="nav-top"><span class="merge"><i class="g"></i><i class="m"></i></span><span class="txt">Concord <small style="color:var(--ink-faint);font-family:var(--font-mono);font-size:10px">mRNA × protein</small></span><button class="nav-collapse" id="navCollapse" aria-label="Collapse sidebar" title="Collapse sidebar" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button></div>
     <button class="nav-item newchat" id="newChat" aria-label="New chat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">New chat</span></button>
     <div class="modes" role="tablist" style="display:contents">
       <button class="nav-item mode on" id="mChat" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="lbl">Chat</span></button>
@@ -3038,6 +3063,18 @@ ZNF250</div>
     setArts(document.querySelector(".workspace").classList.contains("arts-collapsed"));
   });
   $("artsClose").addEventListener("click",function(){ setArts(false); });
+
+  // ---- collapsible left nav (mirrors the artifacts rail) ----
+  function setNav(collapsed){
+    document.querySelector(".workspace").classList.toggle("nav-collapsed",collapsed);
+    var b=$("navCollapse");
+    b.setAttribute("aria-pressed",String(collapsed));
+    b.setAttribute("aria-label",collapsed?"Expand sidebar":"Collapse sidebar");
+    b.setAttribute("title",collapsed?"Expand sidebar":"Collapse sidebar");
+  }
+  $("navCollapse").addEventListener("click",function(){
+    setNav(!document.querySelector(".workspace").classList.contains("nav-collapsed"));
+  });
 
   // Per-plan-turn export buttons (Export PDF prints; Copy protocol copies THIS turn's plan text).
   function wirePlanExports(turn, gene){
