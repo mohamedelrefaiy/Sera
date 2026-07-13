@@ -66,8 +66,19 @@ python pipeline/05_ground_truth.py
 ```
 How Concord recovers canonical IL-2 regulators + the aggregate Spearman → `ground_truth.json`.
 
-**Full rebuild:** `00 → 01 → 02 → 03 → 04 → 05`. Steps 02–05 need only the parquet from 01, so a
-keyless offline build (skipping 04) still produces a fully working app.
+### 07 — warm the protein mini-report caches (structure needs network; literature needs credentials)
+```bash
+python pipeline/07_warm_protein_reports.py                  # all three caches, demo gene set
+python pipeline/07_warm_protein_reports.py --no-literature  # identity + structure only (keyless)
+```
+Precomputes the `protein_report` card's three retrievals for the demo genes so a demo turn is
+instant: identity + best structure → `clients/protein_cache.json`, the 3D coordinate files →
+`data/artifacts/structure_cache/`, and the cited literature panel → `literature_cache.json`.
+Prints a per-gene READY/PARTIAL summary. Warms identity + structure without credentials (network
+only); the literature step no-ops cleanly without them (the card falls back to a live call).
+
+**Full rebuild:** `00 → 01 → 02 → 03 → 04 → 05 → 07`. Steps 02–07 need only the parquet from 01, so
+a keyless offline build (skipping 04 and the literature half of 07) still produces a working app.
 
 ## Notes / verified facts (2026-07-09)
 

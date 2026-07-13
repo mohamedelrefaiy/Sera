@@ -1,0 +1,155 @@
+{
+"ITK": {
+"gene": "ITK",
+"accession": "Q08881",
+"protein_name": "Tyrosine-protein kinase ITK/TSK",
+"length": 620,
+"resolved": true,
+"structure": {
+"source": "experimental",
+"identifier": "9NWX",
+"method": "X-RAY DIFFRACTION",
+"resolution": 1.35,
+"title": "Discovery of a Small Molecule ITK and Pan-TRK Kinase Inhibitor (PF-07245303) for the Potential Topical Treatment of Atopic Dermatitis",
+"viewer_url": "https://files.rcsb.org/download/9NWX.cif",
+"page_url": "https://www.rcsb.org/structure/9NWX",
+"coord_format": "mmcif"
+}
+},
+"BCL10": {
+"gene": "BCL10",
+"accession": "O95999",
+"protein_name": "B-cell lymphoma/leukemia 10",
+"length": 233,
+"resolved": true,
+"structure": {
+"source": "experimental",
+"identifier": "6BZE",
+"method": "ELECTRON MICROSCOPY",
+"resolution": 4.0,
+"title": "Cryo-EM structure of BCL10 CARD filament",
+"viewer_url": "https://files.rcsb.org/download/6BZE.pdb",
+"page_url": "https://www.rcsb.org/structure/6BZE",
+"coord_format": "pdb"
+}
+},
+"VAV1": {
+"gene": "VAV1",
+"accession": "P15498",
+"protein_name": "Proto-oncogene vav",
+"length": 845,
+"resolved": true,
+"structure": {
+"source": "experimental",
+"identifier": "6NEW",
+"method": "X-RAY DIFFRACTION",
+"resolution": 2.5,
+"title": "Apo structure of the activated truncation of Vav1",
+"viewer_url": "https://files.rcsb.org/download/6NEW.pdb",
+"page_url": "https://www.rcsb.org/structure/6NEW",
+"coord_format": "pdb"
+}
+},
+"TSC1": {
+"gene": "TSC1",
+"accession": "Q92574",
+"protein_name": "Hamartin",
+"length": 1164,
+"resolved": true,
+"structure": {
+"source": "experimental",
+"identifier": "4Z6Y",
+"method": "X-RAY DIFFRACTION",
+"resolution": 2.81,
+"title": "Structure of the TBC1D7-TSC1 complex",
+"viewer_url": "https://files.rcsb.org/download/4Z6Y.pdb",
+"page_url": "https://www.rcsb.org/structure/4Z6Y",
+"coord_format": "pdb"
+}
+},
+"LCP2": {
+"gene": "LCP2",
+"accession": "Q13094",
+"protein_name": "Lymphocyte cytosolic protein 2",
+"length": 533,
+"resolved": true,
+"structure": {
+"source": "experimental",
+"identifier": "6ZCJ",
+"method": "X-RAY DIFFRACTION",
+"resolution": 1.53,
+"title": "14-3-3sigma in complex with SLP76pS376 phosphopeptide crystal structure",
+"viewer_url": "https://files.rcsb.org/download/6ZCJ.pdb",
+"page_url": "https://www.rcsb.org/structure/6ZCJ",
+"coord_format": "pdb"
+}
+},
+"VPS37B": {
+"gene": "VPS37B",
+"accession": "Q9H9H4",
+"protein_name": "Vacuolar protein sorting-associated protein 37B",
+"length": 285,
+"resolved": true,
+"structure": {
+"source": "experimental",
+"identifier": "6VME",
+"method": "X-RAY DIFFRACTION",
+"resolution": 2.19,
+"title": "Human ESCRT-I heterotetramer headpiece",
+"viewer_url": "https://files.rcsb.org/download/6VME.pdb",
+"page_url": "https://www.rcsb.org/structure/6VME",
+"coord_format": "pdb"
+}
+},
+"ZNF250": {
+"gene": "ZNF250",
+"accession": "P15622",
+"protein_name": "Zinc finger protein 250",
+"length": 560,
+"resolved": true,
+"structure": {
+"source": "alphafold",
+"identifier": "P15622",
+"method": "AlphaFold",
+"resolution": null,
+"title": "AlphaFold predicted model (P15622)",
+"viewer_url": "https://alphafold.ebi.ac.uk/files/AF-P15622-F1-model_v6.pdb",
+"page_url": "https://alphafold.ebi.ac.uk/entry/P15622",
+"coord_format": "pdb"
+}
+},
+"IL2RA": {
+"gene": "IL2RA",
+"accession": "P01589",
+"protein_name": "Interleukin-2 receptor subunit alpha",
+"length": 272,
+"resolved": true,
+"structure": {
+"source": "experimental",
+"identifier": "6YIO",
+"method": "X-RAY DIFFRACTION",
+"resolution": 1.83,
+"title": "CRYSTAL STRUCTURE OF FAB RG6292 IN COMPLEX WITH CD25 ECD",
+"viewer_url": "https://files.rcsb.org/download/6YIO.pdb",
+"page_url": "https://www.rcsb.org/structure/6YIO",
+"coord_format": "pdb"
+}
+},
+"NFKB2": {
+"gene": "NFKB2",
+"accession": "Q00653",
+"protein_name": "Nuclear factor NF-kappa-B p100 subunit",
+"length": 900,
+"resolved": true,
+"structure": {
+"source": "experimental",
+"identifier": "1A3Q",
+"method": "X-RAY DIFFRACTION",
+"resolution": 2.1,
+"title": "HUMAN NF-KAPPA-B P52 BOUND TO DNA",
+"viewer_url": "https://files.rcsb.org/download/1A3Q.pdb",
+"page_url": "https://www.rcsb.org/structure/1A3Q",
+"coord_format": "pdb"
+}
+}
+}

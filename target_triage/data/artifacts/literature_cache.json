@@ -1,0 +1,356 @@
+{
+ "ITK": {
+  "gene": "ITK",
+  "resolved": true,
+  "findings": [
+   {
+    "statement": "ITK is a Tec family kinase that regulates T-cell receptor signaling and T cell responses.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "22449075",
+     "status": "retrieved",
+     "title": "Regulation of T-cell responses and disease by tec kinase Itk.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/22449075/"
+    }
+   },
+   {
+    "statement": "ITK deficiency impairs interferon-gamma immunity and causes increased susceptibility to tuberculosis.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "36326697",
+     "status": "retrieved",
+     "title": "Inherited human ITK deficiency impairs IFN-\u03b3 immunity and underlies tuberculosis.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/36326697/"
+    }
+   },
+   {
+    "statement": "ITK inhibition treats autoimmune arthritis by altering T cell differentiation and function.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "37992572",
+     "status": "retrieved",
+     "title": "Targeting kinase ITK treats autoimmune arthritis via orchestrating T cell differentiation and function.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/37992572/"
+    }
+   },
+   {
+    "statement": "Inhibition of ITK enhances chimeric antigen receptor T cell persistence and anti-tumor efficacy.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "39589809",
+     "status": "retrieved",
+     "title": "IL-2-inducible T cell kinase deficiency sustains chimeric antigen receptor T cell therapy against tumor cells.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/39589809/"
+    }
+   }
+  ]
+ },
+ "BCL10": {
+  "gene": "BCL10",
+  "resolved": true,
+  "findings": [
+   {
+    "statement": "BCL10 is a component of the CBM complex that forms part of the molecular machinery linking immune receptor signaling to NF-\u03baB activation downstream of CARD11.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "26287604",
+     "status": "retrieved",
+     "title": "Immunodeficiency and CARD-BCL10-MALT1.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/26287604/"
+    }
+   },
+   {
+    "statement": "BCL10 functions in regulatory T cell development and homeostasis as part of the CARD11-containing signaling pathway.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "35255409",
+     "status": "retrieved",
+     "title": "CARD11 signaling in regulatory T cell development and function.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/35255409/"
+    }
+   },
+   {
+    "statement": "BCL10 regulates neutrophil NETosis (neutrophil extracellular trap formation) and its inhibition can reduce sepsis-induced multiorgan damage.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "40779122",
+     "status": "retrieved",
+     "title": "Emodin Alleviates Sepsis-Induced Multiorgan Damage by Inhibiting NETosis through Targeting Neutrophils BCL-10.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/40779122/"
+    }
+   }
+  ]
+ },
+ "TSC1": {
+  "gene": "TSC1",
+  "resolved": true,
+  "findings": [
+   {
+    "statement": "TSC1 and TSC2 form a complex that negatively regulates mTOR signaling, a pathway implicated in cell growth and aging.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "40620657",
+     "status": "retrieved",
+     "title": "Rapamycin for longevity: the pros, the cons, and future perspectives.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/40620657/"
+    }
+   },
+   {
+    "statement": "Pathogenic variants in TSC1 cause tuberous sclerosis complex, an autosomal dominant disorder characterized by benign tumor growth in multiple organ systems.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "29478616",
+     "status": "retrieved",
+     "title": "Tuberous sclerosis complex.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/29478616/"
+    }
+   },
+   {
+    "statement": "TSC1 mutations lead to lymphangioleiomyomatosis, a progressive cystic lung disease affecting primarily women of reproductive age.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "36571446",
+     "status": "retrieved",
+     "title": "Lymphangioleiomyomatosis: a metastatic lung disease.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/36571446/"
+    }
+   },
+   {
+    "statement": "Loss of TSC1 in macrophages impairs the AKT/MST1/NRF2 signaling axis, amplifying sterile inflammatory liver injury.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "38360839",
+     "status": "retrieved",
+     "title": "Loss of macrophage TSC1 exacerbates sterile inflammatory liver injury through inhibiting the AKT/MST1/NRF2 signaling pathway.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/38360839/"
+    }
+   }
+  ]
+ },
+ "LCP2": {
+  "gene": "LCP2",
+  "resolved": true,
+  "findings": [
+   {
+    "statement": "LCP2 is a lymphocyte cytosolic protein required for normal T cell signaling and function.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "35780036",
+     "status": "retrieved",
+     "title": "Modulating T-cell activation with antisense oligonucleotides targeting lymphocyte cytosolic protein 2.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/35780036/"
+    }
+   },
+   {
+    "statement": "Biallelic LCP2 variants cause combined immunodeficiency with impaired PI3K signaling.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "37211057",
+     "status": "retrieved",
+     "title": "Combined immunodeficiency and impaired PI3K signaling in a patient with biallelic LCP2 variants.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/37211057/"
+    }
+   },
+   {
+    "statement": "LCP2 inhibition in T cells reduces apoptosis and oxidative stress through modulation of the PD-1/PD-L1 pathway.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "40700829",
+     "status": "retrieved",
+     "title": "Inhibition of LCP2 in T cells alleviated apoptosis and oxidative stress via PD-1/PD-L1 in diabetic retinopathy.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/40700829/"
+    }
+   },
+   {
+    "statement": "LCP2 expression correlates with infiltration of CD8+ T cells in metastatic melanoma and serves as a prognostic biomarker.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "33911146",
+     "status": "retrieved",
+     "title": "A novel prognostic biomarker LCP2 correlates with metastatic melanoma-infiltrating CD8(+) T cells.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/33911146/"
+    }
+   }
+  ]
+ },
+ "VPS37B": {
+  "gene": "VPS37B",
+  "resolved": true,
+  "findings": [
+   {
+    "statement": "VPS37 protein depletion destabilizes ESCRT-I complexes and triggers cellular stress responses.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "33419951",
+     "status": "retrieved",
+     "title": "Concurrent depletion of Vps37 proteins evokes ESCRT-I destabilization and profound cellular stress responses.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/33419951/"
+    }
+   }
+  ]
+ },
+ "ZNF250": {
+  "gene": "ZNF250",
+  "resolved": true,
+  "findings": [
+   {
+    "statement": "ZNF250 is transcriptionally activated by cancer-associated fibroblast-derived exosomes and promotes hepatocellular carcinoma cell proliferation, migration, and invasion through PD-L1 activation.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "39252517",
+     "status": "retrieved",
+     "title": "Cancer-associated fibroblasts-derived exosomal ZNF250 promotes the proliferation, migration, invasion, and immune escape of hepatocellular carcinoma cells by transcriptionally activating PD-L1.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/39252517/"
+    }
+   },
+   {
+    "statement": "ZNF250 is regulated by the miR-1245a/lncRNA AC116914.2 axis and promotes oral cancer progression.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "41354813",
+     "status": "retrieved",
+     "title": "LncRNA AC116914.2 promotes the progression of oral cancer by targeting METTL3 via miR-1245a/ZNF250.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/41354813/"
+    }
+   },
+   {
+    "statement": "ZNF250 is a key transcription factor identified in the genomic landscapes of human sarcomas.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "21192842",
+     "status": "retrieved",
+     "title": "A systems biological approach to identify key transcription factors and their genomic neighborhoods in human sarcomas.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/21192842/"
+    }
+   }
+  ]
+ },
+ "VAV1": {
+  "gene": "VAV1",
+  "resolved": true,
+  "findings": [
+   {
+    "statement": "VAV1 is a guanine nucleotide exchange factor that regulates T cell receptor signaling and T cell function.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "38093011",
+     "status": "retrieved",
+     "title": "Base-editing mutagenesis maps alleles to tune human T cell functions.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/38093011/"
+    }
+   },
+   {
+    "statement": "VAV1 is implicated in the pathogenesis of autoimmune and chronic inflammatory diseases, making it a candidate for therapeutic intervention.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "39060140",
+     "status": "retrieved",
+     "title": "VAV1 as a putative therapeutic target in autoimmune and chronic inflammatory diseases.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/39060140/"
+    }
+   },
+   {
+    "statement": "VAV1 activates ERK signaling downstream of HSPA8 ubiquitination to suppress triple-negative breast cancer proliferation.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "39813169",
+     "status": "retrieved",
+     "title": "Pristimerin Promotes Ubiquitination of HSPA8 and Activates the VAV1/ERK Pathway to Suppress TNBC Proliferation.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/39813169/"
+    }
+   },
+   {
+    "statement": "VAV1 expression is elevated in angioimmunoblastic T-cell lymphoma, identifying it as a potential therapeutic vulnerability.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "40510016",
+     "status": "retrieved",
+     "title": "Integrative Genomic and Transcriptomic Analysis Reveals Targetable Vulnerabilities in Angioimmunoblastic T-Cell Lymphoma.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/40510016/"
+    }
+   }
+  ]
+ },
+ "IL2RA": {
+  "gene": "IL2RA",
+  "resolved": true,
+  "findings": [
+   {
+    "statement": "IL-2R\u03b1 is a therapeutic target for enhancing T cell-mediated anti-tumor immunity when engaged by receptor-masked IL-2 immunocytokines.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "39326410",
+     "status": "retrieved",
+     "title": "A PD-1-targeted, receptor-masked IL-2 immunocytokine that engages IL-2R\u03b1 strengthens T cell-mediated anti-tumor therapies.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/39326410/"
+    }
+   },
+   {
+    "statement": "IL2RA function is central to regulatory T cell (Treg) development and maintenance, with genetic variations in IL2RA associated with autoimmune diseases.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "32367041",
+     "status": "retrieved",
+     "title": "Transcriptional and epigenetic basis of Treg cell development and function: its genetic anomalies or variations in autoimmune diseases.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/32367041/"
+    }
+   },
+   {
+    "statement": "IL-2 signaling through IL-2R\u03b1 can be harnessed to reprogram human T cell function and specificity for therapeutic purposes.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "29995861",
+     "status": "retrieved",
+     "title": "Reprogramming human T cell function and specificity with non-viral genome targeting.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/29995861/"
+    }
+   }
+  ]
+ },
+ "NFKB2": {
+  "gene": "NFKB2",
+  "resolved": true,
+  "findings": [
+   {
+    "statement": "NFKB2 mediates immune escape in colorectal cancer by promoting PD-L1 expression through a STAT2-dependent mechanism.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "38660687",
+     "status": "retrieved",
+     "title": "NFKB2 mediates colorectal cancer cell immune escape and metastasis in a STAT2/PD\u2010L1\u2010dependent manner.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/38660687/"
+    }
+   },
+   {
+    "statement": "NFKB2 mutations cause primary immunodeficiency characterized by impaired type I interferon responses and autoantibody production against interferons.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "37938781",
+     "status": "retrieved",
+     "title": "Autoantibodies against type I IFNs in humans with alternative NF-\u03baB pathway deficiency.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/37938781/"
+    }
+   },
+   {
+    "statement": "NFKB2 functions in the noncanonical NF-\u03baB pathway, which regulates SPP1 expression in melanoma progression.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "33052224",
+     "status": "retrieved",
+     "title": "BET inhibitor suppresses melanoma progression via the noncanonical NF-\u03baB/SPP1 pathway.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/33052224/"
+    }
+   },
+   {
+    "statement": "Genetic mutations in NFKB2 are associated with altered immunological and clinical features in primary immunodeficiency patients.",
+    "citation": {
+     "db": "pubmed",
+     "accession": "38990428",
+     "status": "retrieved",
+     "title": "Clinical, Immunological, and Genetic Features in Patients with NFKB1 and NFKB2 Mutations: a Systematic Review.",
+     "url": "https://pubmed.ncbi.nlm.nih.gov/38990428/"
+    }
+   }
+  ]
+ }
+}
