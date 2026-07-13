@@ -28,8 +28,8 @@ import re
 import pytest
 
 from target_triage.core.decision_brief import (
-    COMPARABILITY, EXPLANATION_CLASSES, ConcordanceSnapshot, ExperimentConstraints, GroundedClaim,
-    ScreenPairContext, build_decision_brief)
+    COMPARABILITY, EXPLANATION_CLASSES, RECOMMENDATION, ConcordanceSnapshot, ExperimentConstraints,
+    GroundedClaim, ScreenPairContext, TargetDossier, build_decision_brief)
 
 
 # --- fixtures that mirror the real TSC1 reconciliation ---------------------------------------
@@ -180,3 +180,103 @@ def test_valid_constraints_are_feasible_and_respected():
     brief = build_decision_brief(_tsc1_snapshot(), _tsc1_context(), _tsc1_claims(), constraints)
     assert brief.feasible is True
     assert not brief.unmet_requirements
+
+
+# --- advanceability axis (the verdict-INDEPENDENT "should it advance?" question) -------------
+# The reconciliation verdict answers "do the two screens agree?"; it does NOT answer "is this worth
+# advancing as a program?". That second question needs the target dossier (druggability, disease
+# genetics, QC), which the brief now folds in as a code-owned recommendation stance.
+
+
+def _tsc1_dossier() -> TargetDossier:
+    """TSC1's real dossier from enrichment.json: High QC, no small-molecule handle (sm=0.0), a weak
+    antibody score (0.333) with no clinical stage, and NO immune-disease genetics (score 0.0). Real,
+    high-confidence biology — but no path to a near-term drug program."""
+    return TargetDossier(
+        sm_score=0.0, sm_stage=None, ab_score=0.333, ab_stage=None,
+        disease_score=0.0, top_disease=None, qc_confidence="High")
+
+
+def test_tsc1_recommendation_is_hold_weak_target():
+    """The flagship control for the axis: TSC1 is biologically real (discordant, High QC) but a weak
+    drug target (no tractable chemistry, no disease genetics), so the honest stance is NOT 'advance'
+    and NOT 'deprioritise' — it is 'hold as a weak target': understand the biology, don't run a
+    program on it yet."""
+    brief = build_decision_brief(
+        _tsc1_snapshot(), _tsc1_context(), _tsc1_claims(), dossier=_tsc1_dossier())
+    assert brief.recommendation in RECOMMENDATION
+    assert brief.recommendation == "hold_weak_target"
+    # The rationale is present and verdict-independent (it names the target-quality reason).
+    assert brief.recommendation_rationale.strip()
+    joined = brief.recommendation_rationale.lower()
+    assert ("druggab" in joined or "handle" in joined or "chemistry" in joined
+            or "antibody" in joined or "disease" in joined), brief.recommendation_rationale
+
+
+def test_recommendation_is_independent_of_the_reconciliation_verdict():
+    """Same dossier, different verdicts → the stance still reflects target quality, never collapses
+    into the verdict. A weak target is a weak target whether the screens agree or disagree."""
+    weak = _tsc1_dossier()
+    for verdict in ("discordant", "protein_only", "replicated"):
+        snap = dataclasses.replace(_tsc1_snapshot(), verdict=verdict)
+        brief = build_decision_brief(snap, _tsc1_context(), (), dossier=weak)
+        # A target with no chemistry and no disease genetics is never a green-light 'advance'.
+        assert brief.recommendation != "advance", verdict
+
+
+def test_advance_requires_agreement_plus_tractability_plus_disease():
+    """The only green light: both screens agree (replicated), the target is tractable, it has
+    immune-disease genetics, and QC is High. Anything less is validate/hold, never advance."""
+    strong = TargetDossier(
+        sm_score=0.7, sm_stage="Phase II", ab_score=0.4, ab_stage=None,
+        disease_score=0.62, top_disease="rheumatoid arthritis", qc_confidence="High")
+    snap = dataclasses.replace(_tsc1_snapshot(), verdict="replicated")
+    brief = build_decision_brief(snap, _tsc1_context(), (), dossier=strong)
+    assert brief.recommendation == "advance"
+
+
+def test_tractable_but_discordant_is_validate_first():
+    """A tractable target with disease genetics whose screens DISAGREE is not a hold — the biology is
+    worth resolving first. Validate, then decide."""
+    tractable = TargetDossier(
+        sm_score=0.6, sm_stage=None, ab_score=0.2, ab_stage=None,
+        disease_score=0.55, top_disease="asthma", qc_confidence="High")
+    brief = build_decision_brief(
+        _tsc1_snapshot(), _tsc1_context(), (), dossier=tractable)   # discordant
+    assert brief.recommendation == "validate_first"
+
+
+def test_no_signal_is_deprioritise():
+    """A 'neither' verdict — no screen sees an effect — is not worth chasing regardless of dossier."""
+    snap = dataclasses.replace(_tsc1_snapshot(), verdict="neither")
+    brief = build_decision_brief(snap, _tsc1_context(), (), dossier=_tsc1_dossier())
+    assert brief.recommendation == "deprioritize"
+
+
+def test_missing_dossier_yields_unknown_not_a_fake_stance():
+    """Without a dossier the brief must not invent a target-quality stance. It reports 'unknown' and
+    a rationale that says the dossier is unavailable — never a fabricated 'advance'/'hold'."""
+    brief = build_decision_brief(_tsc1_snapshot(), _tsc1_context(), _tsc1_claims())  # no dossier
+    assert brief.recommendation == "unknown"
+    assert brief.recommendation not in RECOMMENDATION           # 'unknown' is a sentinel, not a stance
+    assert "dossier" in brief.recommendation_rationale.lower() or brief.recommendation_rationale
+
+
+def test_recommendation_rationale_leaks_no_raw_statistics():
+    """The rationale is prose a bench reader consumes — it must not quote the raw dossier scores,
+    same discipline as the rest of the brief's narration."""
+    brief = build_decision_brief(
+        _tsc1_snapshot(), _tsc1_context(), _tsc1_claims(), dossier=_tsc1_dossier())
+    # The dossier scores (0.0, 0.333) must not appear verbatim in the rationale prose.
+    assert "0.333" not in brief.recommendation_rationale
+    assert "0.0" not in brief.recommendation_rationale
+    hit = _STAT_TOKENS.search(brief.recommendation_rationale)
+    assert hit is None, f"raw statistic leaked into recommendation prose: {hit!r}"
+
+
+def test_brief_with_dossier_still_serialises_to_json():
+    brief = build_decision_brief(
+        _tsc1_snapshot(), _tsc1_context(), _tsc1_claims(), dossier=_tsc1_dossier())
+    round_tripped = json.loads(json.dumps(dataclasses.asdict(brief)))
+    assert round_tripped["recommendation"] == "hold_weak_target"
+    assert round_tripped["target_dossier"]["qc_confidence"] == "High"

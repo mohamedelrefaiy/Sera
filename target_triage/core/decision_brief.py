@@ -107,6 +107,23 @@ EXPLANATION_LABELS: dict[str, str] = {
 #: Readout tokens a scientist may declare available. Closed enum, not free-form strings.
 READOUTS: tuple[str, ...] = ("qpcr", "elisa", "facs", "western")
 
+#: The verdict-INDEPENDENT advancement stance. The reconciliation verdict answers "do the two screens
+#: agree?"; this answers the different question "is this worth advancing as a program?" — which needs
+#: the target dossier (druggability, disease genetics, QC), NOT the screen agreement alone. Closed on
+#: purpose: a code-owned stance the LLM may render but never author. `unknown` is a SENTINEL for a
+#: missing dossier and is deliberately NOT a member — absence of input is not a judgment.
+RECOMMENDATION: tuple[str, ...] = ("advance", "validate_first", "hold_weak_target", "deprioritize")
+_RECOMMENDATION_UNKNOWN = "unknown"
+
+#: A target is "tractable" (has a real drug handle) if either modality clears this score or already
+#: has a clinical stage. Set at 0.5, not lower: a weak near-baseline score (e.g. an antibody score of
+#: ~0.33, which even control-like genes carry, or an antibody route for an intracellular target) is
+#: NOT a viable program path. The bar separates "a genuine handle" from "a weak signal", not "some"
+#: from "none".
+_TRACTABLE_SCORE = 0.5
+#: A target has "disease rationale" if immune-disease genetics clear this score AND name a disease.
+_DISEASE_SCORE = 0.3
+
 #: The minimum donors a decisive paired experiment needs by default.
 _MIN_DONORS = 3
 SCHEMA_VERSION = 1
@@ -174,6 +191,37 @@ class ExperimentConstraints:
             raise ValueError("donors and days must be non-negative")
 
 
+@dataclass(frozen=True)
+class TargetDossier:
+    """The verdict-INDEPENDENT target-quality facts, resolved from `enrichment.json` by the endpoint.
+    Mirrors that artifact's fields exactly; the brief only reasons over them, never fetches them.
+
+    Small-molecule and antibody druggability are tracked SEPARATELY (a target can be undruggable by
+    chemistry yet have an antibody handle) — same discipline as the dossier. `*_stage` is a clinical
+    stage string (e.g. 'Approved', 'Phase II') or None when no compound has reached the clinic.
+    `qc_confidence` is the screen's own confidence tier ('High' / 'Low')."""
+    sm_score: float
+    sm_stage: str | None
+    ab_score: float
+    ab_stage: str | None
+    disease_score: float
+    top_disease: str | None
+    qc_confidence: str
+
+    @property
+    def tractable(self) -> bool:
+        """A real drug handle exists: either modality clears the score OR already has a clinical
+        stage. Kept as a property so the selector reads as a scientific statement, not a threshold."""
+        return (self.sm_score >= _TRACTABLE_SCORE or self.ab_score >= _TRACTABLE_SCORE
+                or bool(self.sm_stage) or bool(self.ab_stage))
+
+    @property
+    def has_disease_rationale(self) -> bool:
+        """Immune-disease genetics support the target: the association clears the score AND names a
+        disease (a score with no disease is not actionable rationale)."""
+        return self.disease_score >= _DISEASE_SCORE and bool(self.top_disease)
+
+
 # --- outputs (all immutable) -----------------------------------------------------------------
 
 @dataclass(frozen=True)
@@ -212,6 +260,9 @@ class DecisionBrief:
     remaining_uncertainty: str
     outcome_matrix: tuple[OutcomeRow, ...]
     decision: str
+    recommendation: str            # one of RECOMMENDATION, or 'unknown' when no dossier was supplied
+    recommendation_rationale: str  # verdict-independent, prose (no raw dossier scores leak here)
+    target_dossier: TargetDossier | None
     citations: tuple[GroundedClaim, ...]
     provenance: dict = field(default_factory=dict)
 
@@ -294,6 +345,54 @@ def _trust(snap: ConcordanceSnapshot) -> tuple[str, str]:
             "protein is the open question — bridge to protein before trusting.")
     return "neither_yet", (
         f"Neither screen sees {g} doing much at this condition; validating is low-yield.")
+
+
+def _recommendation(snap: ConcordanceSnapshot, dossier: TargetDossier | None) -> tuple[str, str]:
+    """The verdict-INDEPENDENT advancement stance + a plain rationale that does NOT quote raw scores.
+
+    This is the answer to 'should it advance?', which is a DIFFERENT question from 'do the screens
+    agree?'. It folds the target dossier (druggability, disease genetics) into a code-owned stance so
+    an attractive reconciliation cannot smuggle a weak drug target onto the 'advance' pile.
+
+    Decision order (most-decisive first):
+      - no dossier          -> 'unknown'          (honest: absence of input, never a fabricated call)
+      - verdict 'neither'   -> 'deprioritize'     (no signal to chase, regardless of dossier)
+      - not tractable AND no disease genetics -> 'hold_weak_target' (biology may be real; no program)
+      - replicated + tractable + disease + High QC -> 'advance'     (the only green light)
+      - otherwise           -> 'validate_first'   (worth resolving the disagreement before committing)
+    """
+    g = snap.gene
+    if dossier is None:
+        return _RECOMMENDATION_UNKNOWN, (
+            f"No target dossier is available for {g}, so the advancement call can't be made here — "
+            "pull the druggability and disease-genetics evidence before deciding.")
+
+    if snap.verdict == "neither":
+        return "deprioritize", (
+            f"Neither screen sees {g} move at this condition, so there is nothing to advance — "
+            "deprioritise it.")
+
+    if not dossier.tractable and not dossier.has_disease_rationale:
+        return "hold_weak_target", (
+            f"{g} looks biologically real, but it has no tractable drug handle (neither a "
+            "small-molecule nor an antibody route) and no immune-disease genetics behind it — worth "
+            "understanding as biology, but not worth advancing as a program yet.")
+
+    strong_qc = (dossier.qc_confidence or "").lower() == "high"
+    if (snap.verdict == "replicated" and dossier.tractable
+            and dossier.has_disease_rationale and strong_qc):
+        disease = dossier.top_disease or "an immune disease"
+        return "advance", (
+            f"Both screens agree on {g}, it is a tractable target with genetics linking it to "
+            f"{disease}, and the screen quality is high — this one is ready to advance.")
+
+    # Everything in between: there is a reason to care (a handle or disease link), but the screen
+    # disagreement / one-sidedness is unresolved. Resolve it first.
+    reason = "the two screens don't yet agree" if snap.verdict in ("discordant", "protein_only",
+                                                                    "mrna_only") else "the evidence is not yet decisive"
+    return "validate_first", (
+        f"{g} is worth pursuing — there is a drug handle or a disease link — but {reason}, so run "
+        "the discriminating experiment below and let the result decide before committing.")
 
 
 def _experiment_and_outcomes(
@@ -385,12 +484,15 @@ def build_decision_brief(
     screen_context: ScreenPairContext,
     claims: tuple[GroundedClaim, ...] = (),
     constraints: ExperimentConstraints | None = None,
+    dossier: TargetDossier | None = None,
 ) -> DecisionBrief:
     """Assemble the decision brief. Pure and deterministic: no I/O, no LLM, no globals.
 
     `snapshot` carries the code-computed verdict (never recomputed here). `screen_context` comes from
     the canonical adapter. `claims` are stored, pre-resolved literature entries reused as background
-    for a hypothesis — this function never fabricates or upgrades them to verdict support."""
+    for a hypothesis — this function never fabricates or upgrades them to verdict support. `dossier`
+    (optional) carries the verdict-independent target-quality facts; when absent, the advancement
+    recommendation is the honest sentinel 'unknown' rather than a fabricated stance."""
     if snapshot.verdict not in EXPLANATION_CLASSES:
         raise ValueError(
             f"unknown verdict {snapshot.verdict!r}; expected one of {tuple(EXPLANATION_CLASSES)}")
@@ -398,6 +500,7 @@ def build_decision_brief(
     comparability, comp_reasons = _comparability(snapshot, screen_context)
     explanations, explanation_labels = _explanations(snapshot.verdict)
     trust, decision = _trust(snapshot)
+    recommendation, rec_rationale = _recommendation(snapshot, dossier)
     experiment, outcomes, feasible, unmet, adaptations, remaining = _experiment_and_outcomes(
         snapshot, constraints)
 
@@ -431,6 +534,9 @@ def build_decision_brief(
         remaining_uncertainty=remaining,
         outcome_matrix=outcomes,
         decision=decision,
+        recommendation=recommendation,
+        recommendation_rationale=rec_rationale,
+        target_dossier=dossier,
         citations=tuple(claims),
         provenance={
             "rna_screen_id": snapshot.rna_screen_id,
