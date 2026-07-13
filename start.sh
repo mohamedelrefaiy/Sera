@@ -39,10 +39,19 @@ elif ! "$PY" -c "import sera" >/dev/null 2>&1; then
 fi
 
 # --- 2. Make sure the port is free -------------------------------------------
-if lsof -ti "tcp:$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
-  echo "✗ Port $PORT is already in use. Free it with:  lsof -ti:$PORT | xargs kill"
-  echo "  …or run on another port:  PORT=$((PORT + 1)) ./start.sh"
-  exit 1
+EXISTING_PIDS="$(lsof -ti "tcp:$PORT" -sTCP:LISTEN 2>/dev/null || true)"
+if [ -n "$EXISTING_PIDS" ]; then
+  echo "→ Port $PORT is in use (pid(s): $EXISTING_PIDS) — killing and retrying…"
+  echo "$EXISTING_PIDS" | xargs kill
+  for _ in $(seq 1 20); do
+    lsof -ti "tcp:$PORT" -sTCP:LISTEN >/dev/null 2>&1 || break
+    sleep 0.25
+  done
+  if lsof -ti "tcp:$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "  …still held, force killing…"
+    lsof -ti "tcp:$PORT" -sTCP:LISTEN | xargs kill -9
+    sleep 0.5
+  fi
 fi
 
 # --- 3. Report whether the live agent chat will be enabled -------------------
