@@ -106,6 +106,15 @@ class CuratedPathway:
 # hit set (ITK, ZAP70, LCP2, PLCG1, VAV1, BCL10, …) sits in. Transcribed from Reactome TCR Signaling
 # (R-HSA-202403) + curated sub-reactions; each edge cites a backing accession and PMID. This is the
 # single pathway we curate impeccably rather than many shallowly — one bulletproof figure.
+#
+# Deliberate simplifications (documented so they read as choices, not errors):
+#   - LAT → LCP2 is drawn as one step; in Reactome LAT and SLP-76 (LCP2) are co-equal proximal
+#     scaffolds bridged by the adaptor GADS/GRAP2, not a strict A-then-B sequence. Collapsed for space.
+#   - PLCG1 → PRKCQ omits the DAG intermediate: PLCγ1 cleaves PIP2 into IP3 (drawn) and DAG (not a
+#     node); DAG is what activates PKCθ. The edge stands for that DAG-mediated activation.
+#   - The CBM node keeps id=BCL10 (a replicated hit) but is LABELLED as the whole CARD11/BCL10/MALT1
+#     complex, because PKCθ's direct substrate is CARD11/CARMA1 — BCL10 binds after CARD11
+#     oligomerises. Labelling the complex avoids implying BCL10 is the PKCθ substrate.
 
 TCR_IL2 = CuratedPathway(
     id="tcr_il2",
@@ -130,7 +139,11 @@ TCR_IL2 = CuratedPathway(
         # second messengers + downstream
         TopoNode("IP3",   "cytoplasm",  "second_messenger", label="IP₃ / Ca²⁺"),
         TopoNode("PRKCQ", "cytoplasm",  "kinase",   label="PKCθ"),
-        TopoNode("BCL10", "cytoplasm",  "adaptor",  label="CBM (BCL10)"),
+        # The CBM (CARD11–BCL10–MALT1) complex, drawn as one node. PKCθ's direct substrate is
+        # CARD11/CARMA1 (it phosphorylates CARD11, which then oligomerises and recruits BCL10+MALT1);
+        # the node keeps id=BCL10 so hit-shading reflects the real replicated screen hit, and the
+        # label names the whole complex so it never claims BCL10 is the PKCθ substrate.
+        TopoNode("BCL10", "cytoplasm",  "adaptor",  label="CBM (CARD11/BCL10/MALT1)"),
         # nuclear transcription factors
         TopoNode("NFATC1", "nucleus",   "tf",       label="NFAT"),
         TopoNode("RELA",   "nucleus",   "tf",       label="NF-κB"),
@@ -182,7 +195,7 @@ BCR = CuratedPathway(
         TopoNode("AKT1",   "cytoplasm",  "kinase",   label="AKT"),
         TopoNode("IP3",    "cytoplasm",  "second_messenger", label="IP₃ / Ca²⁺"),
         TopoNode("PRKCB",  "cytoplasm",  "kinase",   label="PKCβ"),
-        TopoNode("CARD11", "cytoplasm",  "adaptor",  label="CBM (CARD11)"),
+        TopoNode("CARD11", "cytoplasm",  "adaptor",  label="CBM (CARD11/BCL10/MALT1)"),
         TopoNode("NFATC1", "nucleus",    "tf",       label="NFAT"),
         TopoNode("RELA",   "nucleus",    "tf",       label="NF-κB"),
     ),

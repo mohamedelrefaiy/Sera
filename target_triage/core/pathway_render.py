@@ -255,7 +255,10 @@ def _pill_svg(p: Placed, *, focal: bool, focal_colour: str, status: str | None) 
         parts.append(
             f'<rect x="{x - 4:.1f}" y="{y - 4:.1f}" width="{_PILL_W + 8}" height="{_PILL_H + 8}" '
             f'rx="16" fill="none" stroke="{focal_colour}" stroke-width="2.6"/>')
-    fs = 10.8 if len(label) <= 9 else 9.2
+    # Three size tiers so a long complex label (e.g. "CBM (CARD11/BCL10/MALT1)") stays inside the
+    # pill instead of overflowing its edges.
+    n = len(label)
+    fs = 10.8 if n <= 9 else 9.2 if n <= 16 else 7.2
     parts.append(
         f'<text x="{p.x:.1f}" y="{p.y + 3.5:.1f}" text-anchor="middle" font-size="{fs}" '
         f'fill="{label_ink}" font-weight="600">{escape(label)}</text>')
