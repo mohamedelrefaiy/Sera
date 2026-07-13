@@ -75,5 +75,43 @@
 "library": "Reactome_2022"
 }
 ],
-"f8168084b4432384": []
+"f8168084b4432384": [],
+"b77435f926db8b37": [
+{
+"term": "TCR Signaling R-HSA-202403",
+"adj_p": 0.0,
+"n_genes": 10,
+"library": "Reactome_2022"
+},
+{
+"term": "Generation Of Second Messenger Molecules R-HSA-202433",
+"adj_p": 0.0,
+"n_genes": 7,
+"library": "Reactome_2022"
+},
+{
+"term": "Adaptive Immune System R-HSA-1280218",
+"adj_p": 2.73e-06,
+"n_genes": 12,
+"library": "Reactome_2022"
+},
+{
+"term": "Immune System R-HSA-168256",
+"adj_p": 2.73e-06,
+"n_genes": 18,
+"library": "Reactome_2022"
+},
+{
+"term": "Translocation Of ZAP-70 To Immunological Synapse R-HSA-202430",
+"adj_p": 3.04e-06,
+"n_genes": 4,
+"library": "Reactome_2022"
+},
+{
+"term": "Phosphorylation Of CD3 And TCR Zeta Chains R-HSA-202427",
+"adj_p": 5.13e-06,
+"n_genes": 4,
+"library": "Reactome_2022"
+}
+]
 }

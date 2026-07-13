@@ -321,6 +321,41 @@ async def known_biology(args):
     )
 
 
+@tool(
+    "hitlist_biology",
+    "Answer what BIOLOGY the replicated hits share — corpus-wide, not one gene. Concord's replicated "
+    "set (genes both screens agree on) is run through pathway enrichment; this returns the shared "
+    "pathways (e.g. 'TCR Signaling') the hits cluster in, with a plain summary. Call this for 'what "
+    "do the hits have in common', 'what pathways are enriched', 'shared biology', 'what connects "
+    "these genes', or a question about the hit list as a set. The hit list and the pathways are "
+    "computed by CODE (verdict-selected genes -> Reactome enrichment); you narrate the shared theme "
+    "in one or two plain sentences and NEVER name a pathway that isn't in the returned set.",
+    {},
+)
+async def hitlist_biology(args):
+    import dataclasses
+
+    from ..clients import enrichr
+    from ..core.hitlist_enrichment import build_hitlist_enrichment
+
+    if not _CONCORDANCE:
+        return _text({"error": "concordance artifact not built",
+                      "note": "Say the hit-list biology isn't available; do not invent pathways."})
+    result = build_hitlist_enrichment(_CONCORDANCE, enrichr.enrich)
+    payload = dataclasses.asdict(result)
+    if not result.pathways:
+        return _text({"hitlist": payload,
+                      "note": "No enriched pathways came back. Say so plainly — do NOT invent a "
+                              "shared theme or name a pathway."})
+    return _view(
+        {"hitlist": payload,
+         "note": "Narrate the shared biology in ONE or TWO plain sentences from `plain_summary` / "
+                 "`top_term` — name only pathways present in `pathways`, never one you recall. Do "
+                 "NOT quote the q-values; the panel shows them."},
+        {"action": "hitlist_biology", "hitlist": payload},
+    )
+
+
 _BRIEF_ANCHOR_ORDER = ("Stim48hr", "Stim8hr", "Rest")
 
 
@@ -390,7 +425,7 @@ def build_concord_server():
         name="concord",
         version="0.1.0",
         tools=[reconcile_gene, compare_conditions, gene_evidence, known_biology,
-               draft_decision_brief],
+               draft_decision_brief, hitlist_biology],
     )
 
 
@@ -400,4 +435,5 @@ CONCORD_ALLOWED_TOOLS = [
     "mcp__concord__gene_evidence",
     "mcp__concord__known_biology",
     "mcp__concord__draft_decision_brief",
+    "mcp__concord__hitlist_biology",
 ]

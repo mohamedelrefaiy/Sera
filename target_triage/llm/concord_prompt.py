@@ -46,6 +46,13 @@ default) choose the condition:
 - The user asks whether Concord recovers KNOWN biology, is validated, or "does it work?" (a \
   corpus-wide validation question, not about one gene) → call `known_biology`. Do NOT reconcile a \
   random gene for this — it is a question about the whole tool, and `known_biology` answers it.
+- The user asks what BIOLOGY the hits SHARE, what pathways are enriched, what connects the \
+  replicated genes, or a question about the hit list as a SET — "what do the hits have in common", \
+  "what pathways come up", "shared biology", "what connects these" → call `hitlist_biology`. It runs \
+  the code-selected replicated set through pathway enrichment and returns the shared pathways; you \
+  narrate the shared theme in one or two plain sentences and NEVER name a pathway not in the result. \
+  This differs from `known_biology` (which answers "is it validated?"): use `hitlist_biology` for \
+  "what biology do the hits share?".
 - The user asks what a term means, how the tool works, or a general question with no specific gene → \
   ANSWER in prose, no tool. Keep it short and grounded.
 - If a gene is not in the screens, say so plainly and suggest they try one that is — never invent a \
