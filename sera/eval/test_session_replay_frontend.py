@@ -89,9 +89,17 @@ def check_replay_does_not_rerun_agent() -> tuple[bool, str]:
     return True, "replayAgentTurn renders saved narration + deterministic figure, no live calls"
 
 
-# --- gate 3: a hard refresh restores the last chat instead of blanking the thread ---
+# --- gate 3: a hard refresh lands on the hero UNLESS the URL says a chat was open ---
+#
+# Two distinct requirements collapse into one gate:
+#   (a) app-open / no-chat-yet: refresh must show the empty hero, never the most-recently-saved
+#       chat picked implicitly (the old "restore last session" behavior this replaces).
+#   (b) chat-open: refresh must stay on THAT chat. openSession() stamps ?session=ID into the URL
+#       the moment a chat opens (see openSession()), so init() reopening ?session= on refresh is
+#       URL-driven restoration of the CURRENT chat, not implicit auto-restore of an unrelated one.
+#       newSession() clears ?session=, so a fresh "New chat" + refresh still lands on the hero.
 
-def check_refresh_restores_last_session() -> tuple[bool, str]:
+def check_refresh_shows_empty_hero() -> tuple[bool, str]:
     html = _html()
     m = re.search(r"function\s+init\s*\(", html)
     assert m, "init() not found"
@@ -100,11 +108,21 @@ def check_refresh_restores_last_session() -> tuple[bool, str]:
     end = html.index("})();", start)
     body = html[start:end]
 
-    if "openSession(" not in body:
-        return False, "init() no longer restores a saved session on load — refresh blanks the thread"
-    if "api/sessions" not in body:
-        return False, "init() no longer reads the session list to find the most-recent chat"
-    return True, "init() restores the most-recent saved chat when there is no ?gene= deep-link"
+    if "api/sessions" in body:
+        return False, "init() reads the full session list to guess the most-recent chat — that's implicit auto-restore, not URL-driven"
+    if 'searchParams.get("session")' not in body.replace(" ", "").replace("'", '"'):
+        return False, "init() no longer reads ?session= from the URL to restore the chat that was actually open"
+    if "showLanding(" not in body:
+        return False, "init() no longer shows the landing hero on load with no ?session=/?gene= in the URL"
+
+    open_body = _slice(html, "openSession")
+    if 'searchParams.set("session"' not in open_body.replace(" ", "").replace("'", '"'):
+        return False, "openSession() no longer stamps ?session= into the URL — a chat-then-refresh would lose the open chat"
+
+    new_body = _slice(html, "newSession")
+    if 'searchParams.delete("session"' not in new_body.replace(" ", "").replace("'", '"'):
+        return False, "newSession() no longer clears ?session= — a new-chat-then-refresh would reopen a stale chat instead of the hero"
+    return True, "refresh restores the chat that was actually open (via ?session=) and otherwise shows the empty hero"
 
 
 # --- gate 4: a complete workup is one ordered report on live render and replay ---
@@ -130,6 +148,28 @@ def check_full_workup_has_report_structure() -> tuple[bool, str]:
     return True, "full workups render as one ordered, replay-safe lab progress report"
 
 
+def check_reconciliation_has_scientific_reading_order() -> tuple[bool, str]:
+    html = _html()
+    start = html.index('<template id="turnTpl">')
+    end = html.index("</template>", start)
+    template = html[start:end]
+
+    ordered_markers = (
+        "js-effectFig",
+        "js-evidenceLedger",
+        "js-proseOpen",
+        "js-observed",
+        "js-threats",
+        "js-resolution",
+    )
+    positions = [template.index(marker) for marker in ordered_markers]
+    if positions != sorted(positions):
+        return False, "reconciliation no longer flows from results through interpretation and limits to validation"
+    if tuple(template.count(f">{n:02d}<") for n in range(1, 5)) != (1, 1, 1, 1):
+        return False, "reconciliation report no longer exposes four unambiguous numbered sections"
+    return True, "reconciliation follows results, evidence, interpretation, limits, then validation"
+
+
 # --- pytest entry points ---
 
 def test_replay_uses_agent_turns() -> None:
@@ -142,8 +182,8 @@ def test_replay_does_not_rerun_agent() -> None:
     assert passed, reason
 
 
-def test_refresh_restores_last_session() -> None:
-    passed, reason = check_refresh_restores_last_session()
+def test_refresh_shows_empty_hero() -> None:
+    passed, reason = check_refresh_shows_empty_hero()
     assert passed, reason
 
 
@@ -152,13 +192,19 @@ def test_full_workup_has_report_structure() -> None:
     assert passed, reason
 
 
+def test_reconciliation_has_scientific_reading_order() -> None:
+    passed, reason = check_reconciliation_has_scientific_reading_order()
+    assert passed, reason
+
+
 if __name__ == "__main__":
     print("SESSION-REPLAY PARITY GATE — reopening a chat must render what was persisted\n")
     checks = (
         ("openSession renders agent turns", check_replay_uses_agent_turns),
         ("replay reconstructs (no live re-run)", check_replay_does_not_rerun_agent),
-        ("refresh restores the last chat", check_refresh_restores_last_session),
+        ("refresh shows the empty hero", check_refresh_shows_empty_hero),
         ("full workup stays one report", check_full_workup_has_report_structure),
+        ("reconciliation has report order", check_reconciliation_has_scientific_reading_order),
     )
     results = [(name, *fn()) for name, fn in checks]
     width = max(len(name) for name, _, _ in results)
