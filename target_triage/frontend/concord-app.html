@@ -801,9 +801,10 @@
   .user-msg{background:rgba(255,255,255,.72);border:0;box-shadow:inset 0 0 0 1px var(--line),0 12px 30px -22px rgba(20,43,50,.32);color:var(--ink)}
   .ava{background:rgba(255,255,255,.84);border:0;box-shadow:inset 0 0 0 1px var(--line),0 8px 20px -14px rgba(20,43,50,.28)}
   .prose{color:var(--ink);font-family:var(--font-ui);font-size:17px;line-height:1.68;letter-spacing:-.006em}
-  .fig-frame{background:rgba(255,255,255,.66);border:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.9),inset 0 0 0 2px var(--line),var(--shadow);border-radius:22px;padding:7px}
-  .fig-eyebrow{color:var(--ink-faint);padding:18px 20px 9px}
-  .cap{border-top-color:var(--line);color:var(--ink-soft);padding:17px 20px 20px}
+  .fig-frame{background:oklch(98.7% .004 205);border:1px solid var(--line-strong);box-shadow:none;border-radius:10px;padding:8px 14px 0}
+  .fig-eyebrow{color:var(--ink-faint);padding:12px 12px 2px;font-size:10px;letter-spacing:.1em}
+  .js-effectFig{display:block;width:100%;height:auto;min-height:0}
+  .cap{border-top:1px solid var(--line);color:var(--ink-soft);padding:13px 12px 15px;font-size:12px;line-height:1.55}
   .resolution{border:0;border-radius:22px;background:rgba(255,255,255,.68);box-shadow:inset 0 0 0 1px rgba(255,255,255,.95),inset 0 0 0 2px var(--line),var(--shadow);padding:28px}
   .resolution-h{font-family:var(--font-ui);font-size:23px;letter-spacing:-.025em}
   .resolution-copy{color:var(--ink-soft)}
@@ -851,6 +852,24 @@
   .bench-workspace .followups{display:flex;flex-direction:column;margin:0}.bench-workspace .followups::before{content:"Suggested next steps";margin:2px 0 8px;font:600 10px var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
   .bench-workspace .fchip{width:100%;justify-content:flex-start}.bench-workspace .dossier,.bench-workspace .srcline{display:none!important}
 
+  /* Refinement: a plan returned by the agent is supporting evidence inside that answer, not a
+     second chat turn. The protocol reads as a compact lab worksheet with one continuous rhythm. */
+  .js-answerText{max-width:70ch!important;font-size:17px;line-height:1.62}
+  .inline-plan{max-width:none!important;margin:28px 0 0!important;padding:26px 0 8px!important;border-top:1px solid var(--line)}
+  .inline-plan>.reply-turn.agent{display:block}.inline-plan>.reply-turn.agent>.ava{display:none}.inline-plan .reply-body{width:100%}
+  .plan-sheet .planbar{margin:0 0 16px;align-items:flex-end}.plan-sheet .pt-title{font:650 19px/1.25 var(--font-ui);letter-spacing:-.025em}
+  .plan-sheet .exports{margin-left:auto}.plan-sheet .xbtn{min-height:34px;border-color:var(--line);background:transparent;font-family:var(--font-ui);font-size:12px}
+  .plan-sheet .rec{margin:0;padding:18px 0;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0;background:transparent}
+  .plan-sheet .rec-action{font:650 17px/1.3 var(--font-ui)}.plan-sheet .rec-why{max-width:68ch;margin-top:10px;font-family:var(--font-ui);font-size:14px;line-height:1.55}
+  .plan-sheet .plan-grid{gap:0;margin-top:4px;border-bottom:1px solid var(--line)}
+  .plan-sheet .pcard{position:relative;min-height:150px;padding:18px 20px 20px 0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent}
+  .plan-sheet .pcard:nth-child(even){padding-left:20px;border-left:1px solid var(--line)}
+  .plan-sheet .pnum{color:var(--accent)}.plan-sheet .pk{font-family:var(--font-ui);font-size:14px}.plan-sheet .pv{font-family:var(--font-ui);font-size:13.5px;line-height:1.55;color:var(--ink-soft)}
+  .plan-sheet .decision{margin-top:18px;padding:16px 18px;border:1px solid color-mix(in srgb,var(--warn) 35%,var(--line));border-radius:12px;background:var(--warn-soft)}
+  .plan-sheet .decision .dh{color:var(--warn)}.plan-sheet .decision p{font-family:var(--font-ui);font-size:14px;line-height:1.55}
+  .plan-sheet .srcline{margin-top:12px}.turn:has(.inline-plan){padding-bottom:56px}
+  .arts-empty{max-width:28ch;margin:22px auto;padding:20px 10px}
+
   @media(max-width:1280px){.workspace{grid-template-columns:220px minmax(0,1fr)}.arts{display:none}.arts-toggle{display:none}}
   @media(max-width:1050px){.brief-shell{grid-template-columns:1fr}.bench-workspace{position:static}.evidence-boundary{grid-template-columns:1fr}.boundary{min-height:0}}
   @media(max-width:940px){.workspace{grid-template-columns:64px minmax(0,1fr)}.convo-context{display:none}}
@@ -865,6 +884,7 @@
     .landing{padding-top:7vh}.landing-h{font-size:34px}.composer-chips{overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px}
     .cchip{flex:none}.reply-turn.user-row .user-msg{max-width:86%}
     .decision-gate{grid-template-columns:1fr}.brief-shell{gap:20px}.evidence-ledger,.threats{padding:16px}
+    .plan-sheet .plan-grid{grid-template-columns:1fr}.plan-sheet .pcard:nth-child(even){padding-left:0;border-left:0}.plan-sheet .exports{width:100%}
   }
   @media(max-width:560px){.nav-top{width:30px;padding:0;margin-right:auto}.nav-top .txt{display:none!important}.modes{gap:4px}}
   @media(max-width:420px){.nav-top .txt{font-size:13px}.modes .nav-item{padding:8px}.modes .lbl{display:none}.landing-h{font-size:30px}}
@@ -1088,7 +1108,7 @@ ZNF250</div>
 
     <!-- A validation-plan turn (appended when the user clicks the Validation plan chip). -->
     <template id="planTpl">
-      <div class="turn turn-follow">
+      <div class="turn turn-follow plan-sheet">
         <div class="reply-turn user-row"><div class="user-msg js-user"></div></div>
         <div class="reply-turn agent">
           <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
@@ -1393,7 +1413,7 @@ ZNF250</div>
     try{ var r=await fetch("api/sessions/"+encodeURIComponent(sid)); if(r.ok){ s=await r.json(); } }catch(e){}
     if(!s){ return; }
     currentSession={id:s.id,title:s.title};
-    thread.innerHTML=""; hideLanding(); setMode("chat");
+    thread.innerHTML=""; setMode("chat"); hideLanding();
     $("convoTitle").textContent="Chat";
     _replaying=true;
     try{
@@ -1645,43 +1665,45 @@ ZNF250</div>
   // assay, direction, effect size, and significance before stating the cross-assay conclusion.
   function drawEffectFig(turn,row){
     var svg=q(turn,"js-effectFig"); if(!svg) return;
-    svg.setAttribute("viewBox","0 0 700 320");
-    svg.setAttribute("aria-label","Comparison of the IL-2 mRNA and secreted protein responses to gene knockdown");
+    svg.setAttribute("viewBox","0 0 700 330");
+    svg.setAttribute("aria-label","Two-panel effect plot comparing IL-2 mRNA z-score and secreted IL-2 protein log2 fold change after gene knockdown");
     if(!row){ svg.innerHTML=""; return; }
     function qtxt(v){ return v==null?"not available":(Number(v)<0.001?Number(v).toExponential(1):Number(v).toFixed(3)); }
-    function direction(v){ return v<0?"DECREASED":v>0?"INCREASED":"NO CHANGE"; }
-    function arrow(v){ return v<0?"↓":v>0?"↑":"→"; }
-    function assayPanel(x,label,assay,effectLabel,effect,qvalue,hit,color,untested,align){
-      var tx=align==="right"?x+278:x+22, anchor=align==="right"?"end":"start";
-      if(untested) return '<rect x="'+x+'" y="18" width="300" height="204" rx="14" fill="#FBFCFD" stroke="#DEE5E8"/>'
-        +'<text x="'+tx+'" y="52" text-anchor="'+anchor+'" fill="#182023" font-size="17" font-weight="600">'+label+'</text>'
-        +'<text x="'+tx+'" y="76" text-anchor="'+anchor+'" fill="#68777B" font-size="12.5">'+assay+'</text>'
-        +'<text x="'+tx+'" y="138" text-anchor="'+anchor+'" fill="#526064" font-size="18">NOT MEASURED</text>'
-        +'<text x="'+tx+'" y="164" text-anchor="'+anchor+'" fill="#819095" font-size="11.5">not included in this assay library</text>';
-      var dir=direction(effect), arr=arrow(effect), status=hit?"significant screen hit":"not statistically significant";
-      return '<rect x="'+x+'" y="18" width="300" height="204" rx="14" fill="#FBFCFD" stroke="#DEE5E8"/>'
-        +'<rect x="'+(align==="right"?x+296:x)+'" y="18" width="4" height="204" rx="2" fill="'+color+'"/>'
-        +'<text x="'+tx+'" y="52" text-anchor="'+anchor+'" fill="#182023" font-size="17" font-weight="600">'+label+'</text>'
-        +'<text x="'+tx+'" y="76" text-anchor="'+anchor+'" fill="#68777B" font-size="12.5">'+assay+'</text>'
-        +'<text x="'+tx+'" y="128" text-anchor="'+anchor+'" fill="'+color+'" font-size="27" font-weight="600">'+arr+' '+dir+'</text>'
-        +'<text x="'+tx+'" y="160" text-anchor="'+anchor+'" fill="#344347" font-size="13">'+effectLabel+' '+fmt(effect)+'</text>'
-        +'<text x="'+tx+'" y="183" text-anchor="'+anchor+'" fill="#68777B" font-size="12">q-value '+qtxt(qvalue)+'</text>'
-        +'<text x="'+tx+'" y="207" text-anchor="'+anchor+'" fill="'+(hit?color:'#68777B')+'" font-size="11.5">'+status+'</text>';
+    function limFor(effect,minimum,step){
+      var raw=Math.max(minimum,Math.abs(Number(effect)||0));
+      return Math.ceil(raw/step)*step;
+    }
+    function panel(letter,y,label,assay,unit,effect,qvalue,hit,color,untested,limit){
+      var x0=235,x1=635,mid=(x0+x1)/2, axisY=y+58;
+      if(untested) return '<text x="26" y="'+(y+5)+'" fill="#182023" font-size="13" font-weight="700">'+letter+'</text>'
+        +'<text x="54" y="'+(y+5)+'" fill="#182023" font-size="14" font-weight="600">'+label+'</text>'
+        +'<text x="54" y="'+(y+25)+'" fill="#68777B" font-size="11">'+assay+'</text>'
+        +'<text x="235" y="'+(y+28)+'" fill="#68777B" font-size="12">Not measured in this assay library</text>';
+      var px=mid+(Number(effect)/limit)*((x1-x0)/2-12);
+      var status=hit?"q = "+qtxt(qvalue)+" · screen threshold met":"q = "+qtxt(qvalue)+" · not significant";
+      return '<text x="26" y="'+(y+5)+'" fill="#182023" font-size="13" font-weight="700">'+letter+'</text>'
+        +'<text x="54" y="'+(y+5)+'" fill="#182023" font-size="14" font-weight="600">'+label+'</text>'
+        +'<text x="54" y="'+(y+25)+'" fill="#68777B" font-size="11">'+assay+'</text>'
+        +'<line x1="'+x0+'" y1="'+axisY+'" x2="'+x1+'" y2="'+axisY+'" stroke="#AAB6BA" stroke-width="1"/>'
+        +'<line x1="'+mid+'" y1="'+(y+22)+'" x2="'+mid+'" y2="'+(axisY+8)+'" stroke="#7C898D" stroke-width="1" stroke-dasharray="3 3"/>'
+        +'<line x1="'+mid+'" y1="'+axisY+'" x2="'+px+'" y2="'+axisY+'" stroke="'+color+'" stroke-width="3"/>'
+        +'<circle cx="'+px+'" cy="'+axisY+'" r="7" fill="'+(hit?color:'#F8FAFA')+'" stroke="'+color+'" stroke-width="2"/>'
+        +'<text x="'+px+'" y="'+(axisY-13)+'" text-anchor="middle" fill="#182023" font-size="12" font-weight="600">'+fmt(effect)+'</text>'
+        +'<text x="'+x0+'" y="'+(axisY+22)+'" text-anchor="middle" fill="#68777B" font-size="10">−'+limit+'</text>'
+        +'<text x="'+mid+'" y="'+(axisY+22)+'" text-anchor="middle" fill="#68777B" font-size="10">0</text>'
+        +'<text x="'+x1+'" y="'+(axisY+22)+'" text-anchor="middle" fill="#68777B" font-size="10">+'+limit+'</text>'
+        +'<text x="'+x0+'" y="'+(axisY+39)+'" fill="#68777B" font-size="10.5">'+unit+'</text>'
+        +'<text x="'+x1+'" y="'+(axisY+39)+'" text-anchor="end" fill="'+(hit?color:'#68777B')+'" font-size="10.5">'+status+'</text>';
     }
     var discord=row.prot_tested!==false && row.hit_rna && row.hit_prot && ((row.z_rna<0)!=(row.lfc_prot<0));
-    var conclusion=discord?"Opposite directions across assays → DISCORDANT":
-      row.verdict==="replicated"?"Same direction across assays → REPLICATED":
-      "Combined screen verdict → "+String(row.verdict||"neither").replace("_"," ").toUpperCase();
-    svg.innerHTML=assayPanel(12,"IL-2 mRNA","Perturb-seq · transcript","z-score",row.z_rna,row.q_rna,row.hit_rna,"#00A88B",false,"left")
-      +assayPanel(388,"Secreted IL-2 protein","FACS · functional readout","log₂ fold change",row.lfc_prot,row.q_prot,row.hit_prot,"#D34D91",row.prot_tested===false,"right")
-      +'<path class="assay-flow" d="M314 111 H344" stroke="#00A88B" stroke-width="2"/>'
-      +'<path class="assay-flow protein" d="M386 145 H356" stroke="#D34D91" stroke-width="2"/>'
-      +'<path d="M350 76 V181" stroke="'+(discord?'#C57B16':'#819095')+'" stroke-width="2"/>'
-      +'<circle cx="350" cy="128" r="18" fill="#FFFFFF" stroke="'+(discord?'#C57B16':'#819095')+'"/>'
-      +'<text x="350" y="132" text-anchor="middle" fill="'+(discord?'#C57B16':'#526064')+'" font-size="11" font-weight="600">'+(discord?'SPLIT':'READ')+'</text>'
-      +'<text x="350" y="248" text-anchor="middle" fill="#68777B" font-size="11.5">Cross-assay interpretation</text>'
-      +'<text x="350" y="278" text-anchor="middle" fill="'+(discord?'#A56410':'#182023')+'" font-size="15.5" font-weight="600">'+conclusion+'</text>'
-      +'<text x="350" y="304" text-anchor="middle" fill="#819095" font-size="10.5">Independent units · shared biological question</text>';
+    var conclusion=discord?"Direction discordant across assays":row.verdict==="replicated"?"Direction concordant across assays":"Cross-assay call: "+String(row.verdict||"neither").replace("_"," ");
+    svg.innerHTML='<text x="26" y="22" fill="#68777B" font-size="10.5">Effect of gene knockdown relative to non-targeting control</text>'
+      +panel("A",52,"IL-2 mRNA abundance","Perturb-seq","z-score",row.z_rna,row.q_rna,row.hit_rna,"#009E73",false,limFor(row.z_rna,3,1))
+      +'<line x1="26" y1="164" x2="674" y2="164" stroke="#DEE5E8"/>'
+      +panel("B",190,"Secreted IL-2 protein","FACS","log₂ fold change",row.lfc_prot,row.q_prot,row.hit_prot,"#CC79A7",row.prot_tested===false,limFor(row.lfc_prot,1,.5))
+      +'<rect x="26" y="303" width="648" height="1" fill="#DEE5E8"/>'
+      +'<text x="26" y="324" fill="'+(discord?'#9A6314':'#344347')+'" font-size="11.5" font-weight="600">'+conclusion+'</text>'
+      +'<text x="674" y="324" text-anchor="end" fill="#68777B" font-size="10.5">Effect sizes shown on separate native-unit axes</text>';
   }
 
   // Caption + the verdict sentence, both grounded in the numbers.
@@ -2262,7 +2284,12 @@ ZNF250</div>
       // bubble via the empty customMsg path; the agent turn above already showed the message.
       appendPlanTurn(update.gene, {}, "", update.decision_brief||null);
       var pt=thread.lastElementChild;
-      if(pt){ var pu=pt.querySelector(".js-user"); if(pu){ var prow=pu.closest(".user-row"); (prow||pu).style.display="none"; } }
+      if(pt){
+        var pu=pt.querySelector(".js-user"); if(pu){ var prow=pu.closest(".user-row"); (prow||pu).style.display="none"; }
+        pt.classList.add("inline-plan");
+        if(agentBody) agentBody.appendChild(pt);
+      }
+      renderArtifacts(update.gene);
       return update.gene;
     }
     if(update.action==="known_biology"){
