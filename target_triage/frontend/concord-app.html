@@ -351,6 +351,7 @@
   .agent-facet{margin-top:16px;max-width:540px}
   /* Bench-notebook sketch: a code-generated SVG dropped in below the agent narration. */
   .sketch-fig{margin:16px 0 4px;max-width:560px}
+  .sketch-fig.pathway-fig{max-width:640px}
   .sketch-fig svg{display:block;width:100%;height:auto;border-radius:12px;box-shadow:inset 0 0 0 1px var(--line),0 14px 34px -30px rgba(20,43,50,.4)}
   .sketch-cap{margin-top:9px;font-family:var(--font-serif);font-size:13.5px;line-height:1.55;color:var(--ink-soft)}
 
@@ -2706,6 +2707,7 @@ ZNF250</div>
               else if(ev.update.action==="hitlist_biology") act(actEl,"data","pathway enrichment over the replicated hits","done");
               else if(ev.update.action==="rank_targets") act(actEl,"data","ranked candidate shortlist — impact × druggability × disease","done");
               else if(ev.update.action==="sketch") act(actEl,"data","bench sketch — code-drawn from the verdict","done");
+              else if(ev.update.action==="pathway_map") act(actEl,"data","pathway-context map — real partners, marked hypotheses","done");
             }
           }
           else if(ev.type==="text"){
@@ -2886,6 +2888,18 @@ ZNF250</div>
         fig.className="sketch-fig";
         fig.innerHTML=sk.svg+'<figcaption class="sketch-cap">'+esc(sk.headline||"")+'</figcaption>';
         agentBody.appendChild(fig);
+      }
+      return update.gene;
+    }
+    if(update.action==="pathway_map" && update.pathway_map){
+      // The biological-context map: the gene among its REAL pathway partners + candidate mechanisms
+      // as marked hypotheses. Same code-authored-SVG contract as the sketch, wider frame.
+      var pm=update.pathway_map;
+      if(agentBody && pm.svg){
+        var pfig=document.createElement("figure");
+        pfig.className="sketch-fig pathway-fig";
+        pfig.innerHTML=pm.svg+'<figcaption class="sketch-cap">'+esc(pm.caption||"")+'</figcaption>';
+        agentBody.appendChild(pfig);
       }
       return update.gene;
     }

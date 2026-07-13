@@ -1,42 +1,4 @@
 {
-"0c16421695ae98c1": [
-{
-"term": "Generation Of Second Messenger Molecules R-HSA-202433",
-"adj_p": 0.0,
-"n_genes": 5,
-"library": "Reactome_2022"
-},
-{
-"term": "TCR Signaling R-HSA-202403",
-"adj_p": 0.0,
-"n_genes": 6,
-"library": "Reactome_2022"
-},
-{
-"term": "FCERI Mediated Ca+2 Mobilization R-HSA-2871809",
-"adj_p": 1e-08,
-"n_genes": 4,
-"library": "Reactome_2022"
-},
-{
-"term": "Fc Epsilon Receptor (FCERI) Signaling R-HSA-2454202",
-"adj_p": 2e-08,
-"n_genes": 5,
-"library": "Reactome_2022"
-},
-{
-"term": "Adaptive Immune System R-HSA-1280218",
-"adj_p": 2e-08,
-"n_genes": 7,
-"library": "Reactome_2022"
-},
-{
-"term": "FCERI Mediated MAPK Activation R-HSA-2871796",
-"adj_p": 3.46e-06,
-"n_genes": 3,
-"library": "Reactome_2022"
-}
-],
 "0b86cc5d52368aab": [
 {
 "term": "TCR Signaling R-HSA-202403",
@@ -76,42 +38,189 @@
 }
 ],
 "f8168084b4432384": [],
+"0c16421695ae98c1": [
+{
+"term": "Generation Of Second Messenger Molecules R-HSA-202433",
+"adj_p": 0.0,
+"n_genes": 5,
+"library": "Reactome_2022",
+"genes": [
+"ZAP70",
+"ITK",
+"LCP2",
+"PLCG1",
+"CD3D"
+]
+},
+{
+"term": "TCR Signaling R-HSA-202403",
+"adj_p": 0.0,
+"n_genes": 6,
+"library": "Reactome_2022",
+"genes": [
+"ZAP70",
+"ITK",
+"LCP2",
+"BCL10",
+"PLCG1",
+"CD3D"
+]
+},
+{
+"term": "FCERI Mediated Ca+2 Mobilization R-HSA-2871809",
+"adj_p": 1e-08,
+"n_genes": 4,
+"library": "Reactome_2022",
+"genes": [
+"ITK",
+"LCP2",
+"PLCG1",
+"VAV1"
+]
+},
+{
+"term": "Fc Epsilon Receptor (FCERI) Signaling R-HSA-2454202",
+"adj_p": 2e-08,
+"n_genes": 5,
+"library": "Reactome_2022",
+"genes": [
+"ITK",
+"LCP2",
+"BCL10",
+"PLCG1",
+"VAV1"
+]
+},
+{
+"term": "Adaptive Immune System R-HSA-1280218",
+"adj_p": 2e-08,
+"n_genes": 7,
+"library": "Reactome_2022",
+"genes": [
+"ZAP70",
+"ITK",
+"LCP2",
+"BCL10",
+"PLCG1",
+"CD3D",
+"VAV1"
+]
+},
+{
+"term": "FCERI Mediated MAPK Activation R-HSA-2871796",
+"adj_p": 3.46e-06,
+"n_genes": 3,
+"library": "Reactome_2022",
+"genes": [
+"LCP2",
+"PLCG1",
+"VAV1"
+]
+}
+],
 "b77435f926db8b37": [
 {
 "term": "TCR Signaling R-HSA-202403",
 "adj_p": 0.0,
 "n_genes": 10,
-"library": "Reactome_2022"
+"library": "Reactome_2022",
+"genes": [
+"ZAP70",
+"ITK",
+"PTPRC",
+"CHUK",
+"LCP2",
+"CD247",
+"BCL10",
+"PLCG1",
+"CD3E",
+"CD3D"
+]
 },
 {
 "term": "Generation Of Second Messenger Molecules R-HSA-202433",
 "adj_p": 0.0,
 "n_genes": 7,
-"library": "Reactome_2022"
+"library": "Reactome_2022",
+"genes": [
+"ITK",
+"ZAP70",
+"LCP2",
+"PLCG1",
+"CD247",
+"CD3E",
+"CD3D"
+]
 },
 {
 "term": "Adaptive Immune System R-HSA-1280218",
 "adj_p": 2.73e-06,
 "n_genes": 12,
-"library": "Reactome_2022"
+"library": "Reactome_2022",
+"genes": [
+"ZAP70",
+"ITK",
+"PTPRC",
+"CHUK",
+"CD28",
+"LCP2",
+"CD247",
+"BCL10",
+"PLCG1",
+"CD3E",
+"CD3D",
+"VAV1"
+]
 },
 {
 "term": "Immune System R-HSA-168256",
 "adj_p": 2.73e-06,
 "n_genes": 18,
-"library": "Reactome_2022"
+"library": "Reactome_2022",
+"genes": [
+"ITK",
+"CHUK",
+"BCL10",
+"CD3E",
+"RBSN",
+"CD3D",
+"VAV1",
+"NFKB2",
+"ZAP70",
+"PTPRC",
+"MYC",
+"CD28",
+"LCP2",
+"DEGS1",
+"PTPN7",
+"CD247",
+"PLCG1",
+"EIF4G1"
+]
 },
 {
 "term": "Translocation Of ZAP-70 To Immunological Synapse R-HSA-202430",
 "adj_p": 3.04e-06,
 "n_genes": 4,
-"library": "Reactome_2022"
+"library": "Reactome_2022",
+"genes": [
+"ZAP70",
+"CD247",
+"CD3E",
+"CD3D"
+]
 },
 {
 "term": "Phosphorylation Of CD3 And TCR Zeta Chains R-HSA-202427",
 "adj_p": 5.13e-06,
 "n_genes": 4,
-"library": "Reactome_2022"
+"library": "Reactome_2022",
+"genes": [
+"PTPRC",
+"CD247",
+"CD3E",
+"CD3D"
+]
 }
 ]
 }

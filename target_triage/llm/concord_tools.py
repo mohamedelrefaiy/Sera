@@ -523,6 +523,68 @@ async def sketch_gene(args):
     )
 
 
+# The code-owned replicated hit set (genes both screens agree on) — the enrichment universe the
+# pathway map places a gene within. Computed here (not imported private) so the dependency is clean.
+_REPLICATED_GENES = tuple(sorted({
+    (r.get("gene") or "").strip().upper()
+    for r in _CONCORDANCE if r.get("verdict") == "replicated" and (r.get("gene") or "").strip()}))
+
+
+@tool(
+    "pathway_map",
+    "Draw the BIOLOGICAL-CONTEXT map for ONE gene: where it sits in its signalling neighbourhood — "
+    "the gene as a node among its REAL pathway partners (from the code-owned enrichment), coloured by "
+    "verdict, with candidate mechanisms shown as clearly-marked hypotheses for a disagreement. Call "
+    "this for 'where does GENE sit', 'show the biology / pathway context of GENE', 'what pathway is "
+    "GENE in', 'why might the layers disagree', or when the user wants a richer BIOLOGICAL figure than "
+    "the bench sketch. Partners and pathway are CODE-derived (never invented); hypotheses are marked "
+    "as hypotheses, not facts. Renders as a figure — give ONE plain lead-in sentence, do not restate "
+    "the partners or quote numbers.",
+    {
+        "type": "object",
+        "properties": {
+            "gene": {"type": "string", "description": "Gene symbol, e.g. ZAP70."},
+            "condition": {
+                "type": "string",
+                "description": "Optional activation condition: Rest, Stim8hr, or Stim48hr.",
+            },
+        },
+        "required": ["gene"],
+    },
+)
+async def pathway_map(args):
+    import dataclasses
+
+    from ..clients import enrichr
+    from ..core.pathway_map import build_pathway_map
+
+    gene = (args.get("gene") or "").strip().upper()
+    hits = _BY_GENE.get(gene)
+    if not hits:
+        return _text({"gene": gene, "error": "not in the screens",
+                      "note": "Only genes present in both CRISPR screens can be mapped."})
+    by_cond = {r["condition"]: r for r in hits}
+    requested = _resolve_condition(args.get("condition"), list(by_cond.keys()))
+    anchor = requested or next((c for c in _SKETCH_ANCHOR_ORDER if c in by_cond),
+                               hits[0]["condition"])
+    # Enrichment over the replicated hit set gives real pathways WITH their overlap members, so the
+    # map places the gene among genuine partners. Cached (offline for the demo set).
+    pathways = enrichr.enrich(_REPLICATED_GENES) if _REPLICATED_GENES else []
+    try:
+        pmap = dataclasses.asdict(build_pathway_map(by_cond[anchor], pathways))
+    except (ValueError, KeyError) as e:
+        return _text({"gene": gene, "error": "could not build a pathway map", "detail": str(e),
+                      "note": "Say the pathway map isn't available for this gene; do not invent one."})
+    return _view(
+        {"gene": gene, "verdict": pmap["focal_verdict"], "pathway": pmap["pathway"],
+         "condition": anchor,
+         "note": "ONE plain lead-in sentence only (e.g. 'Here's where " + gene + " sits.'). The map "
+                 "carries the partners and hypotheses — do NOT list the partners or name a pathway "
+                 "the map didn't return; hypotheses are hypotheses, never state them as fact."},
+        {"action": "pathway_map", "gene": gene, "pathway_map": pmap},
+    )
+
+
 _BRIEF_ANCHOR_ORDER = ("Stim48hr", "Stim8hr", "Rest")
 
 
@@ -592,7 +654,7 @@ def build_concord_server():
         name="concord",
         version="0.1.0",
         tools=[reconcile_gene, compare_conditions, gene_evidence, known_biology,
-               draft_decision_brief, hitlist_biology, sketch_gene, rank_targets],
+               draft_decision_brief, hitlist_biology, sketch_gene, rank_targets, pathway_map],
     )
 
 
@@ -605,4 +667,5 @@ CONCORD_ALLOWED_TOOLS = [
     "mcp__concord__hitlist_biology",
     "mcp__concord__sketch_gene",
     "mcp__concord__rank_targets",
+    "mcp__concord__pathway_map",
 ]

@@ -29,6 +29,10 @@ class Pathway:
     adj_p: float
     n_genes: int
     library: str
+    genes: tuple[str, ...] = ()   # the overlapping input genes Enrichr reports for this pathway
+                                  # (row[5]); kept so a pathway-context map can place a gene among
+                                  # its REAL partners, never invented ones. Defaults to () for
+                                  # backward compatibility with cache entries written before this.
 
 
 def _key(genes: tuple[str, ...], library: str) -> str:
@@ -68,8 +72,9 @@ def _enrich(user_list_id: str, library: str) -> list[Pathway]:
     # Enrichr row: [rank, term, p, zscore, combined, [genes], adj_p, ...]
     out = []
     for row in rows[:TOP_N]:
+        members = tuple(str(g).upper() for g in row[5])
         out.append(Pathway(term=row[1], adj_p=round(float(row[6]), 8),
-                           n_genes=len(row[5]), library=library))
+                           n_genes=len(members), library=library, genes=members))
     return out
 
 
@@ -82,7 +87,10 @@ def enrich(genes, library: str = DEFAULT_LIBRARY, progress=None) -> list[Pathway
     cache = _load_cache()
     k = _key(genes, library)
     if k in cache:
-        return [Pathway(**p) for p in cache[k]]
+        # `genes` may be absent in entries written before the pathway-map change; tolerate that.
+        return [Pathway(term=p["term"], adj_p=p["adj_p"], n_genes=p["n_genes"],
+                        library=p["library"], genes=tuple(p.get("genes", ())))
+                for p in cache[k]]
     try:
         uid = _add_list(genes)
         paths = _enrich(uid, library)
@@ -90,8 +98,8 @@ def enrich(genes, library: str = DEFAULT_LIBRARY, progress=None) -> list[Pathway
         if progress:
             progress(f"  enrichr error: {e}")
         return []
-    cache[k] = [{"term": p.term, "adj_p": p.adj_p, "n_genes": p.n_genes, "library": p.library}
-                for p in paths]
+    cache[k] = [{"term": p.term, "adj_p": p.adj_p, "n_genes": p.n_genes, "library": p.library,
+                 "genes": list(p.genes)} for p in paths]
     _save_cache(cache)
     return paths
 
