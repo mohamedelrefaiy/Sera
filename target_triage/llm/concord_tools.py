@@ -356,6 +356,121 @@ async def hitlist_biology(args):
     )
 
 
+# --- discovery: rank the whole screen for candidate targets -------------------------------------
+# The shortlist is expensive (ranks + verifies every significant gene, hits the OT cache). Compute
+# it once, lazily, and hold it in module state — the screen is static, so the ranking never changes
+# within a process. Mirrors api/app.py's _SHORTLISTS cache; the tool serves the SAME rows the
+# deterministic /api/shortlist endpoint does, so chat discovery and the Hit-list view never diverge.
+_SHORTLIST_CACHE: list[dict] | None = None
+
+
+def _shortlist_rows() -> list[dict]:
+    """The ranked + verified + annotated shortlist for the Marson screen, computed once."""
+    global _SHORTLIST_CACHE
+    if _SHORTLIST_CACHE is None:
+        from ..core.shortlist import compute_shortlist
+        _SHORTLIST_CACHE = compute_shortlist()
+    return _SHORTLIST_CACHE
+
+
+#: Druggability tier words — the agent narrates a TIER, never the raw score (same words-not-figures
+#: discipline as every other tool). Closed set; the code picks the bucket, the agent reads it out.
+def _drug_tier(score: float) -> str:
+    if score >= 0.6:
+        return "strong drug handle"
+    if score >= 0.3:
+        return "some drug handle"
+    return "little drug handle"
+
+
+def _disease_tier(score: float) -> str:
+    if score >= 0.7:
+        return "strong disease genetics"
+    if score >= 0.4:
+        return "moderate disease genetics"
+    return "weak disease genetics"
+
+
+#: The default size of the surfaced candidate list. Small on purpose — a triage shortlist a
+#: scientist can actually read and act on, not a genome-scale dump.
+_RANK_DEFAULT_N = 12
+_RANK_MAX_N = 25
+
+
+@tool(
+    "rank_targets",
+    "Surface CANDIDATE drug targets from the whole screen — the DISCOVERY question ('find new "
+    "targets', 'what should I look at', 'top hits', 'rank the screen', 'which genes are worth "
+    "chasing'). Returns the code-computed shortlist: every significant gene ranked by an actionable "
+    "score (knockdown impact reweighted by druggability x disease genetics, with obvious TCR "
+    "machinery damped so novel candidates float up), each already verified and carrying its "
+    "concordance verdict. This is the front door for a scientist who does NOT yet have a gene in "
+    "mind. The ranking, the genes, and their verdicts are ALL computed by code — you narrate the "
+    "shape of the list (how many strong candidates, what stands out) in plain words and NEVER add a "
+    "gene, invent a rank, or quote the raw scores. Point the scientist at reconcile_gene or "
+    "draft_decision_brief to go deeper on any one. Pass `limit` to widen/narrow (default 12).",
+    {
+        "type": "object",
+        "properties": {
+            "limit": {
+                "type": "integer",
+                "description": "How many top candidates to surface (default 12, max 25).",
+            },
+        },
+    },
+)
+async def rank_targets(args):
+    rows = _shortlist_rows()
+    if not rows:
+        return _text({"error": "shortlist not available",
+                      "note": "Say the ranked candidate list isn't available; do not invent genes "
+                              "or ranks."})
+    try:
+        n = int(args.get("limit") or _RANK_DEFAULT_N)
+    except (TypeError, ValueError):
+        n = _RANK_DEFAULT_N
+    n = max(1, min(n, _RANK_MAX_N))
+
+    top = rows[:n]
+    # Words-only facts the agent narrates from — no raw scores. Each candidate is a CLOSED-SET row
+    # the code produced; the agent may describe the list's shape but never add or reorder a gene.
+    candidates = [
+        {
+            "rank": r["rank"],
+            "gene": r["gene"],
+            "verdict": r["verdict"],
+            "best_condition": r["best_condition"],
+            "druggability": _drug_tier(r.get("druggable_score") or 0.0),
+            "disease": _disease_tier(r.get("disease_score") or 0.0),
+            "top_disease": r.get("top_disease"),
+            "clinical_stage": r.get("clinical_stage"),
+        }
+        for r in top
+    ]
+    n_promote = sum(1 for r in top if str(r["verdict"]).startswith("PROMOTE"))
+    plain = {
+        "n_shown": len(candidates),
+        "n_total_significant": len(rows),
+        "n_promote": n_promote,
+        "lead_gene": candidates[0]["gene"] if candidates else None,
+        "how_ranked": (
+            "ranked by an actionable score — knockdown impact reweighted by druggability and immune-"
+            "disease genetics, with obvious T-cell-receptor machinery damped so less-expected "
+            "candidates rise"),
+        "takeaway": (
+            "these are the code-ranked candidates worth triaging; open any one to see whether the "
+            "mRNA and protein screens agree and what to do next"),
+    }
+    return _view(
+        {"plain": plain, "candidates": candidates,
+         "note": "Narrate the SHAPE of this list in one or two plain sentences from `plain` — how "
+                 "many strong candidates, what leads, how it was ranked. Do NOT list every gene in "
+                 "prose (the card shows them), do NOT quote scores, and NEVER name a gene that is "
+                 "not in `candidates`. Invite the scientist to open one with reconcile_gene."},
+        {"action": "rank_targets", "candidates": candidates},
+    )
+
+
 _SKETCH_ANCHOR_ORDER = ("Stim48hr", "Stim8hr", "Rest")
 
 
@@ -477,7 +592,7 @@ def build_concord_server():
         name="concord",
         version="0.1.0",
         tools=[reconcile_gene, compare_conditions, gene_evidence, known_biology,
-               draft_decision_brief, hitlist_biology, sketch_gene],
+               draft_decision_brief, hitlist_biology, sketch_gene, rank_targets],
     )
 
 
@@ -489,4 +604,5 @@ CONCORD_ALLOWED_TOOLS = [
     "mcp__concord__draft_decision_brief",
     "mcp__concord__hitlist_biology",
     "mcp__concord__sketch_gene",
+    "mcp__concord__rank_targets",
 ]

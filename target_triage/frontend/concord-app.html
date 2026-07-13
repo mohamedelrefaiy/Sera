@@ -1000,6 +1000,31 @@
      two data channels (--mrna, --protein), --lock for the deterministic verdict, and --ink/--line
      for structure. SVG classes read from theme variables so every theme (dark, alt-dark, light,
      print) recolours it for free. */
+  /* Discovery candidate-list card — rendered inline in the chat when the agent calls rank_targets.
+     Reuses the app's card idiom (surface + hairline), mono for the machine-ranked rows. Colour is
+     meaning: a promote verdict reads in the mRNA channel, a reject in --danger, neither is neutral. */
+  .rank-card{margin:14px 0 4px;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+  .rt-head{padding:13px 16px 11px;border-bottom:1px solid var(--line)}
+  .rt-k{display:block;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:3px}
+  .rt-sub{display:block;font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)}
+  .rt-list{display:flex;flex-direction:column}
+  .rt-row{display:grid;grid-template-columns:30px 78px 96px 1fr;align-items:center;gap:10px;
+    width:100%;text-align:left;padding:10px 16px;border:0;border-top:1px solid var(--line);
+    background:transparent;cursor:pointer;transition:.12s;font-family:var(--font-mono)}
+  .rt-row:first-child{border-top:0}
+  .rt-row:hover{background:var(--surface-2)}
+  .rt-rank{font-size:12px;color:var(--ink-faint);text-align:right}
+  .rt-gene{font-size:13.5px;color:var(--ink);font-weight:500;letter-spacing:.02em}
+  .rt-verdict{font-size:10.5px;letter-spacing:.04em;text-transform:lowercase}
+  .rt-verdict.promote{color:var(--mrna)}
+  .rt-verdict.reject{color:var(--danger,#C4553B)}
+  .rt-verdict.neutral{color:var(--ink-faint)}
+  .rt-tags{display:flex;flex-wrap:wrap;gap:5px;justify-self:start}
+  .rt-tag{font-size:10px;letter-spacing:.02em;padding:2px 7px;border-radius:20px;border:1px solid var(--line-strong);color:var(--ink-soft);white-space:nowrap}
+  .rt-tag.clin{border-color:var(--lock);color:var(--lock)}
+  .rt-dis{grid-column:2/-1;font-family:var(--font-serif);font-size:12px;color:var(--ink-faint);margin-top:-2px}
+  @media(max-width:700px){.rt-row{grid-template-columns:26px 64px 84px 1fr;gap:7px;padding:10px 13px}.rt-tags{display:none}}
+
   .how-figframe{margin:22px 0 4px;padding:20px 20px 16px;border-radius:14px;background:var(--surface);
     border:1px solid var(--line)}
   .how-figframe svg{width:100%;height:auto;display:block}
@@ -1114,15 +1139,15 @@
         <h1 class="landing-h">When the transcript says one thing and the protein says another.</h1>
         <p class="landing-sub">You knocked out a gene in two screens — one reading mRNA, one reading protein — and they disagree. Ask about the target and Concord tells you which reading to trust, what the evidence can and can’t prove, and the one experiment that settles it.</p>
         <div class="landing-prompts" id="landingPrompts">
-          <button class="lprompt lprompt-hero" data-q="Should TSC1 advance?">
-            <span class="lp-k">Start here · Decision brief</span><span class="lp-t">Should this target advance to a bench validation experiment?</span>
+          <button class="lprompt lprompt-hero" data-q="Find new drug targets in this screen">
+            <span class="lp-k">Start here · Discover</span><span class="lp-t">Don't have a gene yet? Surface the top candidate targets from the whole screen.</span>
+            <span class="lp-ex">"Find new drug targets in this screen"</span></button>
+          <button class="lprompt" data-q="Should TSC1 advance?">
+            <span class="lp-k">Decision brief</span><span class="lp-t">Should a specific target advance to a bench experiment?</span>
             <span class="lp-ex">"Should TSC1 advance?"</span></button>
           <button class="lprompt" data-q="Is PTPN2 druggable?">
             <span class="lp-k">Druggability</span><span class="lp-t">Is a gene a viable drug target?</span>
             <span class="lp-ex">"Is PTPN2 druggable?"</span></button>
-          <button class="lprompt" data-q="What could make the TSC1 result fail?">
-            <span class="lp-k">Stress-test</span><span class="lp-t">Surface the assumptions and failure modes before going to the bench</span>
-            <span class="lp-ex">"What could make the TSC1 result fail?"</span></button>
           <button class="lprompt" data-q="Does Concord recover known biology?">
             <span class="lp-k">Validate</span><span class="lp-t">Does the tool recover known biology?</span>
             <span class="lp-ex">"Does it recover known biology?"</span></button>
@@ -2823,9 +2848,10 @@ ZNF250</div>
           '<span class="rt-sub">code-ranked · impact × druggability × disease · click a gene to reconcile</span></div>'+
           '<div class="rt-list">'+rows+'</div>';
         agentBody.appendChild(rc);
-        // Each row reconciles its gene — reuse the composer submit path so the flow matches typing it.
+        // Each row reconciles its gene — route through handleMessage exactly like the artifact-rail
+        // gene chips (line ~3487), so a click behaves as if the scientist typed "Reconcile GENE".
         rc.querySelectorAll(".rt-row").forEach(function(b){
-          b.addEventListener("click",function(){ var g=b.getAttribute("data-gene"); if(g) submitGene(g); });
+          b.addEventListener("click",function(){ var g=b.getAttribute("data-gene"); if(g) handleMessage("Reconcile "+g); });
         });
       }
       return "__rank_targets__";

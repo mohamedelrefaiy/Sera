@@ -189,3 +189,55 @@ def test_draft_decision_brief_is_registered_and_prompt_routes_to_it():
     assert any(k in p for k in ("what should i do", "validation", "resolve the disagreement",
                                 "what experiment", "next step")), \
         "prompt has no decision-brief trigger language"
+
+
+# ── 5. discovery: rank_targets surfaces the code-ranked candidate shortlist ──────────────────
+# The dogfooding gap: a scientist asking "find new targets" was told Concord can't, even though
+# compute_shortlist ranks the whole screen. rank_targets is the front door — these lock the control
+# that the tool serves ONLY the code-ranked closed set (agent never authors a gene or a rank).
+
+
+def test_rank_targets_returns_code_ranked_closed_set():
+    out = _run(concord_tools.rank_targets.handler({"limit": 6}))
+    payload, vu = _payload(out), _view(out)
+    assert vu["action"] == "rank_targets"
+    cands = vu["candidates"]
+    assert len(cands) == 6, "rank_targets must honour the requested limit"
+    # ranks are the code's, contiguous from 1 (the agent cannot reorder or invent a rank)
+    assert [c["rank"] for c in cands] == [1, 2, 3, 4, 5, 6]
+    # every surfaced gene is a real screen gene, never fabricated
+    for c in cands:
+        assert c["gene"] in concord_tools._GENES, f"{c['gene']} is not a real screen gene"
+    assert payload["plain"]["n_total_significant"] > len(cands)
+
+
+def test_rank_targets_leaks_no_raw_statistic_to_the_agent():
+    """Same words-only discipline as every other tool: druggability/disease are TIER WORDS, and no
+    z/lfc/p/fdr or raw score reaches the narration payload — the numbers live in the card only."""
+    out = _run(concord_tools.rank_targets.handler({}))
+    payload = _payload(out)
+    # the agent-facing text carries no stat tokens or raw score field names
+    text = json.dumps({k: v for k, v in payload.items() if k != "__view_update__"})
+    assert not _STAT_RE.search(text), "rank_targets narration payload leaks a statistic"
+    for score_key in ("druggable_score", "disease_score", "actionable_score"):
+        assert score_key not in text, f"raw {score_key} must not reach the agent payload"
+
+
+def test_rank_targets_limit_is_clamped_not_crashed():
+    """A silly limit degrades to the bounds, never errors."""
+    assert len(_view(_run(concord_tools.rank_targets.handler({"limit": 9999})))["candidates"]) \
+        <= concord_tools._RANK_MAX_N
+    assert len(_view(_run(concord_tools.rank_targets.handler({"limit": 0})))["candidates"]) >= 1
+
+
+def test_rank_targets_is_registered_and_prompt_routes_discovery_to_it():
+    assert "mcp__concord__rank_targets" in concord_tools.CONCORD_ALLOWED_TOOLS
+    assert concord_tools.rank_targets.name == "rank_targets"
+    p = concord_prompt.CONCORD_SYSTEM_PROMPT.lower()
+    assert "rank_targets" in p, "prompt never mentions the discovery tool"
+    assert any(k in p for k in ("find new drug targets", "surface candidate", "top candidates",
+                                "does not yet have a gene", "rank the screen")), \
+        "prompt has no discovery trigger language"
+    # the prompt must NOT still claim Concord can't find targets
+    assert "concord can" in p and "front door" in p, \
+        "prompt should affirm Concord CAN surface candidates"
