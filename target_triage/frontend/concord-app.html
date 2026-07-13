@@ -129,6 +129,8 @@
   .session .s-del svg{width:13px;height:13px;stroke:currentColor}
   @media(max-width:1100px){.sessions,.sessions-empty,.newchat .lbl{display:none}}
   .nav-foot{display:none}
+  .lab-nav{margin-top:5px}
+  .lab-nav svg{fill:none}
   @media(max-width:1100px){.nav .lbl,.nav-sec,.nav-top small{display:none}.nav-top .txt{display:none}}
 
   /* center conversation column */
@@ -136,6 +138,10 @@
   .convo-head{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--line);flex-shrink:0}
   .convo-head .title{font-family:var(--font-display);font-weight:500;font-size:15px}
   .convo-head .crumb{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint)}
+  .lab-indicator{margin-left:auto;display:inline-flex;align-items:center;gap:7px;max-width:260px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-soft);font:500 11px/1.2 var(--font-ui);cursor:pointer;transition:.18s ease}
+  .lab-indicator:hover{border-color:var(--line-strong);color:var(--ink);background:var(--surface-2)}
+  .lab-indicator .lab-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+  .lab-indicator .lab-indicator-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .convo-scroll{flex:1;overflow-y:auto;padding:8px 24px 20px}
   .convo-scroll::-webkit-scrollbar{width:10px}
   .convo-scroll::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:6px;border:3px solid var(--bg)}
@@ -674,6 +680,21 @@
   .bi-r{margin:0;padding-left:18px;font-family:var(--font-serif);font-size:13.5px;line-height:1.55;color:var(--ink-soft)}
   .bi-r li{margin:2px 0}
 
+  /* Persistent lab defaults. A non-modal slide-over keeps the conversation visible while the
+     scientist describes what their bench can run; the per-plan controls remain temporary. */
+  .lab-backdrop{position:fixed;inset:0;z-index:30;background:rgba(8,18,22,.28);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s ease}
+  .lab-backdrop.open{opacity:1;pointer-events:auto}
+  .lab-panel{position:absolute;right:0;top:0;width:min(430px,100%);height:100%;overflow-y:auto;padding:26px 28px 34px;background:var(--bg);border-left:1px solid var(--line);box-shadow:-24px 0 64px -42px rgba(20,43,50,.55);transform:translateX(102%);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+  .lab-backdrop.open .lab-panel{transform:none}
+  .lab-panel-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:26px}
+  .lab-panel-head>div{flex:1}.lab-panel h2{margin:0 0 7px;font:650 25px/1.15 var(--font-ui);letter-spacing:-.035em}.lab-panel-head p,.lab-help{margin:0;color:var(--ink-soft);font:13px/1.5 var(--font-ui)}
+  .lab-close{display:grid;place-items:center;width:34px;height:34px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink-soft);cursor:pointer}.lab-close:hover{color:var(--ink);border-color:var(--line-strong)}.lab-close svg{width:16px;height:16px;stroke:currentColor}
+  .lab-field{display:block;margin:20px 0}.lab-field-title{display:block;margin-bottom:8px;color:var(--ink);font:600 12px/1.3 var(--font-ui)}
+  .lab-field input[type=text],.lab-number{width:100%;box-sizing:border-box;padding:10px 11px;border:1px solid var(--line-strong);border-radius:9px;background:var(--surface);color:var(--ink);font:13px var(--font-ui)}
+  .lab-readouts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.lab-ro{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink-soft);font:13px var(--font-ui);cursor:pointer}.lab-ro:has(input:checked){border-color:color-mix(in srgb,var(--accent) 42%,var(--line));background:color-mix(in srgb,var(--accent) 7%,var(--surface));color:var(--ink)}.lab-ro input{accent-color:var(--accent)}
+  .lab-numbers{display:grid;grid-template-columns:1fr 1fr;gap:12px}.lab-help{display:block;margin-top:6px;font-size:11.5px}
+  .lab-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:26px;padding-top:20px;border-top:1px solid var(--line)}.lab-cancel,.lab-save{min-height:38px;padding:0 15px;border-radius:9px;font:600 12px var(--font-ui);cursor:pointer}.lab-cancel{border:1px solid var(--line);background:transparent;color:var(--ink-soft)}.lab-save{border:0;background:var(--accent);color:#fff}.lab-status{min-height:18px;margin-top:12px;color:var(--mrna);font:11.5px var(--font-ui)}
+
   /* Advanceability axis — the verdict-INDEPENDENT "should it advance?" answer. A code-owned stance
      badge + a target-quality strip (druggability / disease genetics / QC). Distinct from the
      reconciliation verdict badge on purpose: this reads target quality, not screen agreement. */
@@ -908,7 +929,7 @@
     .nav-top{min-height:0;height:40px;margin:0 auto 0 0;padding:0 8px;border:0}.nav-top .txt{display:flex}.nav-top small{display:none}
     .newchat{width:40px;margin:0!important;padding:0!important;justify-content:center}.newchat .lbl{display:none}
     .modes{display:flex!important}.modes .nav-item{width:auto;min-height:40px;padding:8px 11px}.modes .lbl{display:inline}
-    .sessions,.nav-sec,.nav-foot{display:none}.convo{height:calc(100dvh - 58px)}
+    .sessions,.nav-sec,.nav-foot,.lab-nav{display:none}.convo{height:calc(100dvh - 58px)}
     .convo-head{min-height:52px;padding:0 18px}.convo-scroll,.composer{padding-left:18px;padding-right:18px}
     .landing{padding-top:7vh}.landing-h{font-size:34px}.composer-chips{overflow-x:auto;flex-wrap:nowrap;padding-bottom:3px}
     .cchip{flex:none}.reply-turn.user-row .user-msg{max-width:86%}
@@ -916,6 +937,7 @@
     .plan-sheet .plan-grid{grid-template-columns:1fr}.plan-sheet .pcard:nth-child(even){padding-left:0;border-left:0}.plan-sheet .exports{width:100%}
   }
   @media(max-width:560px){.nav-top{width:30px;padding:0;margin-right:auto}.nav-top .txt{display:none!important}.modes{gap:4px}}
+  @media(max-width:560px){.lab-indicator{max-width:150px}.lab-indicator-prefix{display:none}.lab-panel{padding:22px 20px 30px}.lab-readouts{grid-template-columns:1fr}.lab-numbers{grid-template-columns:1fr}}
   @media(max-width:420px){.nav-top .txt{font-size:13px}.modes .nav-item{padding:8px}.modes .lbl{display:none}.landing-h{font-size:30px}}
 
   /* print: a clean one-page validation plan (the ELN/PDF export — the handoff artifact). The app
@@ -951,6 +973,7 @@
       <button class="nav-item mode on" id="mChat" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="lbl">Chat</span></button>
       <button class="nav-item mode" id="mBatch" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="lbl">Hit list</span></button>
     </div>
+    <button class="nav-item lab-nav" id="openLabNav" aria-haspopup="dialog"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 3h6M10 3v5l-5.5 9.5A2.3 2.3 0 0 0 6.5 21h11a2.3 2.3 0 0 0 2-3.5L14 8V3M7.5 15h9"/></svg><span class="lbl">My Lab</span></button>
     <div class="nav-sec">Recent</div>
     <div class="sessions" id="sessions">
       <div class="sessions-empty" id="sessionsEmpty">No chats yet</div>
@@ -964,6 +987,7 @@
       <span class="title" id="convoTitle">Chat</span>
       <span class="crumb" id="urlPath">gene/ITK</span>
       <span class="convo-context">Experimental decision workspace</span>
+      <button class="lab-indicator" id="openLabIndicator" aria-haspopup="dialog" title="Edit saved lab defaults"><span class="lab-dot" aria-hidden="true"></span><span class="lab-indicator-text" id="labIndicatorText"><span class="lab-indicator-prefix">My Lab · </span>Set your bench</span></button>
       <button class="arts-toggle" id="artsToggle" aria-label="Toggle artifacts" title="Show/hide artifacts" aria-pressed="false">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M15 4v16"/></svg>
       </button>
@@ -1301,6 +1325,33 @@ ZNF250</div>
 
 </div><!-- /workspace -->
 
+<div class="lab-backdrop" id="labBackdrop" hidden>
+  <section class="lab-panel" id="labPanel" role="dialog" aria-modal="true" aria-labelledby="labTitle" aria-describedby="labDescription" tabindex="-1">
+    <div class="lab-panel-head">
+      <div><h2 id="labTitle">My Lab</h2><p id="labDescription">Save the capabilities Concord should assume when it designs a validation experiment.</p></div>
+      <button class="lab-close" id="closeLab" aria-label="Close My Lab"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <form id="labForm">
+      <label class="lab-field"><span class="lab-field-title">Lab name <span style="color:var(--ink-faint);font-weight:400">(optional)</span></span><input type="text" id="labName" maxlength="60" autocomplete="organization" placeholder="e.g. Immunology Lab"></label>
+      <fieldset class="lab-field" style="border:0;padding:0"><legend class="lab-field-title">Available readouts</legend>
+        <div class="lab-readouts">
+          <label class="lab-ro"><input type="checkbox" name="labReadout" value="qpcr"> qPCR <span style="color:var(--ink-faint)">transcript</span></label>
+          <label class="lab-ro"><input type="checkbox" name="labReadout" value="elisa"> ELISA</label>
+          <label class="lab-ro"><input type="checkbox" name="labReadout" value="facs"> FACS</label>
+          <label class="lab-ro"><input type="checkbox" name="labReadout" value="western"> Western blot</label>
+        </div><span class="lab-help">Choose at least one. Concord will identify what your available assays can and cannot resolve.</span>
+      </fieldset>
+      <div class="lab-numbers">
+        <label class="lab-field"><span class="lab-field-title">Typical donors</span><input class="lab-number" type="number" id="labDonors" min="0" max="12" required><span class="lab-help">0–12 donors</span></label>
+        <label class="lab-field"><span class="lab-field-title">Available days</span><input class="lab-number" type="number" id="labDays" min="0" max="60" required><span class="lab-help">0–60 days</span></label>
+      </div>
+      <p class="lab-help">These are saved browser-local defaults. You can adjust an individual plan without changing them.</p>
+      <div class="lab-actions"><button type="button" class="lab-cancel" id="resetLab">Reset defaults</button><button type="button" class="lab-cancel" id="cancelLab">Cancel</button><button type="submit" class="lab-save">Save lab profile</button></div>
+      <div class="lab-status" id="labStatus" role="status" aria-live="polite"></div>
+    </form>
+  </section>
+</div>
+
 <script>
 (function(){
   // (The mockup's hardcoded illustrative DATA object was removed — the app is fully data-driven
@@ -1340,6 +1391,91 @@ ZNF250</div>
   var state={gene:null,cond:"Stim48h",byCondition:null,enrichment:null};
   function $(id){return document.getElementById(id);}
   function fmt(x){return (x===null||x===undefined)?"—":(x>=0?"+":"")+Number(x).toFixed(2);}
+
+  // My Lab is deliberately small and versioned: only fields the deterministic decision-brief
+  // endpoint already validates. It stays in this browser; no lab identity is sent to the API.
+  var LAB_PROFILE_KEY="concord.labProfile.v1", LAB_PROFILE_VERSION=1;
+  var LAB_DEFAULTS={schema_version:LAB_PROFILE_VERSION,lab_name:"",readouts:["qpcr","facs"],donors:3,days:7};
+  var LAB_READOUTS={qpcr:"qPCR",elisa:"ELISA",facs:"FACS",western:"Western"};
+  function normalizeLabProfile(raw){
+    if(!raw||typeof raw!=="object"||raw.schema_version!==LAB_PROFILE_VERSION) return null;
+    if(!Array.isArray(raw.readouts)||!raw.readouts.length) return null;
+    var ro=raw.readouts.slice();
+    if(ro.some(function(x){return typeof x!=="string"||!Object.prototype.hasOwnProperty.call(LAB_READOUTS,x);})
+        || ro.some(function(x,i){return ro.indexOf(x)!==i;})) return null;
+    var donors=Number(raw.donors),days=Number(raw.days);
+    if(!ro.length||!Number.isInteger(donors)||donors<0||donors>12||!Number.isInteger(days)||days<0||days>60) return null;
+    return {schema_version:LAB_PROFILE_VERSION,lab_name:String(raw.lab_name||"").trim().slice(0,60),readouts:ro,donors:donors,days:days};
+  }
+  function readLabProfile(){
+    try{
+      var raw=localStorage.getItem(LAB_PROFILE_KEY), parsed=raw?normalizeLabProfile(JSON.parse(raw)):null;
+      return {profile:parsed||Object.assign({},LAB_DEFAULTS,{readouts:LAB_DEFAULTS.readouts.slice()}),saved:!!parsed};
+    }catch(e){ return {profile:Object.assign({},LAB_DEFAULTS,{readouts:LAB_DEFAULTS.readouts.slice()}),saved:false}; }
+  }
+  var _lab=readLabProfile(), labProfile=_lab.profile, labProfileSaved=_lab.saved, labReturnFocus=null;
+  function activeLabConstraints(){ return {readouts:labProfile.readouts.slice(),donors:labProfile.donors,days:labProfile.days,source:labProfileSaved?"lab":"product"}; }
+  function concordanceURL(gene, constraints){
+    var c=constraints||activeLabConstraints(), qs=new URLSearchParams();
+    qs.set("readouts",(c.readouts||[]).join(",")); qs.set("donors",c.donors); qs.set("days",c.days);
+    return "api/concordance/"+encodeURIComponent(gene)+"?"+qs.toString();
+  }
+  function decorateBrief(d, constraints){
+    if(d&&d.decision_brief) d.decision_brief.__constraints=constraints||activeLabConstraints();
+    return d;
+  }
+  function renderLabIndicator(){
+    var el=$("labIndicatorText"); if(!el) return;
+    if(!labProfileSaved){ el.innerHTML='<span class="lab-indicator-prefix">My Lab · </span>Set your bench'; return; }
+    var name=labProfile.lab_name?(labProfile.lab_name+" · "):"";
+    el.textContent=name+labProfile.readouts.map(function(r){return LAB_READOUTS[r];}).join(" + ")+" · "+labProfile.donors+" donor"+(labProfile.donors===1?"":"s")+" · "+labProfile.days+"d";
+  }
+  function fillLabForm(){
+    $("labName").value=labProfile.lab_name; $("labDonors").value=labProfile.donors; $("labDays").value=labProfile.days;
+    document.querySelectorAll('[name="labReadout"]').forEach(function(c){c.checked=labProfile.readouts.indexOf(c.value)>=0;});
+    $("labStatus").textContent="";
+  }
+  function openLab(trigger){
+    labReturnFocus=trigger||document.activeElement; fillLabForm(); var back=$("labBackdrop");
+    back.hidden=false; requestAnimationFrame(function(){back.classList.add("open"); $("labName").focus();});
+  }
+  function closeLab(){
+    var back=$("labBackdrop"); back.classList.remove("open");
+    setTimeout(function(){back.hidden=true; if(labReturnFocus&&labReturnFocus.focus) labReturnFocus.focus();},220);
+  }
+  $("openLabNav").addEventListener("click",function(){openLab(this);});
+  $("openLabIndicator").addEventListener("click",function(){openLab(this);});
+  $("closeLab").addEventListener("click",closeLab); $("cancelLab").addEventListener("click",closeLab);
+  $("resetLab").addEventListener("click",function(){
+    try{ localStorage.removeItem(LAB_PROFILE_KEY); }
+    catch(err){ $("labStatus").textContent="This browser could not reset the saved profile."; return; }
+    labProfile=Object.assign({},LAB_DEFAULTS,{readouts:LAB_DEFAULTS.readouts.slice()}); labProfileSaved=false;
+    fillLabForm(); renderLabIndicator(); $("labStatus").textContent="Product defaults restored. New decision briefs will use them.";
+  });
+  $("labBackdrop").addEventListener("click",function(e){if(e.target===this) closeLab();});
+  $("labForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var readouts=Array.prototype.map.call(document.querySelectorAll('[name="labReadout"]:checked'),function(c){return c.value;});
+    if(!readouts.length){ $("labStatus").textContent="Choose at least one available readout."; return; }
+    if(!this.reportValidity()) return;
+    var nextProfile=normalizeLabProfile({schema_version:LAB_PROFILE_VERSION,lab_name:$("labName").value,readouts:readouts,donors:Number($("labDonors").value),days:Number($("labDays").value)});
+    try{ localStorage.setItem(LAB_PROFILE_KEY,JSON.stringify(nextProfile)); }
+    catch(err){ $("labStatus").textContent="This browser could not save the profile."; return; }
+    labProfile=nextProfile; labProfileSaved=true;
+    renderLabIndicator(); $("labStatus").textContent="Lab defaults saved. New decision briefs will use them.";
+    setTimeout(closeLab,650);
+  });
+  document.addEventListener("keydown",function(e){
+    if($("labBackdrop").hidden) return;
+    if(e.key==="Escape"){ closeLab(); return; }
+    if(e.key!=="Tab") return;
+    var focusable=Array.prototype.slice.call($("labPanel").querySelectorAll('button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])'));
+    if(!focusable.length) return;
+    var first=focusable[0],last=focusable[focusable.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  });
+  renderLabIndicator();
 
   // Landing (empty-state) control. Shown on a fresh no-deep-link load; hidden the instant any turn
   // is created, so it never coexists with the transcript.
@@ -1504,9 +1640,9 @@ ZNF250</div>
   async function loadGene(gene, existingTurn, customMsg, hideUser, condition){
     if(!existingTurn) hideLanding();   // a fresh gene turn leaves the empty state
     try{
-      var r=await fetch("api/concordance/"+encodeURIComponent(gene));
+      var r=await fetch(concordanceURL(gene));
       if(!r.ok){ if(!existingTurn) appendHelpTurn(customMsg||gene, {gene:null,intent:"help"}); return false; }
-      var d=await r.json();
+      var d=decorateBrief(await r.json());
       var turn = existingTurn || appendTurn(d.gene);
       if(hideUser) turn._hideUser=true;   // agent-driven: the agent bubble already showed the message
       // per-turn state lives ON the element, so each turn keeps its own gene/conditions/enrichment.
@@ -2344,10 +2480,17 @@ ZNF250</div>
       return update.gene;
     }
     if(update.action==="plan" && update.gene){
-      // The decision brief: the agent's draft_decision_brief tool ships the whole brief in the
-      // view_update, so render it directly (no second fetch). appendPlanTurn hides its own user
-      // bubble via the empty customMsg path; the agent turn above already showed the message.
-      appendPlanTurn(update.gene, {}, "", update.decision_brief||null);
+      // Re-fetch the deterministic brief with this lab's saved capabilities. The agent's shipped
+      // brief remains a fallback if the personalized request is unavailable.
+      var planData=null;
+      try{ var planResp=await fetch(concordanceURL(update.gene)); planData=planResp.ok?decorateBrief(await planResp.json()):null; }catch(e){}
+      // If personalization fails, retain the agent's grounded brief only as an EXPLICITLY
+      // unadapted fallback. Never infer a `neither` verdict from an empty condition map.
+      var shownBrief=(planData&&planData.decision_brief)||null;
+      if(!shownBrief&&update.decision_brief){
+        shownBrief=Object.assign({},update.decision_brief,{__labProfileUnavailable:true});
+      }
+      if(shownBrief) appendPlanTurn(update.gene, (planData&&planData.by_condition)||{}, "", shownBrief);
       var pt=thread.lastElementChild;
       if(pt){
         var pu=pt.querySelector(".js-user"); if(pu){ var prow=pu.closest(".user-row"); (prow||pu).style.display="none"; }
@@ -2369,7 +2512,7 @@ ZNF250</div>
       // Fetch the gene's enrichment and render the deterministic druggability card inline, so the
       // agent's druggability narration is backed by the actual scores (SM + antibody + disease).
       try{
-        var r=await fetch("api/concordance/"+encodeURIComponent(update.gene));
+        var r=await fetch(concordanceURL(update.gene));
         var d=r.ok?await r.json():null;
         var en=d?d.enrichment:null;
         if(agentBody && en){
@@ -2401,7 +2544,7 @@ ZNF250</div>
     if(!gene){ appendAnswerTurn(text); return; }
     // gene-bearing intents: fetch the gene's data once, then render the scoped view.
     var d;
-    try{ var rr=await fetch("api/concordance/"+encodeURIComponent(gene)); d=rr.ok?await rr.json():null; }
+    try{ var rr=await fetch(concordanceURL(gene)); d=rr.ok?decorateBrief(await rr.json()):null; }
     catch(e){ d=null; }
     if(!d){ appendHelpTurn(text, routed); return; }
     var bc=d.by_condition||{}, en=d.enrichment||null;
@@ -2434,7 +2577,7 @@ ZNF250</div>
     if(!gene) return;
     persistTurn({role:"user", text:userMsg, intent:"plan", gene:gene});
     var d=null;
-    try{ var r=await fetch("api/concordance/"+encodeURIComponent(gene)); d=r.ok?await r.json():null; }
+    try{ var r=await fetch(concordanceURL(gene)); d=r.ok?decorateBrief(await r.json()):null; }
     catch(e){ d=null; }
     var bc=d?(d.by_condition||{}):{};
     appendPlanTurn(gene, bc, userMsg, d?(d.decision_brief||null):null);
@@ -2609,7 +2752,9 @@ ZNF250</div>
     // --- constraints bar + feasibility banner (Task 4: the adaptive money shot) ---
     var body=turn.querySelector(".reply-body")||turn;
     var con=(b && b.__constraints)||null;   // echo the active constraints on re-render
-    var constraintsBar=briefConstraintsHTML(con);
+    var constraintsBar=b.__labProfileUnavailable
+      ? '<div class="brief-infeasible"><div class="bi-h">Lab adaptation unavailable</div><p class="bi-r">This is the unconstrained decision brief. Concord could not apply your saved My Lab capabilities, so do not treat this protocol as lab-adapted.</p></div>'
+      : briefConstraintsHTML(con);
     // Feasibility banner: shown only when constraints made the ask infeasible.
     var feasBanner="";
     if(b.feasible===false && (b.unmet_requirements||[]).length){
@@ -2647,13 +2792,16 @@ ZNF250</div>
   // enums / ints only — the same set the endpoint validates. Pre-checks the active constraints on
   // re-render so the control reflects the current ask.
   function briefConstraintsHTML(con){
-    var ro=(con&&con.readouts)||["qpcr","facs"];
+    con=con||activeLabConstraints();
+    var ro=con.readouts||["qpcr","facs"];
+    var source=con.source==="override"?"Temporary override — your saved My Lab defaults will not change.":
+      con.source==="lab"?"Using saved My Lab defaults.":"Using product defaults — save My Lab to personalize future plans.";
     function chk(id,label){ return '<label class="cx"><input type="checkbox" data-ro="'+id+'"'+(ro.indexOf(id)>=0?" checked":"")+'> '+label+'</label>'; }
     return '<div class="brief-constraints"><div class="be-h">Tune to your bench — what can you actually run?</div>'+
       '<div class="cx-row">'+chk("qpcr","qPCR (transcript)")+chk("elisa","ELISA")+chk("facs","FACS")+chk("western","Western")+'</div>'+
-      '<div class="cx-row"><span class="cx-num">Donors <input type="number" class="js-conDonors" min="1" max="12" value="'+((con&&con.donors)||3)+'"></span>'+
-      '<span class="cx-num">Days <input type="number" class="js-conDays" min="1" max="60" value="'+((con&&con.days)||7)+'"></span>'+
-      '<button class="fchip js-conApply">Re-plan</button></div></div>';
+      '<div class="cx-row"><span class="cx-num">Donors <input type="number" class="js-conDonors" min="0" max="12" value="'+(con.donors==null?3:con.donors)+'"></span>'+
+      '<span class="cx-num">Days <input type="number" class="js-conDays" min="0" max="60" value="'+(con.days==null?7:con.days)+'"></span>'+
+      '<button class="fchip js-conApply">Re-plan this experiment</button><button class="fchip js-conRestore">Restore lab defaults</button></div><span class="lab-help js-conSource">'+esc(source)+'</span><span class="lab-status js-conStatus" role="status" aria-live="polite"></span></div>';
   }
 
   // Wire the constraints control: on Re-plan, fetch the brief WITH constraints and re-render the
@@ -2661,23 +2809,38 @@ ZNF250</div>
   // scientist only picks from the closed set.
   function wireBriefConstraints(turn, gene, customMsg){
     var apply=turn.querySelector(".js-conApply"); if(!apply) return;
-    apply.addEventListener("click", async function(){
-      var readouts=Array.prototype.map.call(turn.querySelectorAll('[data-ro]:checked'),function(c){return c.dataset.ro;});
-      var donors=parseInt((turn.querySelector(".js-conDonors")||{}).value,10)||0;
-      var days=parseInt((turn.querySelector(".js-conDays")||{}).value,10)||0;
-      var qs="readouts="+encodeURIComponent(readouts.join(","))+"&donors="+donors+"&days="+days;
-      apply.disabled=true; apply.textContent="Re-planning…";
+    async function replan(constraints, button){
+      var status=turn.querySelector(".js-conStatus");
+      if(status) status.textContent="";
+      if(!Number.isInteger(constraints.donors)||constraints.donors<0||constraints.donors>12
+          ||!Number.isInteger(constraints.days)||constraints.days<0||constraints.days>60){
+        if(status) status.textContent="Use whole numbers: 0–12 donors and 0–60 days.";
+        return;
+      }
+      button.disabled=true; button.textContent="Re-planning…";
       try{
-        var r=await fetch("api/concordance/"+encodeURIComponent(gene)+"?"+qs);
+        var r=await fetch(concordanceURL(gene,constraints));
         var d=r.ok?await r.json():null;
         var nb=d?(d.decision_brief||null):null;
         if(nb){
-          nb.__constraints={readouts:readouts,donors:donors,days:days};   // echo for the control state
-          turn.remove();                                                  // replace this turn in place
+          nb.__constraints=constraints;                                 // echo for the control state
+          turn.remove();                                                // replace this turn in place
           appendPlanTurn(gene, d.by_condition||{}, customMsg, nb);
-        }else{ apply.disabled=false; apply.textContent="Re-plan"; }
-      }catch(e){ apply.disabled=false; apply.textContent="Re-plan"; }
+        }else{ button.disabled=false; button.textContent=button.dataset.label; if(status) status.textContent="Concord could not apply those constraints."; }
+      }catch(e){ button.disabled=false; button.textContent=button.dataset.label; if(status) status.textContent="Concord could not apply those constraints."; }
+    }
+    apply.dataset.label=apply.textContent;
+    apply.addEventListener("click",function(){
+      var readouts=Array.prototype.map.call(turn.querySelectorAll('[data-ro]:checked'),function(c){return c.dataset.ro;});
+      var donors=Number((turn.querySelector(".js-conDonors")||{}).value);
+      var days=Number((turn.querySelector(".js-conDays")||{}).value);
+      replan({readouts:readouts,donors:donors,days:days,source:"override"},apply);
     });
+    var restore=turn.querySelector(".js-conRestore");
+    if(restore){
+      restore.dataset.label=restore.textContent;
+      restore.addEventListener("click",function(){ replan(activeLabConstraints(),restore); });
+    }
   }
 
   // ---- hit-list (batch) reconciliation ----
@@ -2702,7 +2865,7 @@ ZNF250</div>
     var results=[];
     for(var i=0;i<genes.length;i++){
       try{
-        var r=await fetch("api/concordance/"+encodeURIComponent(genes[i]));
+        var r=await fetch(concordanceURL(genes[i]));
         if(!r.ok){ results.push({gene:genes[i],missing:true}); continue; }
         var d=await r.json();
         var row=(d.by_condition||{}).Stim48hr||(d.by_condition||{}).Stim8hr||(d.by_condition||{}).Rest||null;
@@ -2802,7 +2965,7 @@ ZNF250</div>
     var added=thread.lastElementChild;
     scrollToTurn(added);
     try{
-      var r=await fetch("api/concordance/"+encodeURIComponent(gene));
+      var r=await fetch(concordanceURL(gene));
       if(!r.ok){ q(added,"js-cmpStrip").innerHTML='<div class="arts-empty">'+esc(gene)+" isn't in the screens.</div>"; return added; }
       var d=await r.json();
       var bc=d.by_condition||{};

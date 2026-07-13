@@ -156,3 +156,40 @@ def test_unknown_readout_token_is_a_400():
     with TestClient(app) as client:
         r = client.get("/api/concordance/TSC1?readouts=bogus&donors=3&days=5")
         assert r.status_code == 400
+
+
+def test_saved_lab_profile_adapts_feasibility_without_changing_the_scientific_decision():
+    """A lab profile changes how the experiment can be run, not what the screens concluded."""
+    with TestClient(app) as client:
+        baseline = client.get("/api/concordance/TSC1").json()["decision_brief"]
+        response = client.get(
+            "/api/concordance/TSC1",
+            params={"readouts": " western, qPCR ", "donors": 4, "days": 7},
+        )
+
+        assert response.status_code == 200
+        profiled = response.json()["decision_brief"]
+        assert profiled["feasible"] is True
+        assert profiled["unmet_requirements"] == []
+        assert "western" in " ".join(profiled["experiment"]["readouts"]).lower()
+        assert profiled["snapshot"]["verdict"] == baseline["snapshot"]["verdict"]
+        assert profiled["recommendation"] == baseline["recommendation"]
+
+
+def test_infeasible_saved_lab_profile_reports_every_blocker_and_safe_adaptation():
+    """The API must explain a constrained lab honestly instead of silently weakening the test."""
+    with TestClient(app) as client:
+        response = client.get(
+            "/api/concordance/TSC1",
+            params={"readouts": "ELISA", "donors": 2, "days": 2},
+        )
+
+        assert response.status_code == 200
+        brief = response.json()["decision_brief"]
+        blockers = " ".join(brief["unmet_requirements"]).lower()
+        adaptations = " ".join(brief["adaptations"]).lower()
+        assert brief["feasible"] is False
+        assert "transcript" in blockers
+        assert "donor" in blockers
+        assert brief["experiment"]["timecourse"] is None
+        assert "timepoint" in adaptations or "window" in adaptations
