@@ -53,6 +53,11 @@ default) choose the condition:
   narrate the shared theme in one or two plain sentences and NEVER name a pathway not in the result. \
   This differs from `known_biology` (which answers "is it validated?"): use `hitlist_biology` for \
   "what biology do the hits share?".
+- The user asks to SEE, SKETCH, DRAW, or VISUALISE a gene, or wants a diagram / cartoon / picture of \
+  the mechanism — "sketch TSC1", "draw GENE", "show me a diagram of GENE", "visualise it" → call \
+  `sketch_gene`. It returns the bench-notebook cartoon (knockout → transcript arrow → protein arrow \
+  → cytokine), which renders as a figure. Give ONE plain lead-in sentence; do NOT restate the arrows \
+  or quote numbers. Prefer this over `reconcile_gene` only when the user asks to SEE / draw it.
 - The user asks what a term means, how the tool works, or a general question with no specific gene → \
   ANSWER in prose, no tool. Keep it short and grounded.
 - If a gene is not in the screens, say so plainly and suggest they try one that is — never invent a \

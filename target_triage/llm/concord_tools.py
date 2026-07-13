@@ -356,6 +356,58 @@ async def hitlist_biology(args):
     )
 
 
+_SKETCH_ANCHOR_ORDER = ("Stim48hr", "Stim8hr", "Rest")
+
+
+@tool(
+    "sketch_gene",
+    "Draw the bench-notebook SKETCH for ONE gene: the cartoon a scientist would draw to explain the "
+    "result — knock out the gene, follow the transcript arrow and the protein arrow to the cytokine, "
+    "with the two layers diverging when they disagree. Call this for 'sketch GENE', 'draw GENE', "
+    "'show me a diagram/cartoon of GENE', 'visualise GENE', or when the user wants to SEE the "
+    "mechanism rather than read it. Every arrow is CODE-derived from the verdict and directions; the "
+    "sketch renders as a figure. Give ONE plain lead-in sentence; do NOT restate the sketch or quote "
+    "numbers. Pass `condition` (Rest, Stim8hr, Stim48hr) to focus a condition; omit to default.",
+    {
+        "type": "object",
+        "properties": {
+            "gene": {"type": "string", "description": "Gene symbol, e.g. TSC1."},
+            "condition": {
+                "type": "string",
+                "description": "Optional activation condition: Rest, Stim8hr, or Stim48hr.",
+            },
+        },
+        "required": ["gene"],
+    },
+)
+async def sketch_gene(args):
+    import dataclasses
+
+    from ..core.gene_sketch import build_gene_sketch
+
+    gene = (args.get("gene") or "").strip().upper()
+    hits = _BY_GENE.get(gene)
+    if not hits:
+        return _text({"gene": gene, "error": "not in the screens",
+                      "note": "Only genes present in both CRISPR screens can be sketched."})
+    by_cond = {r["condition"]: r for r in hits}
+    requested = _resolve_condition(args.get("condition"), list(by_cond.keys()))
+    anchor = requested or next((c for c in _SKETCH_ANCHOR_ORDER if c in by_cond),
+                               hits[0]["condition"])
+    try:
+        sketch = dataclasses.asdict(build_gene_sketch(by_cond[anchor]))
+    except (ValueError, KeyError) as e:
+        return _text({"gene": gene, "error": "could not build a sketch", "detail": str(e),
+                      "note": "Say the sketch isn't available for this gene; do not invent one."})
+    return _view(
+        {"gene": gene, "verdict": sketch["verdict"], "condition": anchor,
+         "note": "ONE plain lead-in sentence only (e.g. 'Here's how " + gene + " reads at a "
+                 "glance.'). The sketch figure carries the detail — do NOT restate the arrows or "
+                 "quote numbers."},
+        {"action": "sketch", "gene": gene, "sketch": sketch},
+    )
+
+
 _BRIEF_ANCHOR_ORDER = ("Stim48hr", "Stim8hr", "Rest")
 
 
@@ -425,7 +477,7 @@ def build_concord_server():
         name="concord",
         version="0.1.0",
         tools=[reconcile_gene, compare_conditions, gene_evidence, known_biology,
-               draft_decision_brief, hitlist_biology],
+               draft_decision_brief, hitlist_biology, sketch_gene],
     )
 
 
@@ -436,4 +488,5 @@ CONCORD_ALLOWED_TOOLS = [
     "mcp__concord__known_biology",
     "mcp__concord__draft_decision_brief",
     "mcp__concord__hitlist_biology",
+    "mcp__concord__sketch_gene",
 ]
