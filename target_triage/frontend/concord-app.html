@@ -934,7 +934,7 @@
     <div class="convo-head">
       <span class="title" id="convoTitle">Chat</span>
       <span class="crumb" id="urlPath">gene/ITK</span>
-      <span class="convo-context">Evidence workspace</span>
+      <span class="convo-context">Experimental decision workspace</span>
       <button class="arts-toggle" id="artsToggle" aria-label="Toggle artifacts" title="Show/hide artifacts" aria-pressed="false">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M15 4v16"/></svg>
       </button>
@@ -1018,15 +1018,15 @@ ZNF250</div>
             <div class="brief-shell">
               <article class="brief-main">
                 <section class="decision-gate" aria-label="Current experimental decision">
-                  <div><div class="brief-k">Current gate</div><strong class="js-gateState">Review evidence</strong></div>
+                  <div><div class="brief-k">Recommendation</div><strong class="js-gateState">Review the evidence</strong></div>
                   <p class="js-gateReason"></p>
                 </section>
             <p class="prose js-proseOpen"></p>
             <p class="prose result-narrative js-resultNarrative"></p>
             <section class="evidence-boundary" aria-label="Evidence boundary">
-              <div class="boundary observed"><div class="brief-k">Observed</div><div class="js-observed"></div></div>
-              <div class="boundary inferred"><div class="brief-k">Inferred</div><div class="js-inferred"></div></div>
-              <div class="boundary unknown"><div class="brief-k">Still unknown</div><div class="js-unknown"></div></div>
+              <div class="boundary observed"><div class="brief-k">What the data show</div><div class="js-observed"></div></div>
+              <div class="boundary inferred"><div class="brief-k">What it may mean</div><div class="js-inferred"></div></div>
+              <div class="boundary unknown"><div class="brief-k">What must be resolved</div><div class="js-unknown"></div></div>
             </section>
             <figure class="fig">
               <div class="fig-frame">
@@ -1042,17 +1042,17 @@ ZNF250</div>
               </article>
               <aside class="bench-workspace" aria-label="Experimental planning workspace">
             <section class="threats">
-              <div class="brief-section-head"><span class="brief-k">Threats to interpretation</span><span>Before you trust the call</span></div>
+              <div class="brief-section-head"><span class="brief-k">Why this could mislead</span><span>Limits to keep in mind</span></div>
               <div class="js-threats"></div>
             </section>
             <section class="resolution js-resolution" aria-label="Resolution experiment">
               <div class="resolution-head">
                 <div>
-                  <div class="resolution-k">Most informative experiment</div>
+                  <div class="resolution-k">The experiment that settles it</div>
                   <h3 class="resolution-h js-resolutionTitle">Run one matched experiment</h3>
                   <p class="resolution-copy js-resolutionCopy"></p>
                 </div>
-                <span class="resolution-tag">editable plan</span>
+                <span class="resolution-tag">bench-ready outline</span>
               </div>
               <div class="bench-spec js-benchSpec"></div>
               <div class="outcomes js-outcomes"></div>
@@ -1259,9 +1259,9 @@ ZNF250</div>
   </main><!-- /convo -->
 
   <!-- RIGHT ARTIFACTS PANEL — collapsible (toggled from the convo header). -->
-  <aside class="arts" id="artsPanel" aria-label="Artifacts">
+  <aside class="arts" id="artsPanel" aria-label="Evidence and sources">
     <div class="arts-head">
-      <span class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg> Artifacts</span>
+      <span class="h"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg> Evidence &amp; sources</span>
       <span class="arts-count" id="artsCount"></span>
       <button class="arts-close" id="artsClose" aria-label="Hide artifacts" title="Hide artifacts">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
@@ -1556,7 +1556,7 @@ ZNF250</div>
     // Empty landing (no gene yet): a quiet placeholder, not a fetch for `null`.
     if(!gene){
       count.textContent="";
-      body.innerHTML='<div class="arts-empty">Screens and citations appear here once you ask about a gene.</div>';
+      body.innerHTML='<div class="arts-empty">Screen provenance and biological context appear here once you ask about a gene.</div>';
       return;
     }
     try{
@@ -1598,10 +1598,10 @@ ZNF250</div>
       }).join("");
 
       count.textContent=(Object.keys(screens).length)+" screens · "+claims.length+" cited";
-      body.innerHTML='<div class="art-group">Screens read · Node A</div>'+screenCards
-        +'<div class="art-group">Cited for '+esc(gene)+' · Node B</div>'
+      body.innerHTML='<div class="art-group">Screen inputs and provenance</div>'+screenCards
+        +'<div class="art-group">Biological context cited for '+esc(gene)+'</div>'
         +(hypCards||'<div class="arts-empty" style="padding:12px 8px;text-align:left">No hypotheses — '
-          +esc(gene)+' is not a discordance Node B interprets.</div>');
+          +esc(gene)+' is not a disagreement Concord has cited literature for.</div>');
     }catch(err){ body.innerHTML='<div class="arts-empty">Receipt unavailable.</div>'; }
   }
 
