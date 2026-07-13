@@ -649,6 +649,24 @@
   .bi-r{margin:0;padding-left:18px;font-family:var(--font-serif);font-size:13.5px;line-height:1.55;color:var(--ink-soft)}
   .bi-r li{margin:2px 0}
 
+  /* Advanceability axis — the verdict-INDEPENDENT "should it advance?" answer. A code-owned stance
+     badge + a target-quality strip (druggability / disease genetics / QC). Distinct from the
+     reconciliation verdict badge on purpose: this reads target quality, not screen agreement. */
+  .brief-advance{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:13px 16px;margin-top:16px}
+  .brief-advance .ba-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .brief-advance .ba-k{font-family:var(--font-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint)}
+  .rec-badge{font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;border-radius:5px;padding:3px 9px;border:1px solid var(--line-strong)}
+  .rec-advance{color:#5FB58A;border-color:#3E7A5C;background:rgba(95,181,138,.10)}
+  .rec-validate{color:var(--accent);border-color:var(--accent);background:rgba(120,140,200,.08)}
+  .rec-hold{color:#D0864F;border-color:#C4703A;background:rgba(196,112,58,.10)}
+  .rec-deprioritize{color:var(--ink-faint);border-color:var(--line-strong)}
+  .rec-unknown{color:var(--ink-faint);border-color:var(--line);border-style:dashed}
+  .brief-advance .ba-why{font-family:var(--font-serif);font-size:13.5px;line-height:1.55;color:var(--ink-soft);margin:9px 0 0}
+  .tq-strip{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+  .tq{font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);border:1px solid var(--line);border-radius:6px;padding:4px 9px;background:var(--surface-2)}
+  .tq b{color:var(--ink);font-weight:600}
+  .tq.tq-none{color:var(--ink-faint)}
+
   .hidden{display:none}
   :focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:4px}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -1254,6 +1272,15 @@ ZNF250</div>
     partially_comparable:"Partially comparable",
     context_mismatch:"Context mismatch",
     insufficient_metadata:"Insufficient metadata"
+  };
+  // The verdict-INDEPENDENT advancement stance — code-owned label + badge class (mirrors
+  // RECOMMENDATION in core/decision_brief.py). 'unknown' is the missing-dossier sentinel.
+  var RECOMMENDATION_LABEL={
+    advance:{txt:"Advance",cls:"rec-advance"},
+    validate_first:{txt:"Validate first",cls:"rec-validate"},
+    hold_weak_target:{txt:"Hold — weak target",cls:"rec-hold"},
+    deprioritize:{txt:"Deprioritise",cls:"rec-deprioritize"},
+    unknown:{txt:"Advanceability unknown",cls:"rec-unknown"}
   };
   // API condition keys -> UI tab keys (backend uses Stim8hr/Stim48hr; tabs use Stim8h/Stim48h).
   var COND_API={Rest:"Rest",Stim8h:"Stim8hr",Stim48h:"Stim48hr"};
@@ -2448,6 +2475,38 @@ ZNF250</div>
       warn.innerHTML='<div class="bc-h">Comparability · '+esc(compTxt)+'</div>'+
         (reasons?('<ul class="bc-r">'+reasons+'</ul>'):'');
       rec.parentNode.insertBefore(warn, rec.nextSibling);
+    }
+
+    // --- advanceability axis: the verdict-INDEPENDENT "should it advance?" answer ---
+    // Sits right under the comparability caveat so the stance reads before the experiment detail.
+    // Everything here is code-computed — the stance, the rationale, and the dossier facts.
+    if(b.recommendation){
+      var recMeta=RECOMMENDATION_LABEL[b.recommendation]||RECOMMENDATION_LABEL.unknown;
+      var adv=document.createElement("div");
+      adv.className="brief-advance";
+      var dossier=b.target_dossier||null;
+      // Target-quality strip: druggability (SM vs Ab, tracked separately), disease genetics, QC.
+      // Words, not raw scores — a chip reads "tractable / no handle", never "0.333".
+      var tqChips="";
+      if(dossier){
+        var smHandle=(dossier.sm_score>=0.5)||!!dossier.sm_stage;
+        var abHandle=(dossier.ab_score>=0.5)||!!dossier.ab_stage;
+        var drugTxt = (smHandle||abHandle)
+          ? ("<b>"+(smHandle&&abHandle?"small-molecule + antibody":(smHandle?"small-molecule":"antibody"))+"</b>")
+          : "<b>no tractable handle</b>";
+        var diseaseOK=(dossier.disease_score>=0.3)&&!!dossier.top_disease;
+        var disTxt = diseaseOK ? ("<b>"+esc(dossier.top_disease)+"</b>") : "<b>no disease genetics</b>";
+        tqChips =
+          '<span class="tq'+((smHandle||abHandle)?'':' tq-none')+'">Druggability · '+drugTxt+'</span>'+
+          '<span class="tq'+(diseaseOK?'':' tq-none')+'">Disease genetics · '+disTxt+'</span>'+
+          '<span class="tq">Screen QC · <b>'+esc(dossier.qc_confidence||"—")+'</b></span>';
+      }
+      adv.innerHTML=
+        '<div class="ba-head"><span class="ba-k">Should it advance?</span>'+
+        '<span class="rec-badge '+recMeta.cls+'">'+esc(recMeta.txt)+'</span></div>'+
+        (b.recommendation_rationale?('<p class="ba-why">'+esc(b.recommendation_rationale)+'</p>'):'')+
+        (tqChips?('<div class="tq-strip">'+tqChips+'</div>'):'');
+      if(rec){ rec.parentNode.insertBefore(adv, warn?warn.nextSibling:rec.nextSibling); }
     }
 
     // Relabel the QC card to "Competing explanations" — the brief lists the honest alternatives
