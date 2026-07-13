@@ -20,7 +20,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .decision_brief import ConcordanceSnapshot, GroundedClaim, ScreenPairContext
+from .decision_brief import (
+    ConcordanceSnapshot, GroundedClaim, ScreenPairContext, TargetDossier)
 
 # The adapter's known constant for the Zhu mRNA screen — CD4 T cells. Provenance stores null (the
 # on-target rows that would name it were dropped upstream), so we supply the adapter's fact.
@@ -124,3 +125,25 @@ def resolve_claims(gene: str, cytokine: str, condition: str,
             supports="mtor_background",               # the claim's real scope, never "verdict"
         ))
     return tuple(out)
+
+
+def resolve_dossier(enrichment: dict | None) -> TargetDossier | None:
+    """Map a gene's `enrichment.json` record to a `TargetDossier`, or None when absent.
+
+    Returns None (not a zeroed dossier) when the enrichment is missing, so the brief's advancement
+    recommendation degrades to the honest 'unknown' sentinel rather than a fabricated 'deprioritise'.
+    Reads only the fields the axis needs; the raw scores flow through, the brief owns their meaning."""
+    if not enrichment:
+        return None
+    drug = enrichment.get("druggability") or {}
+    dis = enrichment.get("disease") or {}
+    qual = enrichment.get("quality") or {}
+    return TargetDossier(
+        sm_score=float(drug.get("sm_score") or 0.0),
+        sm_stage=drug.get("sm_stage"),
+        ab_score=float(drug.get("ab_score") or 0.0),
+        ab_stage=drug.get("ab_stage"),
+        disease_score=float(dis.get("score") or 0.0),
+        top_disease=dis.get("top_disease"),
+        qc_confidence=qual.get("confidence") or "Low",
+    )

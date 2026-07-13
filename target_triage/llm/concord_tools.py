@@ -345,7 +345,8 @@ _BRIEF_ANCHOR_ORDER = ("Stim48hr", "Stim8hr", "Rest")
 async def draft_decision_brief(args):
     import dataclasses
 
-    from ..core.brief_resolver import resolve_claims, resolve_context, resolve_snapshot
+    from ..core.brief_resolver import (
+        resolve_claims, resolve_context, resolve_dossier, resolve_snapshot)
     from ..core.decision_brief import build_decision_brief
 
     gene = (args.get("gene") or "").strip().upper()
@@ -360,19 +361,25 @@ async def draft_decision_brief(args):
         snapshot = resolve_snapshot(row, _PROVENANCE)
         context = resolve_context(row, _PROVENANCE)
         claims = resolve_claims(row["gene"], row["cytokine"], anchor, _PROVENANCE)
-        brief = dataclasses.asdict(build_decision_brief(snapshot, context, claims))
+        dossier = resolve_dossier(_ENRICHMENT.get(gene))
+        brief = dataclasses.asdict(
+            build_decision_brief(snapshot, context, claims, dossier=dossier))
     except (ValueError, KeyError, AssertionError) as e:
         return _text({"gene": gene, "error": "could not build a decision brief",
                       "detail": str(e),
                       "note": "Say the decision brief isn't available for this gene; do not invent one."})
     # The brief renders as a card; the agent adds a one-line lead-in. Ship the whole brief in the
-    # view_update so the browser renders without a second fetch. Verdict is code-computed.
+    # view_update so the browser renders without a second fetch. Verdict and advancement stance are
+    # both code-computed — the agent may reflect the stance in words but never overrides it.
     return _view(
         {"gene": gene, "verdict": brief["snapshot"]["verdict"],
          "comparability": brief["comparability"], "feasible": brief["feasible"],
-         "note": "One plain lead-in sentence only (e.g. 'Here's how I'd resolve the "
-                 + gene + " disagreement.'). The card carries the detail — do NOT restate the "
-                 "experiment, explanations, or numbers."},
+         "recommendation": brief["recommendation"],
+         "note": "One plain lead-in sentence only. Reflect the code-computed advancement stance in "
+                 "plain words (advance / validate first / hold as a weak target / deprioritise) — "
+                 "e.g. 'Real biology, but a weak drug target — here's how I'd resolve the " + gene
+                 + " split.'. The card carries the detail — do NOT restate the experiment, "
+                 "explanations, dossier scores, or numbers."},
         {"action": "plan", "gene": gene, "decision_brief": brief},
     )
 

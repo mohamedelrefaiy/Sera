@@ -344,7 +344,8 @@ def _decision_brief_for(hits: list[dict], constraints=None) -> dict | None:
     present, drives feasibility — an infeasible ask is reported as infeasible, never downgraded."""
     import dataclasses
 
-    from ..core.brief_resolver import resolve_claims, resolve_context, resolve_snapshot
+    from ..core.brief_resolver import (
+        resolve_claims, resolve_context, resolve_dossier, resolve_snapshot)
     from ..core.decision_brief import build_decision_brief
 
     by_cond = {r["condition"]: r for r in hits}
@@ -356,7 +357,8 @@ def _decision_brief_for(hits: list[dict], constraints=None) -> dict | None:
         snapshot = resolve_snapshot(row, _PROVENANCE)
         context = resolve_context(row, _PROVENANCE)
         claims = resolve_claims(row["gene"], row["cytokine"], anchor, _PROVENANCE)
-        brief = build_decision_brief(snapshot, context, claims, constraints)
+        dossier = resolve_dossier(_ENRICHMENT.get(row["gene"]))
+        brief = build_decision_brief(snapshot, context, claims, constraints, dossier)
         return dataclasses.asdict(brief)
     except (ValueError, KeyError, AssertionError):
         return None
