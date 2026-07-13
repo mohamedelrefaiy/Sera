@@ -241,3 +241,31 @@ def test_rank_targets_is_registered_and_prompt_routes_discovery_to_it():
     # the prompt must NOT still claim Concord can't find targets
     assert "concord can" in p and "front door" in p, \
         "prompt should affirm Concord CAN surface candidates"
+
+
+# ── 6. sketch → pathway map for curated genes ────────────────────────────────────────────
+# "sketch/draw GENE" should earn the richer signalling cascade when the gene is in a curated
+# pathway, and fall back to the bench cartoon otherwise. Regression lock for the routing fix:
+# the live app was showing the weak old sketch for genes that now have a full pathway figure.
+
+def test_sketch_of_a_curated_gene_emits_the_pathway_map_figure():
+    """A curated gene (ITK sits in TCR signalling) asked to be sketched must render the CST-style
+    pathway cascade, not the bench cartoon — same `pathway_map` action the frontend already draws."""
+    vu = _view(_run(concord_tools.sketch_gene.handler({"gene": "ITK"})))
+    assert vu["action"] == "pathway_map", "a curated gene's sketch must upgrade to the pathway map"
+    assert vu["gene"] == "ITK"
+    assert vu["pathway_map"]["style"] == "topology"          # the real cascade, not the starburst
+
+
+def test_sketch_of_a_non_curated_gene_stays_the_bench_cartoon():
+    """A gene with no curated wiring (TSC1) keeps the honest bench sketch — the fallback is intact."""
+    vu = _view(_run(concord_tools.sketch_gene.handler({"gene": _GENE})))
+    assert vu["action"] == "sketch", "a non-curated gene must keep the bench sketch"
+    assert vu["gene"] == _GENE
+
+
+def test_sketch_routing_honours_the_requested_condition():
+    """The condition the question names still propagates through the sketch→pathway_map upgrade."""
+    out = _run(concord_tools.sketch_gene.handler({"gene": "ITK", "condition": "Stim8hr"}))
+    assert _view(out)["action"] == "pathway_map"
+    assert _payload(out)["condition"] == "Stim8hr"           # the named condition propagated

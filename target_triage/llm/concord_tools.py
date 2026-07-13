@@ -477,12 +477,14 @@ _SKETCH_ANCHOR_ORDER = ("Stim48hr", "Stim8hr", "Rest")
 
 @tool(
     "sketch_gene",
-    "Draw the bench-notebook SKETCH for ONE gene: the cartoon a scientist would draw to explain the "
-    "result — knock out the gene, follow the transcript arrow and the protein arrow to the cytokine, "
-    "with the two layers diverging when they disagree. Call this for 'sketch GENE', 'draw GENE', "
-    "'show me a diagram/cartoon of GENE', 'visualise GENE', or when the user wants to SEE the "
-    "mechanism rather than read it. Every arrow is CODE-derived from the verdict and directions; the "
-    "sketch renders as a figure. Give ONE plain lead-in sentence; do NOT restate the sketch or quote "
+    "Draw a FIGURE for ONE gene. Call this for 'sketch GENE', 'draw GENE', 'show me a "
+    "diagram/cartoon of GENE', 'visualise GENE', or when the user wants to SEE the mechanism rather "
+    "than read it. If the gene sits in a curated signalling pathway (TCR, BCR, MAPK/ERK), this draws "
+    "the full compartment cascade — membrane receptor → cytoplasmic cascade → nucleus → cytokine "
+    "output — exactly like the pathway_map figure. Otherwise it draws the bench-notebook cartoon: "
+    "knock out the gene, follow the transcript arrow and the protein arrow to the cytokine, with the "
+    "two layers diverging when they disagree. Every node and arrow is CODE-derived (never invented); "
+    "it renders as a figure. Give ONE plain lead-in sentence; do NOT restate the figure or quote "
     "numbers. Pass `condition` (Rest, Stim8hr, Stim48hr) to focus a condition; omit to default.",
     {
         "type": "object",
@@ -500,6 +502,7 @@ async def sketch_gene(args):
     import dataclasses
 
     from ..core.gene_sketch import build_gene_sketch
+    from ..core.pathway_topology import select_for
 
     gene = (args.get("gene") or "").strip().upper()
     hits = _BY_GENE.get(gene)
@@ -510,6 +513,14 @@ async def sketch_gene(args):
     requested = _resolve_condition(args.get("condition"), list(by_cond.keys()))
     anchor = requested or next((c for c in _SKETCH_ANCHOR_ORDER if c in by_cond),
                                hits[0]["condition"])
+
+    # When the gene sits in a CURATED pathway, "sketch it" earns the richer figure: draw the
+    # signalling cascade (membrane → cytoplasm → nucleus → output) rather than the bench cartoon.
+    # The bench sketch stays the honest fallback for a gene with no curated wiring. Same code-owned,
+    # never-invented contract either way.
+    if select_for(gene) is not None:
+        return _pathway_map_view(gene, by_cond, anchor)
+
     try:
         sketch = dataclasses.asdict(build_gene_sketch(by_cond[anchor]))
     except (ValueError, KeyError) as e:
@@ -551,6 +562,39 @@ def _curated_node_status(condition: str) -> dict[str, str]:
     return status
 
 
+def _pathway_map_view(gene: str, by_cond: dict, anchor: str):
+    """Build the pathway-map view for a resolved gene/condition. Shared by the `pathway_map` tool and
+    by `sketch_gene`'s curated-gene routing, so both emit the identical `pathway_map` action the
+    frontend renders. Pure of tool wrapping — a plain function both call at runtime."""
+    import dataclasses
+
+    from ..clients import enrichr
+    from ..core.pathway_map import build_pathway_map
+
+    # Enrichment over the replicated hit set gives real pathways WITH their overlap members, so the
+    # STARBURST fallback places the gene among genuine partners. Cached (offline for the demo set).
+    pathways = enrichr.enrich(_REPLICATED_GENES) if _REPLICATED_GENES else []
+    # For the CURATED topology figure, shade each curated node by whether it is a confident hit in
+    # THESE screens (solid) or surrounding context (faded). Read straight from the concordance table
+    # at the same anchor condition — never inferred. A curated gene absent from the screens stays
+    # unshaded (solid). This is a second axis of truth the starburst never had.
+    node_status = _curated_node_status(anchor)
+    try:
+        pmap = dataclasses.asdict(
+            build_pathway_map(by_cond[anchor], pathways, node_status=node_status))
+    except (ValueError, KeyError) as e:
+        return _text({"gene": gene, "error": "could not build a pathway map", "detail": str(e),
+                      "note": "Say the pathway map isn't available for this gene; do not invent one."})
+    return _view(
+        {"gene": gene, "verdict": pmap["focal_verdict"], "pathway": pmap["pathway"],
+         "condition": anchor,
+         "note": "ONE plain lead-in sentence only (e.g. 'Here's where " + gene + " sits.'). The map "
+                 "carries the partners and hypotheses — do NOT list the partners or name a pathway "
+                 "the map didn't return; hypotheses are hypotheses, never state them as fact."},
+        {"action": "pathway_map", "gene": gene, "pathway_map": pmap},
+    )
+
+
 @tool(
     "pathway_map",
     "Draw the BIOLOGICAL-CONTEXT map for ONE gene: where it sits in its signalling neighbourhood — "
@@ -574,11 +618,6 @@ def _curated_node_status(condition: str) -> dict[str, str]:
     },
 )
 async def pathway_map(args):
-    import dataclasses
-
-    from ..clients import enrichr
-    from ..core.pathway_map import build_pathway_map
-
     gene = (args.get("gene") or "").strip().upper()
     hits = _BY_GENE.get(gene)
     if not hits:
@@ -588,28 +627,7 @@ async def pathway_map(args):
     requested = _resolve_condition(args.get("condition"), list(by_cond.keys()))
     anchor = requested or next((c for c in _SKETCH_ANCHOR_ORDER if c in by_cond),
                                hits[0]["condition"])
-    # Enrichment over the replicated hit set gives real pathways WITH their overlap members, so the
-    # STARBURST fallback places the gene among genuine partners. Cached (offline for the demo set).
-    pathways = enrichr.enrich(_REPLICATED_GENES) if _REPLICATED_GENES else []
-    # For the CURATED topology figure, shade each curated node by whether it is a confident hit in
-    # THESE screens (solid) or surrounding context (faded). Read straight from the concordance table
-    # at the same anchor condition — never inferred. A curated gene absent from the screens stays
-    # unshaded (solid). This is a second axis of truth the starburst never had.
-    node_status = _curated_node_status(anchor)
-    try:
-        pmap = dataclasses.asdict(
-            build_pathway_map(by_cond[anchor], pathways, node_status=node_status))
-    except (ValueError, KeyError) as e:
-        return _text({"gene": gene, "error": "could not build a pathway map", "detail": str(e),
-                      "note": "Say the pathway map isn't available for this gene; do not invent one."})
-    return _view(
-        {"gene": gene, "verdict": pmap["focal_verdict"], "pathway": pmap["pathway"],
-         "condition": anchor,
-         "note": "ONE plain lead-in sentence only (e.g. 'Here's where " + gene + " sits.'). The map "
-                 "carries the partners and hypotheses — do NOT list the partners or name a pathway "
-                 "the map didn't return; hypotheses are hypotheses, never state them as fact."},
-        {"action": "pathway_map", "gene": gene, "pathway_map": pmap},
-    )
+    return _pathway_map_view(gene, by_cond, anchor)
 
 
 _BRIEF_ANCHOR_ORDER = ("Stim48hr", "Stim8hr", "Rest")
