@@ -859,6 +859,10 @@
   /* Experimental decision brief: narrative and data on the left, the next bench decision on the right. */
   .turn{max-width:1160px}.brief-shell{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:28px;align-items:start}
   .brief-main,.bench-workspace{min-width:0}.bench-workspace{position:sticky;top:20px;display:flex;flex-direction:column;gap:16px}
+  /* Drop the right rail below the RECOMMENDATION card so that card owns the whole top band of the
+     view; the "Why this could mislead" panel begins near the card's lower edge, not level with its
+     top. Collapses to 0 on the stacked layout. */
+  .bench-workspace{margin-top:120px}
   .brief-k{font:600 10px/1.2 var(--font-mono);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint)}
   .decision-gate{display:grid;grid-template-columns:minmax(150px,.42fr) 1fr;gap:18px;align-items:center;margin:0 0 24px;padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.76);box-shadow:inset 0 0 0 1px var(--line)}
   .decision-gate strong{display:block;margin-top:7px;font:670 17px/1.2 var(--font-ui);letter-spacing:-.02em}.decision-gate p{margin:0;color:var(--ink-soft);font-size:13px;line-height:1.5}
@@ -896,7 +900,7 @@
   .arts-empty{max-width:28ch;margin:22px auto;padding:20px 10px}
 
   @media(max-width:1280px){.workspace{grid-template-columns:220px minmax(0,1fr)}.arts{display:none}.arts-toggle{display:none}}
-  @media(max-width:1050px){.brief-shell{grid-template-columns:1fr}.bench-workspace{position:static}.evidence-boundary{grid-template-columns:1fr}.boundary{min-height:0}}
+  @media(max-width:1050px){.brief-shell{grid-template-columns:1fr}.bench-workspace{position:static;margin-top:0}.evidence-boundary{grid-template-columns:1fr}.boundary{min-height:0}}
   @media(max-width:940px){.workspace{grid-template-columns:64px minmax(0,1fr)}.convo-context{display:none}}
   @media(max-width:700px){
     .workspace{grid-template-columns:1fr;grid-template-rows:58px minmax(0,1fr)}
