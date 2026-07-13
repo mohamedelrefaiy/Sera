@@ -24,7 +24,7 @@
     --line:#332F2C; --line-strong:#453F3B;
     --mrna:#4FC7A5; --mrna-soft:#182E28;
     --protein:#E07BB6; --protein-soft:#33202D;
-    --lock:#9DB4CC; --lock-soft:#1F2C39;
+    --lock:#9DB4CC; --lock-soft:#1F2C39; --lock-on:#17222D; --lock-on-sub:#2D4153;
     --warn:#D8A85A; --warn-soft:#332C1D;
     --absent:#87837B; --absent-soft:#2B2A28;
     --accent:#C96442;               /* Claude clay — reserved for the primary/brand action (fills only) */
@@ -960,6 +960,7 @@
     --prov:rgba(20,43,50,.12);--accent:#0A6DD4;--mrna:#007E69;--mrna-soft:#DDF6EF;
     --protein:#B93A79;--protein-soft:#FAE3EF;--warn:#9C610E;--warn-soft:#FBEED8;
     --absent:#8A9BA1;--absent-soft:#E8EDEF;--lock:#3E6E9E;--lock-soft:#DEEAF4;
+    --lock-on:#FFFFFF;--lock-on-sub:#E6EFF7;
     --shadow:0 24px 70px -38px rgba(27,52,62,.28),0 2px 10px rgba(27,52,62,.05);
     --font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
     --font-serif:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;
@@ -1226,26 +1227,28 @@
   .rt-dis{grid-column:2/-1;font-family:var(--font-serif);font-size:12px;color:var(--ink-faint);margin-top:-2px}
   @media(max-width:700px){.rt-row{grid-template-columns:26px 64px 84px 1fr;gap:7px;padding:10px 13px}.rt-tags{display:none}}
 
-  .how-figframe{margin:22px 0 4px;padding:20px 20px 16px;border-radius:14px;background:var(--surface);
-    border:1px solid var(--line)}
-  .how-figframe svg{width:100%;height:auto;display:block}
+  .how-figframe{margin:24px 0 4px;padding:24px;border-radius:16px;background:var(--surface);
+    border:1px solid var(--line);overflow-x:auto}
+  .how-figframe svg{width:100%;min-width:660px;height:auto;display:block}
   .how-diagram .d-box{fill:var(--surface-2);stroke:var(--line-strong);stroke-width:.5}
   .how-diagram .d-core{fill:var(--mrna-soft);stroke:var(--mrna);stroke-width:.5}
-  .how-diagram .d-verdict{fill:var(--lock-soft);stroke:var(--lock);stroke-width:.5}
+  .how-diagram .d-verdict{fill:var(--lock);stroke:var(--lock);stroke-width:.5}
   .how-diagram .d-conflict{fill:var(--protein-soft);stroke:var(--protein);stroke-width:.5}
   .how-diagram .d-agent{fill:none;stroke:var(--line-strong);stroke-width:.5;stroke-dasharray:3 3}
-  .how-diagram .d-arr{stroke:var(--ink-faint);stroke-width:1;fill:none}
-  .how-diagram .d-t{fill:var(--ink);font-family:var(--font-serif);font-size:13px;font-weight:600}
-  .how-diagram .d-m{fill:var(--ink-soft);font-family:var(--font-mono);font-size:10px;letter-spacing:.03em}
-  .how-diagram .d-k{fill:var(--ink-faint);font-family:var(--font-mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+  .how-diagram .d-arr{stroke:var(--ink-faint);stroke-width:1.25;fill:none}
+  .how-diagram .d-t{fill:var(--ink);font-family:var(--font-ui);font-size:14px;font-weight:600}
+  .how-diagram .d-m{fill:var(--ink-soft);font-family:var(--font-mono);font-size:11px;letter-spacing:.015em}
+  .how-diagram .d-k{fill:var(--ink-faint);font-family:var(--font-mono);font-size:10px;letter-spacing:.075em;text-transform:uppercase}
   .how-diagram .d-mrna{fill:var(--mrna)}
   .how-diagram .d-protein{fill:var(--protein)}
   .how-diagram .d-lock{fill:var(--lock)}
-  /* --lock-soft is a dark navy fill in every theme, so text placed ON a .d-verdict box is tagged
-     .d-on-dark and .d-on-dark-sub to stay legible (light-on-dark), independent of the live theme. */
-  .how-diagram .d-on-dark{fill:#EAF0F6}
-  .how-diagram .d-on-dark-sub{fill:#B7C6D6}
+  /* Locked results use a solid blue-grey surface. Theme-specific foreground tokens preserve
+     contrast when --lock changes from light in dark mode to dark in light/print modes. */
+  .how-diagram .d-on-lock{fill:var(--lock-on)}
+  .how-diagram .d-on-lock-sub{fill:var(--lock-on-sub)}
   .how-figcap{font-family:var(--font-mono);font-size:11.5px;line-height:1.5;color:var(--ink-faint);margin:14px 2px 0}
+
+  @media(max-width:700px){.how-figframe{margin-left:-6px;margin-right:-6px;padding:14px 12px}.how-figframe svg{min-width:680px}}
 
   .how-cta{margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:14px}
   .how-cta .go{width:auto;padding:12px 20px}
@@ -1377,7 +1380,7 @@
      voice split, and hide all chrome, nav, and the other three views. */
   @media print{
     :root{--ink:#111;--ink-soft:#333;--ink-faint:#666;--line:#d8d5cf;--line-strong:#bdb9b1;
-      --surface:#fff;--surface-2:#f6f4f0;--lock:#3a5f86;--prov:#c9c5bd}
+      --surface:#fff;--surface-2:#f6f4f0;--lock:#3a5f86;--lock-on:#fff;--lock-on-sub:#e8eef4;--prov:#c9c5bd}
     body{background:#fff;color:#111;padding:0}
     .workspace{display:block;height:auto}
     .nav,.arts,.convo-head,.composer,.demo-flag,.exports,.srcline{display:none!important}
@@ -1580,16 +1583,16 @@ ZNF250</div>
         <div class="how-page" id="howScience" role="tabpanel" aria-labelledby="hsScience" hidden>
 
           <section class="how-sec">
-            <div class="how-kicker">The question</div>
-            <h2 class="how-h">Which knockdowns change how a CD4+ T cell makes IL-2?</h2>
-            <p class="how-p"><b>IL-2 is the cytokine a helper T cell releases to command an immune response</b> — it drives T cells to proliferate and defines regulatory-T-cell (Treg) identity through the IL-2 / IL2RA / STAT5 axis. It sits at the centre of three live therapeutic programs: low-dose and Treg-biased IL-2 muteins for <b>autoimmunity</b> (lupus, type-1 diabetes, graft-versus-host); IL-2 as a persistence and exhaustion lever in <b>CAR-T and TIL cancer therapy</b>; and Treg engineering. A validated <em>upstream regulator</em> of IL-2 is a way to tune cytokine output without dosing the cytokine itself.</p>
-            <p class="how-p">So the hunt is for genes whose loss raises or lowers IL-2 — and the honest complication is that “raises IL-2” looks different depending on whether you measure the transcript or the protein.</p>
+            <div class="how-kicker">Biological question</div>
+            <h2 class="how-h">Which genetic perturbations alter IL-2 production in human CD4+ T cells?</h2>
+            <p class="how-p"><b>Interleukin-2 couples T-cell activation to proliferation, differentiation, and regulatory T-cell homeostasis through the IL-2–IL2RA–STAT5 axis.</b> Its pathway is therapeutically relevant to immune tolerance, engineered T-cell persistence, and Treg-directed intervention. Identifying upstream regulators could therefore enable modulation of IL-2 output without administering the cytokine itself.</p>
+            <p class="how-p">The relevant phenotype is not defined by a single molecular measurement. A perturbation can alter IL-2 transcription, translation, secretion, or the fraction of responding cells; transcript- and protein-level assays may consequently support different conclusions.</p>
           </section>
 
           <section class="how-sec">
-            <div class="how-kicker">The database</div>
-            <h2 class="how-h">The screens Sera reconciles.</h2>
-            <p class="how-p">All data is public and was downloaded before the hackathon. The mRNA side is a genome-scale <b>CRISPRi Perturb-seq</b> of human CD4+ T cells; the protein side is the loss-of-function arm of an independent FACS screen of the same IL-2 phenotype. They use different instruments on purpose — that is what makes an agreement meaningful and a disagreement interesting.</p>
+            <div class="how-kicker">Source data</div>
+            <h2 class="how-h">Independent screens resolve complementary molecular layers.</h2>
+            <p class="how-p">Sera integrates a genome-scale <b>CRISPRi Perturb-seq</b> study of human CD4+ T cells with the loss-of-function arm of an independent <b>CRISPRi FACS</b> screen. The former quantifies IL-2 transcript abundance across conditions; the latter measures enrichment in IL-2-high and IL-2-low protein fractions. Their methodological independence makes concordance informative, but also requires explicit treatment of assay and context differences.</p>
             <div class="sci-stats">
               <div class="sci-stat"><span class="n">33,983</span><span class="l">perturbation × condition results (mRNA screen)</span></div>
               <div class="sci-stat"><span class="n">10,282</span><span class="l">genes measured in the DE readout</span></div>
@@ -1613,8 +1616,8 @@ ZNF250</div>
 
           <section class="how-sec">
             <div class="how-kicker">The verdict</div>
-            <h2 class="how-h">One of five honest calls — with a direction, not just a hit.</h2>
-            <p class="how-p">For every gene × condition, the core crosses the two screens by <b>biological direction</b>. Sign convention, stated once: a <b>negative</b> effect means the gene <em>promotes</em> IL-2 (knocking it down lowers the readout); a positive effect means the gene is a <em>brake</em>. A side counts as a hit only if it was assayed <em>and</em> significant — <b>untested is never treated as tested-negative</b>.</p>
+            <h2 class="how-h">Five mutually exclusive, direction-resolved verdicts.</h2>
+            <p class="how-p">For each gene–condition pair, Sera compares significance and <b>biological direction</b> across assays. Under the stated sign convention, a negative perturbation effect indicates that the gene promotes IL-2, whereas a positive effect indicates inhibition of IL-2. An assay contributes to the verdict only when the gene was measured and passed that assay's significance criterion; <b>an untested gene is never encoded as a negative result</b>.</p>
             <div class="how-cap-grid" style="margin-top:14px">
               <div class="how-cap" style="cursor:default"><span class="capk" style="color:var(--mrna)">replicated</span><span class="capt">Both screens fire in the same direction. Corroboration across independent assays.</span></div>
               <div class="how-cap" style="cursor:default"><span class="capk" style="color:var(--protein)">discordant</span><span class="capt">Both fire but disagree on direction — a real sign conflict, kept out of “replicated”.</span></div>
@@ -1625,8 +1628,8 @@ ZNF250</div>
 
           <section class="how-sec">
             <div class="how-kicker">Why the screens disagree</div>
-            <h2 class="how-h">Transcript and protein are different layers of biology.</h2>
-            <p class="how-p">A discordant or one-sided call is <b>expected</b> for whole classes of genes, not a contradiction. The IL-2 transcript is only the first of several serial checkpoints, and the two screens differ on more than one axis at once — so mRNA-vs-protein biology is one candidate explanation, never a proven one.</p>
+            <h2 class="how-h">Discordance is informative, but not intrinsically mechanistic.</h2>
+            <p class="how-p">A discordant or one-sided result may arise from post-transcriptional regulation, temporal mismatch, population heterogeneity, or assay-specific effects. Because several of these factors differ simultaneously between the source studies, Sera reports them as competing explanations rather than assigning a mechanism from the screen comparison alone.</p>
             <div class="sci-insights">
               <div class="sci-insight"><span class="it">Post-transcriptional control</span><p>The IL-2 message carries <b>AU-rich elements</b> in its 3′UTR that ZFP36 / tristetraprolin actively degrade. A gene acting on mRNA decay, translation, or protein stability can move the <span class="protein">protein</span> while the steady-state <span class="mrna">transcript</span> barely shifts — or the reverse.</p></div>
               <div class="sci-insight"><span class="it">Mean vs distribution</span><p>The protein screen is a <b>FACS sort of IL-2-high vs IL-2-low cells</b> — it reads the <em>fraction of producers</em>. Perturb-seq reads the population-mean transcript. A gene that changes how many cells produce IL-2, not the average, is a strong protein hit and a weak mRNA one.</p></div>
@@ -1637,25 +1640,25 @@ ZNF250</div>
 
           <section class="how-sec">
             <div class="how-kicker">The time-course</div>
-            <h2 class="how-h">Rest → 8 h → 48 h: IL-2 runs on a schedule.</h2>
-            <p class="how-p">IL-2 is the prototypical <b>immediate-early</b> activation gene. After the T-cell receptor and CD28 engage, NFAT, AP-1 and NF-κB converge on the IL2 promoter and transcription spikes within hours — then autocrine IL-2 → STAT5 feedback and repressors switch it back off by roughly 24–48&nbsp;hours. The same gene can read as a promoter at 8&nbsp;h and neutral or opposite at 48&nbsp;h. <b>The time axis belongs to the mRNA screen only</b> — the protein screen is one stimulated sort — so Sera states the timepoint on every call and never implies the protein side was resolved over the same three points.</p>
+            <h2 class="how-h">Rest → 8 h → 48 h: the transcript readout is time resolved.</h2>
+            <p class="how-p">IL2 transcription rises rapidly after T-cell receptor and CD28 stimulation through NFAT, AP-1, and NF-κB, then declines as feedback and transcriptional repression emerge. A perturbation may therefore have different apparent effects at 8 and 48&nbsp;hours. <b>Only the mRNA screen resolves this time course</b>; the protein dataset represents a single stimulated sort. Sera retains the mRNA condition on every verdict and does not imply matched temporal resolution across assays.</p>
           </section>
 
           <section class="how-sec">
-            <div class="how-kicker">What a verdict does and doesn’t mean</div>
-            <h2 class="how-h">Limits, stated up front.</h2>
+            <div class="how-kicker">Interpretive limits</div>
+            <h2 class="how-h">Each verdict has a defined evidence boundary.</h2>
             <ul class="how-trust">
-              <li><span class="tk">Replicated ≠ validated</span><span class="td">Two independent screens agreeing is <b>corroboration</b>, not validation in your hands. It means both assays fired the same direction — reproduce it in your own cells before you advance.</span></li>
-              <li><span class="tk">Discordant is a fork</span><span class="td">A sign conflict is a <b>real biological decoupling or an assay/context difference</b> — Sera does not presume which. That’s exactly what the discriminating experiment is for.</span></li>
+              <li><span class="tk">Replicated ≠ validated</span><span class="td">Agreement across independent screens provides <b>corroboration, not prospective validation</b>. The effect must still be reproduced in the intended experimental system.</span></li>
+              <li><span class="tk">Discordant is unresolved</span><span class="td">A sign conflict is consistent with <b>biological decoupling or an assay/context difference</b>. The screen comparison alone cannot distinguish between them.</span></li>
               <li><span class="tk">Untested ≠ negative</span><span class="td">The protein library was smaller than the genome-wide mRNA screen. “Not a protein hit” for a gene the protein screen <b>never assayed</b> is absence of evidence, not evidence of absence — and Sera keeps them distinct.</span></li>
-              <li><span class="tk">Near-zero on purpose</span><span class="td">Genome-wide the two screens correlate at ≈&nbsp;−0.01. That’s <b>expected</b> — steady-state mRNA and protein decouple, and a <em>high</em> correlation would mean the join collapsed two screens into one. The value is the per-gene calls, not a global number.</span></li>
+              <li><span class="tk">Global ≠ gene level</span><span class="td">The genome-wide correlation is approximately −0.01. This aggregate statistic does not determine whether a specific gene agrees across assays; <b>the unit of interpretation is the gene-level verdict</b>.</span></li>
             </ul>
           </section>
 
           <section class="how-sec">
-            <div class="how-kicker">What it recovers</div>
-            <h2 class="how-h">Controls first — it must recover known biology before showing anything new.</h2>
-            <p class="how-p">Before a single novel pick is shown, Sera has to reproduce the screen’s established regulators. If the controls don’t come back, it refuses to rank. These are checkable T-cell biology, not vibes:</p>
+            <div class="how-kicker">Positive controls</div>
+            <h2 class="how-h">Established regulators must be recovered before novel candidates are ranked.</h2>
+            <p class="how-p">The ranking procedure is conditional on recovery of predefined T-cell regulatory controls. Failure of this control set halts candidate prioritization.</p>
             <div class="sci-chips">
               <span class="sci-chip">RASA2<small>RAS-GAP brake · loss boosts activation</small></span>
               <span class="sci-chip">IL2RA<small>IL-2 receptor · Treg identity</small></span>
@@ -1663,7 +1666,7 @@ ZNF250</div>
               <span class="sci-chip">FOXP3<small>Treg master transcription factor</small></span>
               <span class="sci-chip">TNFAIP3<small>A20 · NF-κB brake</small></span>
             </div>
-            <p class="how-p" style="margin-top:18px">The canonical TCR-proximal promoters replicate too — <span class="mono">ITK</span> (Tec-family kinase), the <span class="mono">CBM</span> complex (<span class="mono">BCL10</span> / <span class="mono">CARD11</span> / <span class="mono">MALT1</span>) driving NF-κB, and phosphatase brakes like <span class="mono">PTPN2</span>. <span class="mono">TSC1</span> is the honest hard case: an mTORC1 brake that can lower the transcript while raising the protein through translational control — a genuine <span class="protein">discordant</span> call, and one Sera flags as a hypothesis to test, not a fact.</p>
+            <p class="how-p" style="margin-top:18px">The analysis also recovers proximal T-cell receptor regulators, including <span class="mono">ITK</span>, the <span class="mono">BCL10–CARD11–MALT1</span> complex, and the phosphatase <span class="mono">PTPN2</span>. <span class="mono">TSC1</span> provides a deliberately difficult case: its opposing transcript- and protein-level effects are compatible with altered translational control, but Sera reports that mechanism as a testable hypothesis rather than a conclusion.</p>
           </section>
 
         </div><!-- /howScience -->
@@ -1672,71 +1675,72 @@ ZNF250</div>
         <div class="how-page" id="howArch" role="tabpanel" aria-labelledby="hsArch" hidden>
 
           <section class="how-sec">
-            <div class="how-kicker">The pipeline</div>
-            <h2 class="how-h">Five deterministic stages. Code computes; the agent narrates.</h2>
-            <p class="how-p">Every number is produced by a pure Python core — the same target and data always yield the same result. A gene runs the same five stages, in order, and the agent reads the output.</p>
+            <div class="how-kicker">Computational architecture</div>
+            <h2 class="how-h">A deterministic core separates analysis from language generation.</h2>
+            <p class="how-p">Versioned inputs and fixed analytical rules produce the same result for a given target and condition. The agent operates downstream of this core: it assembles and explains computed records without modifying them.</p>
             <ol class="how-steps">
-              <li class="how-step"><h4>Load the screen</h4><p>Raw screen data enters at one boundary and becomes immutable records. A schema maps each screen’s own columns onto a shared shape, and a gate validates the mapping — dropping on-target self-knockdown rows and refusing to mix two significance regimes. Signals a screen doesn’t carry stay absent, never faked as zero.</p></li>
-              <li class="how-step"><h4>Rank impact</h4><p>Each knockdown is scored by how broad and how strong its effect is across Rest, 8 h and 48 h, with obvious TCR machinery damped so novel candidates surface rather than the textbook hits.</p></li>
-              <li class="how-step"><h4>Reconcile <span class="mrna">mRNA</span> against <span class="protein">protein</span> — the keystone</h4><p>The two screens are crossed by biological direction into one of five verdicts. A sign conflict gets its own box rather than being smoothed into “replicated.” The disagreement is the finding.</p></li>
-              <li class="how-step"><h4>Adversarially verify — try to refute it</h4><p>Each candidate is attacked with typed, computed checks. Any failed gate rejects it outright. Independent published screens can add corroboration, never manufacture it.</p></li>
-              <li class="how-step"><h4>Decide, and name the experiment</h4><p>A go / no-go brief folding in druggability, disease genetics and data quality — plus the single arrayed-CRISPRi experiment (2 guides + control, ≥3 donors, paired transcript + protein readout) that would settle the split.</p></li>
+              <li class="how-step"><h4>Standardize source records</h4><p>Assay-specific schemas are mapped to immutable records and validated at ingestion. Missing measurements remain missing, and significance definitions are preserved by source.</p></li>
+              <li class="how-step"><h4>Prioritize perturbation effects</h4><p>Candidate impact is scored from effect magnitude and breadth across Rest, 8-hour, and 48-hour conditions, with established proximal TCR components down-weighted during discovery.</p></li>
+              <li class="how-step"><h4>Reconcile <span class="mrna">mRNA</span> and <span class="protein">protein</span></h4><p>Gene-level effects are compared by significance and biological direction to assign one of five mutually exclusive verdicts. Sign conflicts remain explicit.</p></li>
+              <li class="how-step"><h4>Apply refutation-oriented quality gates</h4><p>Knockdown efficacy, cell number, donor robustness, guide concordance, and held-out evidence challenge each candidate. A failed mandatory gate prevents advancement.</p></li>
+              <li class="how-step"><h4>Define the decision and resolution experiment</h4><p>The final brief integrates data quality, disease genetics, and tractability with an arrayed CRISPRi experiment using two guides, a non-targeting control, at least three donors, and paired transcript–protein readouts.</p></li>
             </ol>
 
             <div class="how-figframe">
-              <svg class="how-diagram" viewBox="0 0 640 452" role="img" aria-labelledby="howDiagTitle howDiagDesc">
+              <svg class="how-diagram" viewBox="0 0 720 592" role="img" aria-labelledby="howDiagTitle howDiagDesc">
                 <title id="howDiagTitle">Sera architecture</title>
                 <desc id="howDiagDesc">A CRISPRi mRNA screen and a CRISPRi protein screen, plus a held-out knockout screen, robustness tables and annotation APIs, feed a deterministic five-stage core — load, rank, reconcile, verify, decide — that outputs an advance-or-hold decision. A Claude agent reads the code-computed results and narrates them without recomputing any verdict.</desc>
                 <defs><marker id="hdArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
 
                 <!-- inputs -->
-                <text x="20" y="24" class="d-k">Inputs · two screens + held-out + tables</text>
-                <g><rect x="20" y="32" width="180" height="46" rx="7" class="d-box"/><text x="34" y="54" class="d-m d-mrna">Marson Perturb-seq</text><text x="34" y="69" class="d-m">CRISPRi · mRNA side</text></g>
-                <g><rect x="212" y="32" width="180" height="46" rx="7" class="d-box"/><text x="226" y="54" class="d-m d-protein">Schmidt 2022</text><text x="226" y="69" class="d-m">CRISPRi FACS · protein side</text></g>
-                <g><rect x="404" y="32" width="216" height="46" rx="7" class="d-box"/><text x="418" y="54" class="d-m">Freimer + robustness</text><text x="418" y="69" class="d-m">held-out KO · donor/guide corr</text></g>
+                <text x="20" y="22" class="d-k">Evidence inputs</text>
+                <g><rect x="20" y="34" width="214" height="54" rx="8" class="d-box"/><text x="36" y="58" class="d-m d-mrna">Marson Perturb-seq</text><text x="36" y="76" class="d-m">CRISPRi · IL-2 transcript</text></g>
+                <g><rect x="253" y="34" width="214" height="54" rx="8" class="d-box"/><text x="269" y="58" class="d-m d-protein">Schmidt 2022</text><text x="269" y="76" class="d-m">CRISPRi FACS · IL-2 protein</text></g>
+                <g><rect x="486" y="34" width="214" height="54" rx="8" class="d-box"/><text x="502" y="58" class="d-m">Held-out evidence</text><text x="502" y="76" class="d-m">KO · donor · guide robustness</text></g>
 
-                <line x1="110" y1="78" x2="110" y2="104" class="d-arr" marker-end="url(#hdArrow)"/>
-                <line x1="302" y1="78" x2="302" y2="104" class="d-arr" marker-end="url(#hdArrow)"/>
-                <line x1="512" y1="78" x2="512" y2="262" class="d-arr" marker-end="url(#hdArrow)"/>
+                <line x1="127" y1="88" x2="127" y2="126" class="d-arr" marker-end="url(#hdArrow)"/>
+                <line x1="360" y1="88" x2="360" y2="126" class="d-arr" marker-end="url(#hdArrow)"/>
+                <path d="M593 88V406" class="d-arr" marker-end="url(#hdArrow)"/>
 
                 <!-- deterministic core -->
-                <text x="20" y="98" class="d-k d-mrna">Deterministic core · computes every verdict</text>
-                <g><rect x="20" y="106" width="600" height="40" rx="7" class="d-core"/><text x="34" y="124" class="d-t">1 · Load screen</text><text x="34" y="138" class="d-m">any screen's columns → immutable records; missing signals stay absent</text></g>
-                <line x1="320" y1="146" x2="320" y2="160" class="d-arr" marker-end="url(#hdArrow)"/>
-                <g><rect x="20" y="162" width="600" height="40" rx="7" class="d-core"/><text x="34" y="180" class="d-t">2 · Rank impact</text><text x="34" y="194" class="d-m">breadth × strength across conditions; obvious TCR machinery damped</text></g>
-                <line x1="320" y1="202" x2="320" y2="216" class="d-arr" marker-end="url(#hdArrow)"/>
+                <text x="20" y="118" class="d-k d-mrna">Deterministic analytical core</text>
+                <g><rect x="20" y="132" width="680" height="46" rx="8" class="d-core"/><text x="38" y="153" class="d-t">1 · Standardize source records</text><text x="38" y="169" class="d-m">validate schemas · preserve missingness · retain assay-specific significance</text></g>
+                <line x1="360" y1="178" x2="360" y2="194" class="d-arr" marker-end="url(#hdArrow)"/>
+                <g><rect x="20" y="198" width="680" height="46" rx="8" class="d-core"/><text x="38" y="219" class="d-t">2 · Prioritize perturbation effects</text><text x="38" y="235" class="d-m">effect magnitude × breadth across Rest, 8-hour, and 48-hour conditions</text></g>
+                <line x1="360" y1="244" x2="360" y2="260" class="d-arr" marker-end="url(#hdArrow)"/>
 
                 <!-- reconcile with 5 verdicts -->
-                <g><rect x="20" y="218" width="600" height="92" rx="7" class="d-core"/>
-                  <text x="34" y="238" class="d-t">3 · Reconcile <tspan class="d-mrna">mRNA</tspan> × <tspan class="d-protein">protein</tspan> — the keystone</text>
-                  <text x="34" y="252" class="d-m">cross the two screens by biological direction → one of five honest verdicts</text>
-                  <rect x="34" y="262" width="108" height="38" rx="5" class="d-verdict"/><text x="88" y="279" text-anchor="middle" class="d-m d-on-dark">replicated</text><text x="88" y="292" text-anchor="middle" class="d-m d-on-dark-sub">agree</text>
-                  <rect x="150" y="262" width="108" height="38" rx="5" class="d-conflict"/><text x="204" y="279" text-anchor="middle" class="d-m d-protein">discordant</text><text x="204" y="292" text-anchor="middle" class="d-m">sign conflict</text>
-                  <rect x="266" y="262" width="108" height="38" rx="5" class="d-box"/><text x="320" y="279" text-anchor="middle" class="d-m">mrna only</text><text x="320" y="292" text-anchor="middle" class="d-m">one side</text>
-                  <rect x="382" y="262" width="108" height="38" rx="5" class="d-box"/><text x="436" y="279" text-anchor="middle" class="d-m">protein only</text><text x="436" y="292" text-anchor="middle" class="d-m">one side</text>
-                  <rect x="498" y="262" width="108" height="38" rx="5" class="d-box"/><text x="552" y="279" text-anchor="middle" class="d-m">neither</text><text x="552" y="292" text-anchor="middle" class="d-m">no hit</text>
+                <g><rect x="20" y="264" width="680" height="118" rx="8" class="d-core"/>
+                  <text x="38" y="287" class="d-t">3 · Reconcile <tspan class="d-mrna">mRNA</tspan> × <tspan class="d-protein">protein</tspan></text>
+                  <text x="38" y="305" class="d-m">compare significance and biological direction → assign one explicit verdict</text>
+                  <rect x="38" y="320" width="124" height="46" rx="6" class="d-verdict"/><text x="100" y="340" text-anchor="middle" class="d-m d-on-lock">replicated</text><text x="100" y="357" text-anchor="middle" class="d-m d-on-lock-sub">same direction</text>
+                  <rect x="170" y="320" width="124" height="46" rx="6" class="d-conflict"/><text x="232" y="340" text-anchor="middle" class="d-m d-protein">discordant</text><text x="232" y="357" text-anchor="middle" class="d-m">sign conflict</text>
+                  <rect x="302" y="320" width="124" height="46" rx="6" class="d-box"/><text x="364" y="340" text-anchor="middle" class="d-m">mRNA only</text><text x="364" y="357" text-anchor="middle" class="d-m">transcript hit</text>
+                  <rect x="434" y="320" width="124" height="46" rx="6" class="d-box"/><text x="496" y="340" text-anchor="middle" class="d-m">protein only</text><text x="496" y="357" text-anchor="middle" class="d-m">protein hit</text>
+                  <rect x="566" y="320" width="116" height="46" rx="6" class="d-box"/><text x="624" y="340" text-anchor="middle" class="d-m">neither</text><text x="624" y="357" text-anchor="middle" class="d-m">no hit</text>
                 </g>
-                <line x1="320" y1="310" x2="320" y2="324" class="d-arr" marker-end="url(#hdArrow)"/>
-                <g><rect x="20" y="326" width="600" height="40" rx="7" class="d-core"/><text x="34" y="344" class="d-t">4 · Adversarially verify — try to refute it</text><text x="34" y="358" class="d-m">gates reject: real KD · powered · clean · donor-robust · guide-robust</text></g>
-                <line x1="320" y1="366" x2="320" y2="380" class="d-arr" marker-end="url(#hdArrow)"/>
-                <g><rect x="20" y="382" width="388" height="40" rx="7" class="d-verdict"/><text x="34" y="400" class="d-t d-on-dark">5 · Decide — advance or hold</text><text x="34" y="414" class="d-m d-on-dark-sub">+ the one experiment that settles the split</text></g>
+                <line x1="360" y1="382" x2="360" y2="398" class="d-arr" marker-end="url(#hdArrow)"/>
+                <g><rect x="20" y="402" width="680" height="46" rx="8" class="d-core"/><text x="38" y="423" class="d-t">4 · Apply refutation-oriented quality gates</text><text x="38" y="439" class="d-m">knockdown efficacy · cell number · donor robustness · guide concordance</text></g>
+                <line x1="360" y1="448" x2="360" y2="464" class="d-arr" marker-end="url(#hdArrow)"/>
+                <g><rect x="20" y="468" width="430" height="54" rx="8" class="d-verdict"/><text x="38" y="492" class="d-t d-on-lock">5 · Define the decision</text><text x="38" y="510" class="d-m d-on-lock-sub">advance or hold · specify the resolution experiment</text></g>
 
                 <!-- annotation overlay -->
-                <g><rect x="420" y="382" width="200" height="40" rx="7" class="d-box"/><text x="434" y="400" class="d-m">Open Targets · trials</text><text x="434" y="414" class="d-m">druggable? in the clinic?</text></g>
-                <line x1="420" y1="402" x2="410" y2="402" class="d-arr" marker-end="url(#hdArrow)"/>
+                <g><rect x="470" y="468" width="230" height="54" rx="8" class="d-box"/><text x="488" y="492" class="d-m">External evidence</text><text x="488" y="510" class="d-m">genetics · tractability · trials</text></g>
+                <line x1="470" y1="495" x2="454" y2="495" class="d-arr" marker-end="url(#hdArrow)"/>
 
                 <!-- agent rim -->
-                <rect x="20" y="430" width="600" height="14" rx="7" class="d-agent"/>
-                <text x="320" y="440" text-anchor="middle" class="d-k">Claude agent · reads the computed results and narrates — never recomputes a verdict or authors an ID</text>
+                <rect x="20" y="542" width="680" height="34" rx="8" class="d-agent"/>
+                <text x="360" y="556" text-anchor="middle" class="d-k">Claude agent · explains computed records</text>
+                <text x="360" y="570" text-anchor="middle" class="d-m">does not recompute verdicts or generate identifiers, statistics, or citations</text>
               </svg>
             </div>
             <p class="how-figcap">Two CRISPRi screens of the same phenotype (<span class="mrna">mRNA</span> · <span class="protein">protein</span>), a held-out knockout screen and annotation APIs feed the core; <span style="color:var(--lock);font-weight:600">blue-grey</span> is a locked deterministic verdict. The agent sits on the rim.</p>
           </section>
 
           <section class="how-sec">
-            <div class="how-kicker">The verifier</div>
-            <h2 class="how-h">Every candidate is attacked before it’s trusted.</h2>
-            <p class="how-p">Verification is adversarial — the checks try to <em>refute</em> the pick. A failed <span style="color:var(--protein);font-weight:600">gate</span> rejects it outright; a <span style="color:var(--lock);font-weight:600">score</span> weights it; a <span style="color:var(--mrna);font-weight:600">bonus</span> can corroborate but never rescue. Thresholds are frozen and re-parametrizable, so you can re-run stricter on demand.</p>
+            <div class="how-kicker">Quality control</div>
+            <h2 class="how-h">Candidates must survive predefined attempts at refutation.</h2>
+            <p class="how-p">A failed <span style="color:var(--protein);font-weight:600">mandatory gate</span> rejects the candidate; a <span style="color:var(--lock);font-weight:600">scored criterion</span> modifies confidence; and <span style="color:var(--mrna);font-weight:600">independent evidence</span> may corroborate, but cannot rescue, a failed primary analysis. Thresholds are fixed for reproducibility and exposed for sensitivity analysis.</p>
             <ul class="arch-gates">
               <li class="arch-gate"><span class="gtype gate">gate</span><span class="gd"><b>Real knockdown.</b> The guide actually silenced its target — a clean, significant on-target self-knockdown. This tests <em>did the perturbation work</em>, not whether the effect is big.</span><span class="gthr">|log2 self-KD| ≥ 2.0</span></li>
               <li class="arch-gate"><span class="gtype gate">gate</span><span class="gd"><b>Enough cells.</b> The perturbation was seen in enough single cells to trust the estimate.</span><span class="gthr">peak n_cells ≥ 100</span></li>
@@ -1749,9 +1753,9 @@ ZNF250</div>
           </section>
 
           <section class="how-sec">
-            <div class="how-kicker">Agents on the rim</div>
-            <h2 class="how-h">The model narrates. It never authors a fact.</h2>
-            <p class="how-p">The doctrine is testable, not a slogan: the language model selects from closed sets the code owns — the verdict, the trust stance, the recommendation — and cites literature <b>by index only</b>. It cannot write a PMID, a gene ID, a statistic, or a verdict. Everything it says is reproducible by the control tests with no model call. These are the ten tools it can reach; each returns code-computed facts plus a plain-language summary.</p>
+            <div class="how-kicker">Agent boundary</div>
+            <h2 class="how-h">The model explains constrained records; it does not generate analytical facts.</h2>
+            <p class="how-p">The language model selects verdicts, confidence statements, recommendations, and references from closed sets produced by the application. Literature is cited by index. Gene identifiers, statistics, citations, and verdicts cannot be introduced through free-form generation. The available tools return computed records with plain-language summaries.</p>
             <div class="arch-tools">
               <div class="arch-tool"><span class="tn">reconcile_gene</span><span class="tg">One gene’s mRNA-vs-protein verdict at one condition.</span></div>
               <div class="arch-tool"><span class="tn">compare_conditions</span><span class="tg">The same gene’s verdict across the Rest → 8 h → 48 h time-course.</span></div>
@@ -1767,8 +1771,8 @@ ZNF250</div>
 
           <section class="how-sec">
             <div class="how-kicker">External evidence</div>
-            <h2 class="how-h">Live annotation, cached and cited.</h2>
-            <p class="how-p"><b>The screens tell you the biology is real; the annotations tell you the target is worth acting on.</b> A gene has to clear both to earn “advance.” Every external fact is retrieved from a real source and cited — the model chooses which to show, never what it says.</p>
+            <h2 class="how-h">Versioned annotations connect biological evidence to actionability.</h2>
+            <p class="how-p"><b>Screen evidence establishes the perturbational phenotype; external annotations address whether the target is actionable.</b> Advancement requires both. Retrieved facts retain their source and are cached for a reproducible record of the decision.</p>
             <div class="arch-tools">
               <div class="arch-tool"><span class="tn">Open Targets</span><span class="tg">GraphQL — small-molecule and antibody tractability, immune-disease genetic association, clinical stage.</span></div>
               <div class="arch-tool"><span class="tn">ClinicalTrials.gov</span><span class="tg">v2 API — is a molecule against this target already in the clinic (NCT id + phase)?</span></div>
