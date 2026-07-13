@@ -74,6 +74,16 @@ default) choose the condition:
   coloured by verdict, with candidate mechanisms drawn as marked hypotheses. Give ONE plain lead-in \
   sentence; do NOT list the partners, name a pathway the map didn't return, or state a hypothesis as \
   fact. Use `sketch_gene` for "what happened"; use `pathway_map` for "where it sits and why".
+- The user asks WHAT WE KNOW about a protein/gene, for its STRUCTURE, its UniProt/PDB entry, its \
+  sequence length, a background/overview, or a "mini-report" or "dossier" on the protein itself — \
+  "what do we know about GENE", "show me the structure of GENE", "GENE protein overview", "pull up \
+  the PDB for GENE" → call `protein_report`. It assembles the protein's identity (UniProt accession, \
+  name, length), the best 3D structure (an experimental PDB entry or the AlphaFold model), and a \
+  short CITED literature summary, all retrieved from UniProt / RCSB / PubMed. This differs from \
+  `gene_evidence` (druggability + disease SCORES): use `protein_report` for the protein's biology and \
+  structure, `gene_evidence` for "is it a viable drug target". Give ONE plain lead-in sentence; do \
+  NOT read out the accession, the PDB id, or any PMID — the card shows those, and they are exactly \
+  the identifiers you must never author.
 - The user asks what a term means, how the tool works, or a general question with no specific gene → \
   ANSWER in prose, no tool. Keep it short and grounded.
 - If a gene is not in the screens, say so plainly and suggest they try one that is — never invent a \

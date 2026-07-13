@@ -695,11 +695,15 @@ async def draft_decision_brief(args):
 
 def build_concord_server():
     """The in-process MCP server hosting Concord's tools."""
+    # Imported here, not at module top: protein_tools imports _GENES/_view FROM this module, so a
+    # top-level import would be circular. By the time the server is built this module is fully loaded.
+    from .protein_tools import protein_report
     return create_sdk_mcp_server(
         name="concord",
         version="0.1.0",
         tools=[reconcile_gene, compare_conditions, gene_evidence, known_biology,
-               draft_decision_brief, hitlist_biology, sketch_gene, rank_targets, pathway_map],
+               draft_decision_brief, hitlist_biology, sketch_gene, rank_targets, pathway_map,
+               protein_report],
     )
 
 
@@ -713,4 +717,5 @@ CONCORD_ALLOWED_TOOLS = [
     "mcp__concord__sketch_gene",
     "mcp__concord__rank_targets",
     "mcp__concord__pathway_map",
+    "mcp__concord__protein_report",
 ]

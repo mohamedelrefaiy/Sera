@@ -32,7 +32,7 @@ import shutil
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import RedirectResponse, StreamingResponse
+from fastapi.responses import RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from collections import Counter
@@ -865,6 +865,75 @@ def enrichr(genes: str = "", library: str = "Reactome_2022") -> dict:
         "library": library,
         "pathways": [{"term": p.term, "adj_p": p.adj_p, "n_genes": p.n_genes} for p in paths],
     }
+
+
+@app.get("/api/protein/{gene}")
+def protein_record(gene: str) -> dict:
+    """One gene's protein identity + best structure reference (UniProt / RCSB / AlphaFold).
+
+    Deterministic and cached in the client — no LLM. This is the re-derivation path a saved chat
+    uses to rebuild a protein_report card's identity + structure on reopen, exactly as the reconcile
+    figure is re-fetched from code. Literature is NOT re-run here (it is an LLM call); the card shows
+    identity + structure on replay and links out for the papers. Returns resolved:false, never a
+    fabricated accession, when the gene isn't in the screens or UniProt can't be reached."""
+    g = gene.strip().upper()
+    if g not in _gene_set():
+        raise HTTPException(status_code=404, detail=f"{gene} not in the screens")
+    from ..clients.protein import resolve_protein
+    return resolve_protein(g).to_json()
+
+
+# Same-origin, disk-cached coordinate proxy. The 3D viewer fetches from HERE, never straight from
+# RCSB/AlphaFold — so the browser has no cross-origin dependency, repeat views are instant, and a
+# structure viewed once during setup renders offline during the demo. Keyed by the structure id
+# (a code-resolved fact), so the viewer cannot ask us to fetch an arbitrary URL.
+@app.get("/api/structure/{gene}")
+def structure_coords(gene: str):
+    """The PDB coordinate text for a gene's best structure, proxied + cached same-origin.
+
+    The gene is resolved to its structure by the SAME code the card used (never a client-supplied
+    URL), the coordinates are fetched once from the fixed RCSB/AlphaFold host and cached to disk,
+    and served as text/plain for 3Dmol.js. 404 when the gene isn't in the screens or has no
+    resolvable structure — the card then shows its static reference instead of an empty viewer."""
+    g = gene.strip().upper()
+    if g not in _gene_set():
+        raise HTTPException(status_code=404, detail=f"{gene} not in the screens")
+
+    from ..clients.protein import resolve_protein
+    record = resolve_protein(g)
+    if not record.structure:
+        raise HTTPException(status_code=404, detail=f"no resolvable structure for {g}")
+
+    struct = record.structure
+    ext = "cif" if struct.coord_format == "mmcif" else "pdb"
+    cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "..", "data", "artifacts", "structure_cache")
+    os.makedirs(cache_dir, exist_ok=True)
+    cache_path = os.path.join(cache_dir, f"{struct.source}_{struct.identifier}.{ext}")
+
+    text = None
+    if os.path.exists(cache_path):
+        with open(cache_path) as fh:
+            text = fh.read()
+    if not text:
+        import urllib.request
+        try:
+            with urllib.request.urlopen(struct.viewer_url, timeout=20) as r:  # noqa: S310 fixed host
+                if r.status == 200:
+                    text = r.read().decode("utf-8", "replace")
+        except Exception:  # noqa: BLE001 — no coordinates rather than a 500 into the viewer
+            text = None
+        if text:
+            with open(cache_path, "w") as fh:
+                fh.write(text)
+    if not text:
+        raise HTTPException(status_code=502, detail=f"could not retrieve coordinates for {g}")
+
+    media = "chemical/x-cif" if struct.coord_format == "mmcif" else "chemical/x-pdb"
+    return Response(content=text, media_type=media,
+                    headers={"X-Structure-Id": struct.identifier,
+                             "X-Structure-Source": struct.source,
+                             "X-Structure-Format": struct.coord_format})
 
 
 @app.get("/api/ground_truth")
