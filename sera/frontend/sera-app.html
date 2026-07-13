@@ -3311,8 +3311,8 @@ ZNF250</div>
             act(actEl,"tool",null,"done");
             var _vaction=ev.update && ev.update.action;
             if(_vaction==="reconcile" || _vaction==="compare"){
-              // Match a Codex-style response: finish the explanation first, then attach the
-              // deterministic figure as supporting evidence inside this same agent turn.
+              // Finish the explanation first, then attach the deterministic figure
+              // as supporting evidence inside this same agent turn.
               pendingViews.push(ev.update);
               if(_vaction==="reconcile") act(actEl,"verdict","computing the deterministic verdict","running");
               else act(actEl,"compare","comparing verdicts across conditions","running");
