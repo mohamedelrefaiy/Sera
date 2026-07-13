@@ -1,6 +1,6 @@
-# Concord design guidelines
+# Sera design guidelines
 
-Concord is an evidence workspace for reconciling mRNA and protein screens. It should feel like scientific decision infrastructure: calm, precise, traceable, and suitable for repeated use by research teams. The interface must not resemble a generic chat product or a decorative AI dashboard.
+Sera is an evidence workspace for reconciling mRNA and protein screens. It should feel like scientific decision infrastructure: calm, precise, traceable, and suitable for repeated use by research teams. The interface must not resemble a generic chat product or a decorative AI dashboard.
 
 ## Design principles
 
@@ -30,7 +30,7 @@ The structural teal is used for focus, active navigation, running status, and pr
 
 ## Typography
 
-Concord uses three intentional voices:
+Sera uses three intentional voices:
 
 - **IBM Plex Sans:** navigation, controls, labels, buttons, and general product UI.
 - **Source Serif 4:** scientific interpretation, narrative answers, figure captions, and conclusions.

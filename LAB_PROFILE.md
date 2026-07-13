@@ -2,25 +2,25 @@
 
 ## Product outcome
 
-Lab Profile lets a scientist save the bench capacity they normally have and reuse it when Concord proposes a discriminating experiment. It is laboratory context, not an AI persona: it constrains what the deterministic decision-brief builder may call feasible; it does not change the reconciliation verdict or instruct Claude to imitate a role.
+Lab Profile lets a scientist save the bench capacity they normally have and reuse it when Sera proposes a discriminating experiment. It is laboratory context, not an AI persona: it constrains what the deterministic decision-brief builder may call feasible; it does not change the reconciliation verdict or instruct Claude to imitate a role.
 
-The v1 promise is narrow: **Concord remembers which paired readouts, donor count, and time window this browser normally has, then clearly separates those defaults from temporary constraints for one experiment.**
+The v1 promise is narrow: **Sera remembers which paired readouts, donor count, and time window this browser normally has, then clearly separates those defaults from temporary constraints for one experiment.**
 
 ## Existing source of truth
 
 The implementation must extend the current constraints path rather than create a second planning system:
 
-1. `target_triage/frontend/concord-app.html` already renders the “Tune to your bench” controls and requests a constrained brief.
-2. `target_triage/api/app.py::_parse_constraints` converts the query parameters into `ExperimentConstraints`.
-3. `target_triage/core/decision_brief.py::ExperimentConstraints` validates the closed readout set and non-negative donor/day counts.
-4. `target_triage/core/decision_brief.py::_experiment_and_outcomes` deterministically selects a protein readout, checks paired RNA/protein feasibility and donor sufficiency, adapts the time course, and reports unmet requirements.
+1. `sera/frontend/sera-app.html` already renders the “Tune to your bench” controls and requests a constrained brief.
+2. `sera/api/app.py::_parse_constraints` converts the query parameters into `ExperimentConstraints`.
+3. `sera/core/decision_brief.py::ExperimentConstraints` validates the closed readout set and non-negative donor/day counts.
+4. `sera/core/decision_brief.py::_experiment_and_outcomes` deterministically selects a protein readout, checks paired RNA/protein feasibility and donor sufficiency, adapts the time course, and reports unmet requirements.
 5. `build_decision_brief` receives those constraints without changing the code-computed concordance verdict.
 
 The Lab Profile is therefore a frontend persistence and input-resolution layer. The resolved constraints sent to the API remain the only inputs that affect feasibility.
 
 ## V1 profile schema
 
-Persist one active profile under a versioned browser-local key such as `concord.labProfile.v1`.
+Persist one active profile under a versioned browser-local key such as `sera.labProfile.v1`.
 
 ```json
 {
@@ -95,7 +95,7 @@ The frontend must render the API’s `feasible`, `unmet_requirements`, `adaptati
 
 V1 adds:
 
-- a “My Lab” entry point in the existing Concord workspace;
+- a “My Lab” entry point in the existing Sera workspace;
 - a small editor for lab name, available readouts, usual donor capacity, and usual time window;
 - save/reset actions and browser-local disclosure;
 - a compact active-profile summary on decision-plan views;
@@ -140,4 +140,4 @@ The profile should be useful without requiring Claude or an API credential. Cons
 
 ## Verification target
 
-Keep the existing decision-brief gates passing, especially `target_triage/eval/test_decision_brief.py` and `target_triage/eval/test_decision_brief_api.py`. Add focused frontend tests if a browser test harness is introduced; otherwise isolate profile parsing and constraint resolution into testable functions and include a manual reload/reset/override checklist.
+Keep the existing decision-brief gates passing, especially `sera/eval/test_decision_brief.py` and `sera/eval/test_decision_brief_api.py`. Add focused frontend tests if a browser test harness is introduced; otherwise isolate profile parsing and constraint resolution into testable functions and include a manual reload/reset/override checklist.

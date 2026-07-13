@@ -1,4 +1,4 @@
-# Target Triage
+# Sera
 
 Rank and adversarially verify druggable T-cell regulators from Perturb-seq — a
 reusable instrument that runs the same pipeline on any screen. Built for the
@@ -17,7 +17,7 @@ Python app:
 
 ```
 .
-├── target_triage/       the package (app-layout: no src/ wrapper)
+├── sera/       the package (app-layout: no src/ wrapper)
 │   ├── core/            deterministic pipeline (data, ranking, verify, shortlist, controls)
 │   ├── clients/         read-only external evidence (Open Targets, ClinicalTrials.gov)
 │   ├── llm/             Claude-facing adapters (@tool wrappers, system prompt, SDK options)
@@ -43,7 +43,7 @@ PORT=9000 ./start.sh  # pick a port
 ```
 
 `start.sh` launches a single server: the FastAPI backend serves both the JSON API
-(`/api/*`) and the static frontend (`target_triage/frontend/`) on one port — there
+(`/api/*`) and the static frontend (`sera/frontend/`) on one port — there
 is no separate frontend process. The deterministic shortlist works with no API key;
 the chat panel needs `ANTHROPIC_API_KEY` (or a logged-in `claude` CLI).
 
@@ -54,19 +54,19 @@ python -m venv .venv && source .venv/bin/activate
 pip install -e .
 
 # The web app (frontend + backend, single server)
-python target_triage/api/serve.py --port 8010   # http://127.0.0.1:8010
+python sera/api/serve.py --port 8010   # http://127.0.0.1:8010
 
 # The deterministic pipeline's positive-control gate (no API key needed)
-python -m target_triage.core.controls           # expect 5/5 PASS on Marson + Schmidt2022
+python -m sera.core.controls           # expect 5/5 PASS on Marson + Schmidt2022
 
 # The live agent end-to-end (requires ANTHROPIC_API_KEY or a logged-in claude CLI)
-python -m target_triage
+python -m sera
 ```
 
 ## Tests
 
 ```bash
-pytest target_triage/eval
+pytest sera/eval
 ```
 
 The controls-first gate is the trust contract: before any novel pick is shown, the

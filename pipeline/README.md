@@ -1,6 +1,6 @@
-# Concord pipeline — h5ad → cytokine-effect parquet
+# Sera pipeline — h5ad → cytokine-effect parquet
 
-The **mRNA side** of Concord's concordance (the effect of each knockdown on a cytokine's
+The **mRNA side** of Sera's concordance (the effect of each knockdown on a cytokine's
 mRNA) lives in a 16.8 GB h5ad that is *not* bundled in the repo. These scripts fetch just
 the cytokine columns and write a compact parquet the deterministic core consumes. Everything
 here is **build-time only** — the served app never touches h5py/parquet on the request path.
@@ -35,7 +35,7 @@ python pipeline/01_extract_cytokines.py --cytokines IL2         # primary anchor
 python pipeline/01_extract_cytokines.py                          # IL2 + config extras
 python pipeline/01_extract_cytokines.py --source local          # from a downloaded copy
 ```
-Writes `target_triage/data/artifacts/cytokine_mrna_effects.parquet` with one row per
+Writes `sera/data/artifacts/cytokine_mrna_effects.parquet` with one row per
 (gene × cytokine × condition): `gene, cytokine, condition, z_rna, q_rna, log_fc, p_value`.
 On-target self-perturbation rows (`gene == cytokine`) are excluded (brief §3.4 hazard 1).
 
@@ -64,7 +64,7 @@ No-ops cleanly without credentials (the frontend template fallback covers every 
 ```bash
 python pipeline/05_ground_truth.py
 ```
-How Concord recovers canonical IL-2 regulators + the aggregate Spearman → `ground_truth.json`.
+How Sera recovers canonical IL-2 regulators + the aggregate Spearman → `ground_truth.json`.
 
 ### 07 — warm the protein mini-report caches (structure needs network; literature needs credentials)
 ```bash

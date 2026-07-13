@@ -19,18 +19,18 @@ import pandas as pd
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _APP = os.path.dirname(_HERE)
-# Make the target_triage package importable when run from application/ (pipeline/ is a
+# Make the sera package importable when run from application/ (pipeline/ is a
 # sibling of the package, not inside it), without requiring an editable install.
 if _APP not in sys.path:
     sys.path.insert(0, _APP)
 
 from dataclasses import asdict  # noqa: E402
 
-from target_triage.core.concordance import (  # noqa: E402 — path set above
+from sera.core.concordance import (  # noqa: E402 — path set above
     Config, MrnaEffect, _direction, classify, load_protein)
 
-_MRNA = os.path.join(_APP, "target_triage", "data", "artifacts", "cytokine_mrna_effects.parquet")
-_OUT = os.path.join(_APP, "target_triage", "data", "artifacts", "concordance.parquet")
+_MRNA = os.path.join(_APP, "sera", "data", "artifacts", "cytokine_mrna_effects.parquet")
+_OUT = os.path.join(_APP, "sera", "data", "artifacts", "concordance.parquet")
 
 
 def build(cytokine: str | None = None, progress=print) -> pd.DataFrame:

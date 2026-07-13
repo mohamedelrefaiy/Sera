@@ -29,11 +29,11 @@ if _APP not in sys.path:
 import pandas as pd  # noqa: E402
 import yaml  # noqa: E402
 
-from target_triage.clients import opentargets  # noqa: E402
-from target_triage.core.concordance import Config  # noqa: E402
-from target_triage.core.data import load_marson  # noqa: E402
+from sera.clients import opentargets  # noqa: E402
+from sera.core.concordance import Config  # noqa: E402
+from sera.core.data import load_marson  # noqa: E402
 
-_DATA = os.path.join(_APP, "target_triage", "data")
+_DATA = os.path.join(_APP, "sera", "data")
 _DONOR = os.path.join(_DATA, "robustness", "DE_donor_robustness_correlation_summary.csv")
 _GUIDE = os.path.join(_DATA, "robustness", "DE_by_guide_correlation_results.csv")
 _CONC = os.path.join(_DATA, "artifacts", "concordance.parquet")

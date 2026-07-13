@@ -1,9 +1,9 @@
 """Phase 5 · step 05 — the ground-truth panel (the money demo).
 
-Concord's trust claim, stated honestly and reproducibly: the tool INDEPENDENTLY recovers the
+Sera's trust claim, stated honestly and reproducibly: the tool INDEPENDENTLY recovers the
 known biology of IL-2 control in CD4+ T cells. We take a fixed set of textbook IL-2 regulators
 — proximal TCR-signaling positive regulators (knockdown should LOWER IL-2) and known brakes
-(knockdown should RAISE IL-2) — and show where Concord's 2x2(+1) verdict lands each one.
+(knockdown should RAISE IL-2) — and show where Sera's 2x2(+1) verdict lands each one.
 
 The honest message is stronger than "the verdicts match a list":
   - every canonical POSITIVE regulator is a hit on at least the protein side (not 'neither'),
@@ -32,20 +32,20 @@ if _APP not in sys.path:
 
 import pandas as pd  # noqa: E402
 
-_CONC = os.path.join(_APP, "target_triage", "data", "artifacts", "concordance.parquet")
-_MRNA = os.path.join(_APP, "target_triage", "data", "artifacts", "cytokine_mrna_effects.parquet")
-_OUT = os.path.join(_APP, "target_triage", "data", "artifacts", "ground_truth.json")
+_CONC = os.path.join(_APP, "sera", "data", "artifacts", "concordance.parquet")
+_MRNA = os.path.join(_APP, "sera", "data", "artifacts", "cytokine_mrna_effects.parquet")
+_OUT = os.path.join(_APP, "sera", "data", "artifacts", "ground_truth.json")
 
 ANCHOR_CONDITION = "Stim48hr"
 
-# The textbook truth set. `role` is the KNOWN biology; the panel shows whether Concord's verdict
+# The textbook truth set. `role` is the KNOWN biology; the panel shows whether Sera's verdict
 # is consistent with it. Positive regulators: KD lowers IL-2 (a hit that "promotes"). Brakes: KD
 # raises IL-2 (a hit that "raises" — surfaces as discordant or a single-modality verdict).
 POSITIVE_REGULATORS = ("ITK", "BCL10", "VAV1", "PLCG1", "LCP2", "ZAP70",
                        "LAT", "CD3D", "CD3E", "CD28", "LCK")
 BRAKES = ("TSC1", "CBLB", "PTPN2", "SOCS1", "TNFAIP3")
 
-# A positive regulator is "recovered" when Concord flags it as a hit in the PROMOTING direction
+# A positive regulator is "recovered" when Sera flags it as a hit in the PROMOTING direction
 # on at least one side: replicated (both agree), or a single-modality hit (protein_only /
 # mrna_only). `discordant` is deliberately EXCLUDED — for a positive regulator, a direction
 # disagreement between the screens is NOT clean recovery of "KD lowers IL-2", so counting it
@@ -89,7 +89,7 @@ def build() -> dict:
     # aggregate Spearman over all shared genes at the anchor condition (the "average hides it").
     m = pd.read_parquet(_MRNA)
     m = m[(m["cytokine"] == "IL2") & (m["condition"] == ANCHOR_CONDITION)]
-    from target_triage.core.concordance import Config, load_protein
+    from sera.core.concordance import Config, load_protein
     prot = load_protein(Config.load())
     shared = [(r.z_rna, prot[r.gene].lfc) for r in m.itertuples(index=False) if r.gene in prot]
     rho = _spearman(*zip(*shared)) if shared else 0.0

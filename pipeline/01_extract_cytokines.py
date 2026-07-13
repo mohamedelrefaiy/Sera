@@ -1,6 +1,6 @@
 """Phase 0 · step 01 — extract the per-cytokine mRNA effect table from the 16.8 GB h5ad.
 
-Concord's mRNA side needs, for each (perturbed gene, condition), the effect of that
+Sera's mRNA side needs, for each (perturbed gene, condition), the effect of that
 knockdown on each cytokine's mRNA. That is a handful of COLUMNS (the cytokines) of the
 33,983 x 10,282 DE matrix, across the layers we care about. We do NOT need the whole file.
 
@@ -192,7 +192,7 @@ def main() -> int:
     df = extract(args.source, args.cytokines, exclude_self)
 
     out = args.out or os.path.join(
-        _APP, "target_triage", "data", "artifacts", "cytokine_mrna_effects.parquet")
+        _APP, "sera", "data", "artifacts", "cytokine_mrna_effects.parquet")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     df.to_parquet(out, index=False)
     print(f"[write] {out}  ({len(df):,} rows, {df['cytokine'].nunique()} cytokines, "

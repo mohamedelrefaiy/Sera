@@ -40,8 +40,8 @@ _APP = os.path.dirname(_HERE)
 if _APP not in sys.path:
     sys.path.insert(0, _APP)
 
-from target_triage.clients.protein import ProteinRecord, resolve_protein  # noqa: E402
-from target_triage.llm.literature import (  # noqa: E402
+from sera.clients.protein import ProteinRecord, resolve_protein  # noqa: E402
+from sera.llm.literature import (  # noqa: E402
     LiteraturePanel, summarise_literature, write_cache)
 
 # The demo gene set — the same genes annotated for the demo in core/explanation.py (chips + the
@@ -49,7 +49,7 @@ from target_triage.llm.literature import (  # noqa: E402
 DEFAULT_GENES: tuple[str, ...] = (
     "ITK", "BCL10", "VAV1", "TSC1", "LCP2", "VPS37B", "ZNF250", "IL2RA", "NFKB2")
 
-_STRUCTURE_CACHE_DIR = os.path.join(_APP, "target_triage", "data", "artifacts", "structure_cache")
+_STRUCTURE_CACHE_DIR = os.path.join(_APP, "sera", "data", "artifacts", "structure_cache")
 
 
 def _has_credentials() -> bool:
@@ -89,10 +89,10 @@ def _warm_structure_coords(record: ProteinRecord, progress=print) -> bool:
 async def warm(genes: list[str], *, do_literature: bool, progress=print) -> dict:
     """Warm identity+structure (always) and literature (if enabled) for each gene. Returns a small
     per-gene status dict for the final summary."""
-    # Use concord_tools._GENES — the SAME closed set the protein_report tool gates on, loaded at
+    # Use sera_tools._GENES — the SAME closed set the protein_report tool gates on, loaded at
     # import from the concordance parquet. NOT api.app._gene_set(): that reads _CONCORDANCE, which is
     # populated by a FastAPI startup event, so it is EMPTY in a standalone script (no server running).
-    from target_triage.llm.concord_tools import _GENES as screen_genes
+    from sera.llm.sera_tools import _GENES as screen_genes
     panels: list[LiteraturePanel] = []
     status: dict[str, dict] = {}
 

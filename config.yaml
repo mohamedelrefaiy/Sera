@@ -1,11 +1,11 @@
-# Concord configuration — thresholds, cytokines, conditions, and data provenance.
+# Sera configuration — thresholds, cytokines, conditions, and data provenance.
 #
-# Every tunable that the brief (concord-build-brief.md) says must NOT be hardcoded lives
+# Every tunable that the brief (sera-build-brief.md) says must NOT be hardcoded lives
 # here. The deterministic core reads these; nothing downstream invents a cutoff. Kept as
 # plain YAML so a reviewer can see and change the science without reading code.
 #
-# NOTE: the existing Target Triage core is intentionally stdlib-only. This file is read by
-# the (optional) Concord pipeline + concordance builder, not by the base app's hot path.
+# NOTE: the existing Sera core is intentionally stdlib-only. This file is read by
+# the (optional) Sera pipeline + concordance builder, not by the base app's hot path.
 
 # ---- cytokine scope (brief §3.5) -------------------------------------------------------
 cytokines:
@@ -69,15 +69,15 @@ data:
   h5ad_obs_condition_col: "culture_condition"
   h5ad_layers: [zscore, adj_p_value, log_fc, p_value, lfcSE, baseMean]
   # Schmidt protein side — already bundled in the repo.
-  schmidt_csv: "target_triage/data/external_screens/Schmidt2022_CRISPRi_gene_phenotypes.csv"
+  schmidt_csv: "sera/data/external_screens/Schmidt2022_CRISPRi_gene_phenotypes.csv"
   schmidt_phenotype_il2: "CD4+ IL2"
   schmidt_phenotype_ifng: "CD8+ IFNG"       # cross-cell-type — flag, do not sell as clean
   # Zhu 2025 citation — DOI confirmed 2026-07-09 from the CZI Virtual Cells + bioRxiv pages.
   zhu_2025_doi: "10.64898/2025.12.23.696273"
 
 # ---- output artifact (brief §5) --------------------------------------------------------
-artifacts_dir: "target_triage/data/artifacts"
-concordance_parquet: "target_triage/data/artifacts/concordance.parquet"
+artifacts_dir: "sera/data/artifacts"
+concordance_parquet: "sera/data/artifacts/concordance.parquet"
 
 # ---- Claude interpretation (brief §4 Phase 4 / §7.3) -----------------------------------
 model:

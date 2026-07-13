@@ -32,11 +32,11 @@ if _APP not in sys.path:
 
 import pandas as pd  # noqa: E402
 
-from target_triage.core.explanation import (  # noqa: E402 — the ONE grounded-prompt source
+from sera.core.explanation import (  # noqa: E402 — the ONE grounded-prompt source
     MODEL, SYSTEM_PROMPT, build_record, user_prompt)
 
-_CONC = os.path.join(_APP, "target_triage", "data", "artifacts", "concordance.parquet")
-_OUT = os.path.join(_APP, "target_triage", "data", "artifacts", "explanations_cache.json")
+_CONC = os.path.join(_APP, "sera", "data", "artifacts", "concordance.parquet")
+_OUT = os.path.join(_APP, "sera", "data", "artifacts", "explanations_cache.json")
 
 # The genes worth caching for the demo (chips + a couple of extra discordant/protein-only cases).
 DEFAULT_GENES = ("ITK", "BCL10", "VAV1", "TSC1", "LCP2", "VPS37B", "ZNF250", "IL2RA")

@@ -22,7 +22,7 @@ data/sessions/
 # Local pre-redesign snapshots of the frontend — safety copies, kept out of git.
 *.bak.html
 
-# Concord pipeline: the 16.8 GB source h5ad (only present if 00_download.py --download
+# Sera pipeline: the 16.8 GB source h5ad (only present if 00_download.py --download
 # was run) is huge and reproducible from public S3 — never commit it. The small extracted
 # parquet under data/artifacts/ IS the served deliverable and is intentionally NOT ignored.
 data/raw/

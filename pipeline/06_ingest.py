@@ -15,7 +15,7 @@ reviewer needs in order to check the work:
                             came from, and any mechanistic sentence to its accession.
 
 The provenance log is not a side artifact -- it IS the differentiator. A general agent produces a
-conclusion. Concord produces a conclusion plus a receipt.
+conclusion. Sera produces a conclusion plus a receipt.
 
 WHAT THIS STEP DOES NOT DO: it does not build, edit, or even open the verdict table for writing.
 The concordance is built by pipeline/02_build_concordance.py from the deterministic core, and
@@ -44,13 +44,13 @@ _APP = os.path.dirname(_HERE)
 if _APP not in sys.path:
     sys.path.insert(0, _APP)
 
-from target_triage.core.canonical import SIGN_CONVENTION, Modality, SchemaViolation  # noqa: E402
-from target_triage.rim.adapters import FREIMER_CSV, SCHMIDT_CSV, zhu_rows  # noqa: E402
-from target_triage.rim.ingest import (  # noqa: E402
+from sera.core.canonical import SIGN_CONVENTION, Modality, SchemaViolation  # noqa: E402
+from sera.rim.adapters import FREIMER_CSV, SCHMIDT_CSV, zhu_rows  # noqa: E402
+from sera.rim.ingest import (  # noqa: E402
     AxisExtract, NeedsConfirmation, has_credentials, ingest_csv, manifest, profile_csv,
     propose_heuristic, propose_with_claude, write_manifest)
 
-_ART = os.path.join(_APP, "target_triage", "data", "artifacts")
+_ART = os.path.join(_APP, "sera", "data", "artifacts")
 _MRNA = os.path.join(_ART, "cytokine_mrna_effects.parquet")
 _CONC = os.path.join(_ART, "concordance.parquet")
 _MANIFEST = os.path.join(_ART, "mapping_manifest.yaml")
@@ -187,7 +187,7 @@ def cited_claims(genes: list[str], *, resolve_citations: bool, progress=print) -
     """
     import pandas as pd
 
-    from target_triage.rim.interpret import UncitedClaim, build_record, interpret, resolve
+    from sera.rim.interpret import UncitedClaim, build_record, interpret, resolve
 
     if not os.path.exists(_CONC):
         progress("[interpret] concordance.parquet absent — skipping Node B")

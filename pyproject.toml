@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "target-triage"
+name = "sera"
 version = "0.1.0"
 description = "Rank + adversarially verify druggable T-cell regulators from Perturb-seq"
 requires-python = ">=3.11"
@@ -22,7 +22,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
 viz = ["plotly>=5.24"]   # interactive figures (plotly skill); not a core-pipeline dep
-# The Concord h5ad → cytokine-parquet extraction (pipeline/). Deliberately SEPARATE from the
+# The Sera h5ad → cytokine-parquet extraction (pipeline/). Deliberately SEPARATE from the
 # core deps: the base app stays stdlib-only for data/verify, and these heavy libs are needed
 # only at build time to produce the parquet artifact — never on the request hot path.
 pipeline = [
@@ -36,20 +36,20 @@ pipeline = [
 ]
 
 [project.scripts]
-target-triage = "target_triage.__main__:main"
-target-triage-serve = "target_triage.api.serve:main"
+sera = "sera.__main__:main"
+sera-serve = "sera.api.serve:main"
 
 # App-layout: the package sits directly under application/ (no src/ wrapper).
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["target_triage*"]
+include = ["sera*"]
 
 # The screen CSVs, the deterministic artifacts (parquet/json/yaml the served app reads at
 # request time), and the served frontend are bundled inside the package, so they must ship with
 # an install — they are not .py and would otherwise be dropped, leaving a clean install that boots
 # but 503s on the first gene view.
 [tool.setuptools.package-data]
-target_triage = [
+sera = [
   "data/**/*.csv",
   "data/**/*.md",
   "data/**/*.parquet",

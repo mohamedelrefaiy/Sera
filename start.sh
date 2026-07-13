@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# start.sh — run Target Triage (frontend + backend).
+# start.sh — run Sera (frontend + backend).
 #
 # There is ONE server. The FastAPI backend serves BOTH the JSON API (/api/*) and
-# the static frontend (target_triage/frontend/, mounted at /) from the same origin,
+# the static frontend (sera/frontend/, mounted at /) from the same origin,
 # so a single uvicorn process is the whole app — no separate frontend dev server.
 # Serving them together on one port is what lets the frontend's fetch("/api/...")
 # calls reach the API without CORS or a proxy.
@@ -33,7 +33,7 @@ if [ ! -x "$PY" ]; then
   python3 -m venv "$VENV"
   "$PY" -m pip install --quiet --upgrade pip
   "$PY" -m pip install --quiet -e .
-elif ! "$PY" -c "import target_triage" >/dev/null 2>&1; then
+elif ! "$PY" -c "import sera" >/dev/null 2>&1; then
   echo "→ Installing the app into the existing .venv…"
   "$PY" -m pip install --quiet -e .
 fi
@@ -53,11 +53,11 @@ else
 fi
 
 echo "──────────────────────────────────────────────────────────"
-echo "  Target Triage — frontend + backend (single server)"
+echo "  Sera — frontend + backend (single server)"
 echo "  URL:   http://$HOST:$PORT"
 echo "  Chat:  $CHAT"
 echo "  Stop:  Ctrl-C"
 echo "──────────────────────────────────────────────────────────"
 
 # --- 4. Run. exec replaces the shell so Ctrl-C goes straight to uvicorn. ------
-exec "$PY" target_triage/api/serve.py --host "$HOST" --port "$PORT"
+exec "$PY" sera/api/serve.py --host "$HOST" --port "$PORT"

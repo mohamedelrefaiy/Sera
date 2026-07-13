@@ -10,7 +10,7 @@ Experimental life scientists evaluating CRISPR screen hits while planning follow
 
 ## Product Purpose
 
-Concord reconciles transcript and protein evidence into an inspectable scientific decision. Success means a researcher can quickly explain the call, see its limitations, and leave with the experiment most likely to change the decision.
+Sera reconciles transcript and protein evidence into an inspectable scientific decision. Success means a researcher can quickly explain the call, see its limitations, and leave with the experiment most likely to change the decision.
 
 ## Brand Personality
 

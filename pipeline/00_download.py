@@ -1,6 +1,6 @@
 """Phase 0 · step 00 — verify (and optionally download) the source h5ad.
 
-The per-cytokine mRNA matrix Concord needs lives in a 16.8 GB public S3 object:
+The per-cytokine mRNA matrix Sera needs lives in a 16.8 GB public S3 object:
     s3://genome-scale-tcell-perturb-seq/marson2025_data/GWCD4i.DE_stats.h5ad
 served over plain HTTPS with `Accept-Ranges: bytes`. Because it is range-capable, the
 extractor (01_extract_cytokines.py) can slice only the cytokine columns WITHOUT a full
@@ -107,7 +107,7 @@ def download(url: str, dest: str) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Verify or download the Concord source h5ad.")
+    ap = argparse.ArgumentParser(description="Verify or download the Sera source h5ad.")
     ap.add_argument("--download", action="store_true",
                     help="fetch the full 16.8 GB file (default is verify-only)")
     args = ap.parse_args()
