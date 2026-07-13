@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sera — reconcile your mRNA and protein screens</title>
+<link rel="icon" href="sera-mark.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Two voices, deliberately paired. Source Serif 4 = the agent narrating (humanist serif, made
@@ -45,6 +46,8 @@
     --t-fig:12px; --t-cap:12.5px; --t-body:16px; --t-lead:17px; --t-verdict:22px;
   }
   *{box-sizing:border-box}
+  .sera-symbols{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
+  .sera-mark{display:block;overflow:visible;flex:none}
   /* The body default is the SERIF — because the page is mostly the agent's written reply, and the
      reply is the product. UI chrome (nav, composer, chips) opts into the sans via --font-ui. */
   html{background:var(--bg);scroll-behavior:smooth}
@@ -88,14 +91,14 @@
   /* Collapsed: the toggle stands alone as the expand affordance; hide the wordmark's dot pair so the
      rail reads as a clean icon column. */
   .workspace.nav-collapsed .nav-top{justify-content:center;padding:5px 0 12px}
-  .workspace.nav-collapsed .nav-top .merge{display:none}
+  .workspace.nav-collapsed .nav-top .sera-mark{display:none}
   .workspace.nav-collapsed .nav-collapse{margin-left:0}
   .workspace.nav-collapsed .nav-collapse svg{transform:rotate(180deg)}
 
   /* left nav */
   .nav{background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:14px 12px;gap:3px;min-width:0}
   .nav-top{display:flex;align-items:center;gap:9px;padding:5px 8px 12px;font-family:var(--font-display);font-weight:500;font-size:14px}
-  .nav-top .merge{display:inline-flex}
+  .nav-top .sera-mark{width:31px;height:20px}
   /* Collapse toggle: a quiet chevron pinned to the right of the logo row; becomes centered + flipped
      when collapsed (rule above). Reuses .nav-item hover affordances. */
   .nav-collapse{margin-left:auto;flex:none;width:26px;height:26px;padding:0;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--ink-faint);border-radius:6px;cursor:pointer;transition:.12s}
@@ -201,10 +204,6 @@
   .landing{max-width:640px;margin:0 auto;padding:8vh 0 40px;text-align:center;
     animation:rise .5s cubic-bezier(.16,1,.3,1) both}
   .landing.hidden{display:none}
-  .landing-mark{display:inline-flex;margin-bottom:22px}
-  .landing-mark .merge{width:40px;height:24px;position:relative;display:inline-block}
-  .landing-mark .merge i{position:absolute;top:2px;width:18px;height:18px;border-radius:50%;mix-blend-mode:screen}
-  .landing-mark .merge i.g{left:0;background:var(--mrna)} .landing-mark .merge i.m{left:12px;background:var(--protein)}
   .landing-h{font-family:var(--font-serif);font-size:30px;font-weight:600;letter-spacing:-.015em;margin:0 0 12px}
   .landing-sub{font-family:var(--font-serif);font-size:16px;line-height:1.65;color:var(--ink-soft);
     max-width:56ch;margin:0 auto 30px}
@@ -335,9 +334,7 @@
   .reply-turn.agent{gap:14px}
   .ava{width:28px;height:28px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);
     display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
-  .ava .merge{width:16px;height:11px;position:relative;display:inline-block}
-  .ava .merge i{position:absolute;top:1px;width:9px;height:9px;border-radius:50%}
-  .ava .merge i.g{left:0;background:var(--mrna)} .ava .merge i.m{left:6px;background:var(--protein);mix-blend-mode:screen}
+  .ava .sera-mark{width:18px;height:12px}
   .reply-body{flex:1;min-width:0;animation:rise .5s cubic-bezier(.16,1,.3,1) both}
   @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .cond-row{display:flex;margin-bottom:14px}
@@ -568,9 +565,6 @@
 
   .bar{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line)}
   .brand{display:flex;align-items:center;gap:11px;font-family:var(--font-display);font-weight:600}
-  .brand .merge{width:26px;height:16px;position:relative;display:inline-block}
-  .brand .merge i{position:absolute;top:2px;width:12px;height:12px;border-radius:50%;mix-blend-mode:multiply}
-  .brand .merge i.g{left:0;background:var(--mrna)} .brand .merge i.m{left:8px;background:var(--protein)}
   .brand small{font-family:var(--font-mono);font-weight:400;font-size:11px;color:var(--ink-faint)}
   .modes{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
   .mode{font-family:var(--font-body);font-size:13.5px;border:none;background:transparent;color:var(--ink-soft);padding:8px 15px;border-radius:7px;cursor:pointer}
@@ -937,7 +931,6 @@
   .arts-head .h{font-family:var(--font-ui);font-size:13px;font-weight:600}
   .art{border-radius:7px;background:var(--surface)}
   .landing{max-width:720px;padding:10vh 0 40px;text-align:left}
-  .landing-mark{margin-bottom:26px}
   .landing-h{max-width:18ch;font-size:42px;line-height:1.08;letter-spacing:-.025em;text-wrap:balance}
   .landing-sub{margin:0 0 34px;max-width:60ch;font-size:17px;line-height:1.65}
   .landing-prompts{gap:10px}
@@ -979,8 +972,10 @@
     linear-gradient(115deg,rgba(255,255,255,.9),rgba(244,247,248,.68) 44%,rgba(235,241,243,.72));}
   .workspace{position:relative;z-index:1}
   .nav{background:var(--sidebar);border-right:1px solid rgba(20,43,50,.08);box-shadow:10px 0 38px rgba(42,66,73,.035)}
-  .nav-top{border-bottom-color:var(--line);font-weight:650;letter-spacing:-.02em}
-  .nav-top small{letter-spacing:.14em!important;color:var(--ink-faint)!important}
+  .nav-top{min-height:50px;padding:2px 10px 14px;border-bottom-color:var(--line);font-size:16px;font-weight:680;letter-spacing:-.025em}
+  .nav-top .txt{gap:3px;line-height:1}
+  .nav-top small{margin-top:0!important;font-size:8.5px!important;line-height:1;letter-spacing:.16em!important;color:var(--ink-faint)!important}
+  .nav-top .nav-collapse{align-self:center}
   .nav-item,.session{color:var(--ink-soft)}
   .nav-item:hover,.session:hover{background:rgba(255,255,255,.76);color:var(--ink)}
   .nav-item.on,.session.on{background:#fff;color:var(--ink);box-shadow:0 8px 24px -16px rgba(25,54,64,.28),inset 3px 0 0 var(--accent)}
@@ -1016,23 +1011,56 @@
   .cchip.on{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px rgba(8,124,240,.25),0 8px 20px -17px rgba(8,124,240,.5)}
   .arts{background:rgba(247,249,250,.9);border-left:1px solid var(--line)}
   .art,.card.soft{background:rgba(255,255,255,.72);border:0;box-shadow:inset 0 0 0 1px var(--line);border-radius:14px}
-  .landing-h{font-family:var(--font-ui);font-size:46px;line-height:1.06;letter-spacing:-.04em;font-weight:680;max-width:none;text-wrap:pretty}
-  .landing-sub{font-family:var(--font-ui);font-size:18px;color:var(--ink-soft);letter-spacing:-.012em}
-  .lprompt{background:rgba(255,255,255,.62);border:0;border-radius:16px;box-shadow:inset 0 0 0 1px var(--line),0 20px 45px -38px rgba(20,43,50,.3);transition:.55s cubic-bezier(.22,1,.36,1)}
-  .lprompt:hover{background:#fff;box-shadow:inset 0 0 0 1px var(--line-strong),0 22px 48px -34px rgba(20,43,50,.32)}
+  .landing{width:min(100%,900px);max-width:900px;padding:6.5vh 0 44px;text-align:left}
+  .landing-brand{display:inline-flex;align-items:center;gap:12px;margin-bottom:24px;color:var(--ink)}
+  .landing-brand .sera-mark{width:54px;height:34px}
+  .landing-brand-copy{display:flex;flex-direction:column;gap:3px}
+  .landing-brand-copy strong{font:720 18px/1 var(--font-ui);letter-spacing:-.025em}
+  .landing-brand-copy small{color:var(--ink-faint);font:600 9px/1.2 var(--font-mono);letter-spacing:.13em;text-transform:uppercase}
+  .landing-h{max-width:21ch;margin:0 0 18px;font-family:var(--font-ui);font-size:54px;line-height:1.01;letter-spacing:-.052em;font-weight:720;text-wrap:balance}
+  .landing-sub{max-width:62ch;margin:0 0 32px;font-family:var(--font-ui);font-size:17px;line-height:1.62;color:var(--ink-soft);letter-spacing:-.01em;text-wrap:pretty}
+  .landing-start{display:flex;align-items:center;gap:12px;margin:0 0 11px;color:var(--ink-faint);font:600 9px/1.3 var(--font-mono);letter-spacing:.13em;text-transform:uppercase}
+  .landing-start::after{content:"";height:1px;flex:1;background:var(--line)}
+  .landing-prompts{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .lprompt{min-height:148px;background:rgba(255,255,255,.62);border:0;border-radius:16px;padding:19px 20px;box-shadow:inset 0 0 0 1px var(--line),0 20px 45px -38px rgba(20,43,50,.3);transition:.38s cubic-bezier(.22,1,.36,1)}
+  .lprompt:hover{background:#fff;box-shadow:inset 0 0 0 1px var(--line-strong),0 22px 48px -34px rgba(20,43,50,.32);transform:translateY(-2px)}
+  .lprompt:active{transform:translateY(0) scale(.99)}
+  .lprompt::after{opacity:.62;transform:none}
+  .lprompt .lp-k{margin-bottom:6px;color:var(--ink-faint);font-size:9px;letter-spacing:.12em}
+  .lprompt .lp-t{max-width:34ch;font:650 17px/1.35 var(--font-ui);letter-spacing:-.015em}
+  .lprompt .lp-ex{margin-top:auto;padding-top:15px;color:var(--ink-faint);font:500 10.5px/1.45 var(--font-mono)}
+  .lprompt-hero,.lprompt-tour{grid-column:auto;background:rgba(255,255,255,.72)}
   .lprompt-hero{box-shadow:inset 3px 0 0 var(--accent),inset 0 0 0 1px var(--line),0 22px 48px -34px rgba(20,43,50,.32)}
+  .lprompt-tour{box-shadow:inset 3px 0 0 var(--protein),inset 0 0 0 1px var(--line),0 22px 48px -34px rgba(20,43,50,.26)}
+  .lprompt-tour .lp-k{color:var(--protein)}
+  .landing-secondary{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .landing-secondary .lprompt{min-height:0;padding:13px 15px 14px;border-radius:12px;background:rgba(255,255,255,.42);box-shadow:inset 0 0 0 1px var(--line)}
+  .landing-secondary .lprompt::after{top:13px;right:13px;font-size:12px}
+  .landing-secondary .lp-k{margin:0;padding-right:18px;color:var(--ink-soft);font-family:var(--font-ui);font-size:12.5px;letter-spacing:-.005em;text-transform:none}
+  .landing-secondary .lp-t{margin-top:5px;color:var(--ink-faint);font:500 11.5px/1.4 var(--font-ui);letter-spacing:0}
+  .landing-secondary .lp-ex{display:none}
+  .landing-genes{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+  .landing-genes .cchip{background:rgba(255,255,255,.46)}
   :focus-visible{outline:3px solid rgba(8,124,240,.45);outline-offset:3px}
 
-  /* Experimental decision brief: narrative and data on the left, the next bench decision on the right. */
-  .turn{max-width:1160px}.brief-shell{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr);gap:24px;align-items:start}
-  .brief-main,.bench-workspace{min-width:0}.bench-workspace{position:sticky;top:20px;display:flex;flex-direction:column;gap:16px}
+  /* Experimental decision brief: one numbered reading order, from result to bench decision. */
+  .turn{max-width:960px}.brief-shell{display:block;max-width:900px;margin:0 auto}
+  .brief-main{min-width:0}
   .brief-k{font:600 10px/1.2 var(--font-mono);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint)}
   .decision-gate{display:grid;grid-template-columns:minmax(210px,.34fr) minmax(0,1fr) auto;gap:24px;align-items:center;margin:0 0 22px;padding:18px 20px;border-radius:16px;background:rgba(255,255,255,.82);box-shadow:inset 0 0 0 1px var(--line),0 16px 38px -34px rgba(20,43,50,.34)}
   .decision-gate strong{display:block;margin-top:7px;font:670 18px/1.18 var(--font-ui);letter-spacing:-.025em}.decision-gate p{max-width:68ch;margin:0;color:var(--ink-soft);font-size:13.5px;line-height:1.5}
   .gate-next{display:flex;flex-direction:column;gap:5px;min-width:126px;padding-left:18px;border-left:1px solid var(--line);color:var(--ink-soft);font:500 11px/1.35 var(--font-ui)}
   .gate-next span:first-child{color:var(--ink-faint);font:600 9px/1.2 var(--font-mono);letter-spacing:.1em;text-transform:uppercase}.gate-next span:last-child{color:var(--ink);font-weight:620}
   .decision-gate.advance strong{color:var(--mrna)}.decision-gate.hold strong{color:var(--warn)}.decision-gate.validate strong{color:var(--accent)}.decision-gate.deprioritize strong,.decision-gate.insufficient strong{color:var(--ink-soft)}
-  .interpretation-block{margin:0 0 20px;padding:2px 0 0}.interpretation-block>.brief-k{display:block;margin-bottom:10px}.interpretation-block .prose{margin:0}.interpretation-block .result-narrative{margin-top:10px}
+  .reconcile-section{padding:30px 0 34px;border-top:1px solid var(--line);scroll-margin-top:80px}
+  .reconcile-section:first-child{border-top:0;padding-top:8px}
+  .reconcile-section-head{display:grid;grid-template-columns:34px minmax(0,1fr);gap:14px;align-items:start;margin-bottom:22px}
+  .reconcile-section-num{display:grid;place-items:center;width:28px;height:28px;border:1px solid var(--line-strong);border-radius:50%;
+    background:rgba(255,255,255,.72);color:var(--ink-faint);font:650 9px/1 var(--font-mono);font-variant-numeric:tabular-nums}
+  .reconcile-section-k{display:block;margin:1px 0 5px;color:var(--accent);font:650 9px/1.3 var(--font-mono);letter-spacing:.12em;text-transform:uppercase}
+  .reconcile-section-title{margin:0;color:var(--ink);font:700 28px/1.12 var(--font-ui);letter-spacing:-.035em;text-wrap:balance}
+  .reconcile-section-deck{margin:7px 0 0;max-width:68ch;color:var(--ink-soft);font-size:13px;line-height:1.5}
+  .interpretation-block{margin:0;padding:0}.interpretation-block .prose{margin:0;max-width:68ch}.interpretation-block .result-narrative{margin-top:10px}
   .evidence-boundary{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:20px 0 24px;background:var(--line);border-radius:16px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
   .boundary{min-height:152px;padding:17px;background:rgba(255,255,255,.76)}.boundary .brief-k::before{content:"";display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:50%;background:var(--ink-faint)}
   .boundary.observed .brief-k::before{background:var(--mrna)}.boundary.inferred .brief-k::before{background:var(--warn)}
@@ -1042,15 +1070,21 @@
   .ledger-row,.threat-row,.spec-row{display:grid;gap:10px;padding:11px 0;border-top:1px solid var(--line);font-size:12px;line-height:1.4}.ledger-row{grid-template-columns:1fr auto}.ledger-row:first-child,.threat-row:first-child,.spec-row:first-child{border-top:0}
   .ledger-row strong{color:var(--ink);font-weight:600}.ledger-row span,.threat-row{color:var(--ink-soft)}.ledger-status{font:600 10px var(--font-mono);text-transform:uppercase;color:var(--mrna)!important}
   .threat-row{grid-template-columns:18px 1fr}.threat-row::before{content:"!";display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--warn-soft);color:var(--warn);font:700 10px var(--font-mono)}
-  .bench-workspace .resolution{margin:0;padding:22px;border-radius:18px;box-shadow:inset 0 0 0 1px var(--line),0 18px 48px -40px rgba(20,43,50,.4)}.bench-workspace .resolution-head{display:block}.bench-workspace .resolution-tag{display:inline-block;margin-top:9px}.bench-workspace .resolution-h{font-size:20px}.bench-workspace .outcomes{grid-template-columns:1fr}
+  .reconcile-section .fig{margin:0}.reconcile-section .fig-frame{max-width:none}
+  .reconcile-section .cap{width:100%;max-width:none;text-align:left}
+  .reconcile-section .evidence-ledger{margin-top:18px}
+  .reconcile-section .threats{margin:0}
+  .reconcile-section .resolution{margin:0;padding:24px;border-radius:18px;box-shadow:inset 0 0 0 1px var(--line),0 18px 48px -40px rgba(20,43,50,.4)}
+  .reconcile-section .resolution-h{font-size:21px}.reconcile-section .outcomes{grid-template-columns:repeat(3,1fr)}
   .outcomes-label{margin:16px 0 8px;color:var(--ink-faint);font:600 9px/1.3 var(--font-mono);letter-spacing:.1em;text-transform:uppercase}
   .bench-spec{margin:16px 0;padding:2px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.spec-row{grid-template-columns:84px 1fr}.spec-row span:first-child{color:var(--ink-faint);font:600 9px/1.5 var(--font-mono);letter-spacing:.08em;text-transform:uppercase}.spec-row span:last-child{color:var(--ink)}
-  .bench-workspace .followups{display:flex;flex-direction:column;margin:0}.bench-workspace .followups::before{content:"Suggested next steps";margin:2px 0 8px;font:600 10px var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
-  .bench-workspace .fchip{width:100%;justify-content:flex-start}.bench-workspace .dossier,.bench-workspace .srcline{display:none!important}
+  .brief-shell>.followups{display:grid;grid-template-columns:repeat(3,1fr);margin:8px 0 0;padding:24px 0 0;border-top:1px solid var(--line)}
+  .brief-shell>.followups::before{grid-column:1/-1;content:"Continue the analysis";margin:0 0 3px;font:600 10px var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+  .brief-shell>.followups .fchip{width:100%;justify-content:flex-start}.brief-shell .dossier,.brief-shell .srcline{display:none!important}
 
   /* Refinement: a plan returned by the agent is supporting evidence inside that answer, not a
      second chat turn. The protocol reads as a compact lab worksheet with one continuous rhythm. */
-  .js-answerText{max-width:70ch!important;font-size:17px;line-height:1.62}
+  .js-answerText{max-width:82ch!important;font-size:17px;line-height:1.62}
   .inline-plan{max-width:none!important;margin:28px 0 0!important;padding:26px 0 8px!important;border-top:1px solid var(--line)}
   .inline-plan>.reply-turn.agent{display:block}.inline-plan>.reply-turn.agent>.ava{display:none}.inline-plan .reply-body{width:100%}
   .plan-sheet .planbar{margin:0 0 16px;align-items:flex-end}.plan-sheet .pt-title{font:650 19px/1.25 var(--font-ui);letter-spacing:-.025em}
@@ -1070,20 +1104,46 @@
      app's own grammar to explain the app. Serif narrates, mono is the machine voice, and the only
      colour is the two data channels (--mrna, --protein) — so the page demonstrates the thesis it
      describes. Lives inside #convoScroll like the other views; toggled by setMode("how"). */
-  #howView{max-width:720px;margin:0 auto;padding:34px 0 96px}
-  .how-sec{padding:36px 0;border-top:1px solid var(--line)}
+  #howView{max-width:860px;margin:0 auto;padding:38px 0 112px}
+  .how-sec{padding:44px 0;border-top:1px solid var(--line)}
   .how-sec:first-child{border-top:0;padding-top:8px}
   .how-kicker{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
     color:var(--ink-faint);margin-bottom:16px}
-  .how-hero-h{font-family:var(--font-serif);font-size:34px;line-height:1.16;letter-spacing:-.01em;
-    font-weight:600;color:var(--ink);margin:0 0 16px;max-width:16ch}
-  .how-lede{font-size:var(--t-lead);line-height:1.6;color:var(--ink-soft);max-width:60ch;margin:0}
-  .how-h{font-family:var(--font-serif);font-size:24px;line-height:1.2;font-weight:600;color:var(--ink);margin:0 0 10px}
+  .how-hero{position:relative;padding:36px 38px 40px!important;border:1px solid var(--line)!important;
+    border-radius:18px;background:var(--surface);overflow:hidden}
+  .how-hero:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;
+    background:linear-gradient(180deg,var(--mrna) 0 48%,var(--protein) 52% 100%)}
+  .how-hero-h{font-family:var(--font-serif);font-size:42px;line-height:1.08;letter-spacing:-.025em;
+    text-wrap:balance;font-weight:600;color:var(--ink);margin:0 0 18px;max-width:18ch}
+  .how-lede{font-size:17px;line-height:1.62;color:var(--ink-soft);max-width:64ch;margin:0;text-wrap:pretty}
+  .how-lede b{color:var(--ink);font-weight:600}
+  .how-h{font-family:var(--font-serif);font-size:27px;line-height:1.18;letter-spacing:-.012em;
+    text-wrap:balance;font-weight:600;color:var(--ink);margin:0 0 12px}
   .how-p{font-size:var(--t-body);line-height:1.62;color:var(--ink-soft);max-width:62ch;margin:0 0 14px}
   .how-p:last-child{margin-bottom:0}
   .how-p b{color:var(--ink);font-weight:600}
   .how-p .mrna{color:var(--mrna);font-weight:600}
   .how-p .protein{color:var(--protein);font-weight:600}
+
+  /* Put the scientific output before the problem: judges can identify the product in one scan. */
+  .how-output{display:grid;grid-template-columns:repeat(3,1fr);margin-top:28px;border-top:1px solid var(--line)}
+  .how-output-item{padding:18px 20px 0 0}
+  .how-output-item+.how-output-item{padding-left:20px;border-left:1px solid var(--line)}
+  .how-output-k{display:block;font-family:var(--font-mono);font-size:10px;line-height:1.4;
+    letter-spacing:.11em;text-transform:uppercase;color:var(--accent-text);margin-bottom:7px}
+  .how-output-v{display:block;font-size:13.5px;line-height:1.48;color:var(--ink-soft)}
+  .how-output-v b{display:block;color:var(--ink);font-size:14px;font-weight:600;margin-bottom:2px}
+  .how-thesis{display:grid;grid-template-columns:minmax(180px,.42fr) 1fr;gap:34px;align-items:start}
+  .how-thesis .how-kicker{margin:4px 0 0}
+  .how-thesis-copy{max-width:62ch}
+  .how-method{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:22px;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .how-method-step{padding:18px 18px 20px 0}
+  .how-method-step+.how-method-step{padding-left:18px;border-left:1px solid var(--line)}
+  .how-method-n{display:block;font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;
+    color:var(--ink-faint);margin-bottom:11px}
+  .how-method-step strong{display:block;font-size:14px;color:var(--ink);font-weight:600;margin-bottom:5px}
+  .how-method-step p{font-size:12.5px;line-height:1.5;color:var(--ink-soft);margin:0}
 
   /* Two-channel legend — the visual key the rest of the app assumes you already know. */
   .how-channels{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 4px}
@@ -1191,6 +1251,86 @@
   .how-cta .go{width:auto;padding:12px 20px}
   .how-cta .cta-note{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint)}
 
+  /* ══ HOW-IT-WORKS HUB — three sub-pages under one destination. A segmented control switches
+     Overview / The science / Architecture; each is a .how-page. The sub-nav is sticky so the
+     reader keeps their place on the long science page. Reuses the app's chrome idiom (mono labels,
+     surface + hairline), no new colour language. */
+  .how-subnav{position:sticky;top:0;z-index:4;display:flex;flex-wrap:wrap;gap:6px;
+    margin:0 0 6px;padding:16px 0 12px;background:linear-gradient(var(--bg) 76%,transparent)}
+  .how-subtab{display:inline-flex;align-items:center;gap:9px;min-height:40px;padding:8px 15px;
+    font-family:var(--font-ui);font-size:13.5px;font-weight:500;color:var(--ink-soft);
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;cursor:pointer;transition:.12s}
+  .how-subtab:hover{background:var(--surface-2);color:var(--ink);border-color:var(--line-strong)}
+  .how-subtab[aria-selected="true"]{background:var(--surface-2);color:var(--ink);
+    border-color:var(--accent-text);box-shadow:inset 0 0 0 1px var(--accent-text)}
+  .how-subtab .st-n{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint)}
+  .how-subtab[aria-selected="true"] .st-n{color:var(--accent-text)}
+  .how-page[hidden]{display:none}
+  .how-page > .how-sec:first-child{border-top:0;padding-top:14px}
+
+  /* Stat band — the dataset at a glance. Numbers are the machine voice (mono, tabular). */
+  .sci-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:6px 0 4px}
+  .sci-stat{padding:16px 16px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+  .sci-stat .n{font-family:var(--font-mono);font-size:23px;font-weight:600;color:var(--ink);
+    font-variant-numeric:tabular-nums;letter-spacing:-.01em;line-height:1}
+  .sci-stat .l{display:block;margin-top:7px;font-size:12.5px;line-height:1.4;color:var(--ink-soft)}
+
+  /* Data-provenance table — every source, what it is, and its role. Mono for the machine facts. */
+  .sci-table{width:100%;border-collapse:collapse;margin:8px 0 2px;font-size:13px}
+  .sci-table th{text-align:left;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--ink-faint);font-weight:500;padding:0 11px 9px 0;border-bottom:1px solid var(--line)}
+  .sci-table td{padding:12px 11px 12px 0;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-soft);line-height:1.5}
+  .sci-table td:last-child,.sci-table th:last-child{padding-right:0}
+  .sci-table tr:last-child td{border-bottom:0}
+  .sci-table .g{font-family:var(--font-mono);font-size:12px;color:var(--ink);white-space:nowrap}
+  .sci-table .role{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)}
+  .sci-table .mrna{color:var(--mrna);font-weight:600}
+  .sci-table .protein{color:var(--protein);font-weight:600}
+  .sci-tablewrap{overflow-x:auto}
+
+  /* Biological-insight cards — a serif claim (the science) with a mono tag (the mechanism class).
+     This is the page's scientific spine, so it uses the serif reading voice, not chrome. */
+  .sci-insights{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 0 2px}
+  .sci-insight{padding:17px 18px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+  .sci-insight .it{font-family:var(--font-mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--ink-faint);display:block;margin-bottom:9px}
+  .sci-insight p{font-family:var(--font-serif);font-size:14.5px;line-height:1.55;color:var(--ink-soft);margin:0}
+  .sci-insight p b{color:var(--ink);font-weight:600}
+  .sci-insight p .mrna{color:var(--mrna);font-weight:600}.sci-insight p .protein{color:var(--protein);font-weight:600}
+
+  /* Recovery chips — the positive controls the tool must reproduce (gene symbols = mono). */
+  .sci-chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 2px}
+  .sci-chip{font-family:var(--font-mono);font-size:12px;color:var(--ink);padding:6px 12px;border-radius:8px;
+    background:var(--surface);border:1px solid var(--line-strong);white-space:nowrap}
+  .sci-chip small{color:var(--ink-faint);margin-left:6px;font-size:10.5px}
+
+  /* Architecture: agent-tool grid — the machine's verbs (mono name) + a serif gloss. */
+  .arch-tools{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 2px}
+  .arch-tool{padding:13px 15px;border-radius:11px;background:var(--surface);border:1px solid var(--line)}
+  .arch-tool .tn{font-family:var(--font-mono);font-size:12.5px;color:var(--ink);display:block;margin-bottom:5px}
+  .arch-tool .tg{font-size:13px;line-height:1.45;color:var(--ink-soft)}
+
+  /* Architecture: verifier gates — typed check (GATE/SCORE/BONUS) + threshold in mono. */
+  .arch-gates{list-style:none;margin:8px 0 2px;padding:0;display:flex;flex-direction:column;gap:1px}
+  .arch-gate{display:grid;grid-template-columns:78px 1fr auto;align-items:baseline;gap:14px;
+    padding:12px 2px;border-top:1px solid var(--line)}
+  .arch-gate:first-child{border-top:0}
+  .arch-gate .gtype{font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding-top:2px}
+  .arch-gate .gtype.gate{color:var(--protein)}
+  .arch-gate .gtype.score{color:var(--lock)}
+  .arch-gate .gtype.bonus{color:var(--mrna)}
+  .arch-gate .gd{font-size:13.5px;line-height:1.5;color:var(--ink-soft)}
+  .arch-gate .gd b{color:var(--ink);font-weight:600}
+  .arch-gate .gthr{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint);white-space:nowrap;text-align:right}
+
+  @media(max-width:700px){
+    .sci-stats{grid-template-columns:1fr 1fr}
+    .sci-insights,.arch-tools{grid-template-columns:1fr}
+    .arch-gate{grid-template-columns:1fr;gap:3px}.arch-gate .gthr{text-align:left}
+    .how-method{grid-template-columns:1fr 1fr}.how-method-step:nth-child(3){border-left:0}
+    .how-method-step:nth-child(n+3){border-top:1px solid var(--line)}
+  }
+
   /* ── Touch targets (WCAG 2.5.8) ────────────────────────────────────────────────────────
      The rail icons stay visually small (26–32px) to keep the chrome quiet, but every
      interactive control needs a ≥44px hit area. A centered, transparent ::after overlay
@@ -1202,13 +1342,16 @@
 
   @media(max-width:700px){
     #howView{padding:24px 0 72px}
-    .how-hero-h{font-size:28px}
+    .how-hero{padding:28px 24px 30px!important}.how-hero-h{font-size:32px}
+    .how-output{grid-template-columns:1fr}.how-output-item{padding:14px 0}
+    .how-output-item+.how-output-item{padding-left:0;border-left:0;border-top:1px solid var(--line)}
+    .how-thesis{grid-template-columns:1fr;gap:14px}
     .how-voices,.how-cap-grid{grid-template-columns:1fr}
     .how-trust li{flex-direction:column;gap:4px}.how-trust .tk{flex-basis:auto}
   }
 
   @media(max-width:1280px){.workspace{grid-template-columns:220px minmax(0,1fr)}.arts{display:none}.arts-toggle{display:none}}
-  @media(max-width:1050px){.brief-shell{grid-template-columns:1fr}.bench-workspace{position:static}.evidence-boundary{grid-template-columns:1fr}.boundary{min-height:0}.decision-gate{grid-template-columns:minmax(190px,.4fr) 1fr}.gate-next{display:none}}
+  @media(max-width:1050px){.evidence-boundary{grid-template-columns:1fr}.boundary{min-height:0}.decision-gate{grid-template-columns:minmax(190px,.4fr) 1fr}.gate-next{display:none}}
   @media(max-width:940px){.workspace{grid-template-columns:64px minmax(0,1fr)}.convo-context{display:none}}
   @media(max-width:700px){
     .workspace{grid-template-columns:1fr;grid-template-rows:58px minmax(0,1fr)}
@@ -1218,14 +1361,16 @@
     .modes{display:flex!important}.modes .nav-item{width:auto;min-height:40px;padding:8px 11px}.modes .lbl{display:inline}
     .sessions,.nav-sec,.nav-foot,.lab-nav{display:none}.convo{height:calc(100dvh - 58px)}
     .convo-head{min-height:52px;padding:0 18px}.convo-scroll,.composer{padding-left:18px;padding-right:18px}
-    .landing{padding-top:7vh}.landing-h{font-size:34px}.landing-genes{gap:6px}.landing-genes-label{flex-basis:100%;margin-bottom:2px}
+    .landing{padding:5vh 0 34px}.landing-h{max-width:17ch;font-size:40px}.landing-prompts{grid-template-columns:1fr}.landing-secondary{grid-column:auto;grid-template-columns:1fr}.landing-genes{gap:6px}.landing-genes-label{flex-basis:100%;margin-bottom:2px}
     .cchip{flex:none}.reply-turn.user-row .user-msg{max-width:86%}
-    .decision-gate{grid-template-columns:1fr;gap:10px}.brief-shell{gap:20px}.evidence-ledger,.threats{padding:16px}
+    .decision-gate{grid-template-columns:1fr;gap:10px}.evidence-ledger,.threats{padding:16px}
+    .reconcile-section{padding:24px 0 28px}.reconcile-section-head{grid-template-columns:30px minmax(0,1fr);gap:10px}.reconcile-section-title{font-size:23px}
+    .reconcile-section .outcomes,.brief-shell>.followups{grid-template-columns:1fr}
     .plan-sheet .plan-grid{grid-template-columns:1fr}.plan-sheet .pcard:nth-child(even){padding-left:0;border-left:0}.plan-sheet .exports{width:100%}
   }
   @media(max-width:560px){.nav-top{width:30px;padding:0;margin-right:auto}.nav-top .txt{display:none!important}.modes{gap:4px}}
   @media(max-width:560px){.lab-indicator{max-width:150px}.lab-indicator-prefix{display:none}.lab-panel{padding:22px 20px 30px}.lab-readouts{grid-template-columns:1fr}.lab-numbers{grid-template-columns:1fr}}
-  @media(max-width:420px){.nav-top .txt{font-size:13px}.modes .nav-item{padding:8px}.modes .lbl{display:none}.landing-h{font-size:30px}}
+  @media(max-width:420px){.nav-top .txt{font-size:13px}.modes .nav-item{padding:8px}.modes .lbl{display:none}.landing-h{font-size:34px}.landing-brand{margin-bottom:20px}}
 
   /* print: a clean one-page validation plan (the ELN/PDF export — the handoff artifact). The app
      is dark on screen; on paper it must be black-on-white. Force light surfaces, keep the serif/mono
@@ -1248,13 +1393,20 @@
 </style>
 </head>
 <body>
+<svg class="sera-symbols" aria-hidden="true" focusable="false">
+  <symbol id="seraConvergenceMark" viewBox="0 0 72 44">
+    <path d="M4 8h20c11 0 11 14 22 14" fill="none" stroke="#007E69" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M4 36h20c11 0 11-14 22-14" fill="none" stroke="#B93A79" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M46 22h22" fill="none" stroke="#153044" stroke-width="6" stroke-linecap="round"/>
+  </symbol>
+</svg>
 <a class="skip-link" href="#mainContent">Skip to main content</a>
 <div class="workspace arts-collapsed">
 
   <!-- LEFT NAV — one primary surface (Chat) + a secondary Hit-list tool. Validation plan and
        Known biology are no longer destinations; they're produced inside the thread on request. -->
   <nav class="nav" aria-label="Workspace">
-    <div class="nav-top"><span class="merge"><i class="g"></i><i class="m"></i></span><span class="txt">Sera <small style="color:var(--ink-faint);font-family:var(--font-mono);font-size:10px">Gene</small></span><button class="nav-collapse" id="navCollapse" aria-label="Collapse sidebar" title="Collapse sidebar" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button></div>
+    <div class="nav-top"><svg class="sera-mark" viewBox="0 0 72 44" aria-hidden="true" focusable="false"><use href="#seraConvergenceMark"/></svg><span class="txt">Sera <small style="color:var(--ink-faint);font-family:var(--font-mono);font-size:10px">Gene</small></span><button class="nav-collapse" id="navCollapse" aria-label="Collapse sidebar" title="Collapse sidebar" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button></div>
     <button class="nav-item newchat" id="newChat" aria-label="New chat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">New chat</span></button>
     <div class="modes" role="tablist" style="display:contents">
       <button class="nav-item mode on" id="mChat" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="lbl">Chat</span></button>
@@ -1285,25 +1437,28 @@
       <!-- LANDING — the empty agentic start. Shown until the first message; hidden the moment a
            turn is appended. A greeting + example prompts that teach what the tool can be asked. -->
       <div id="landing" class="landing">
-        <div class="landing-mark" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
-        <h1 class="landing-h">One verdict, and the experiment that settles it.</h1>
-        <p class="landing-sub">You suppressed the same gene in two CRISPR screens — one reading mRNA, one reading protein — and they disagree. Sera reconciles them into a defensible verdict, tries to refute it, and hands you the single bench experiment that would settle it.</p>
+        <div class="landing-brand"><svg class="sera-mark" viewBox="0 0 72 44" aria-hidden="true" focusable="false"><use href="#seraConvergenceMark"/></svg><span class="landing-brand-copy"><strong>Sera</strong><small>Experimental decision support</small></span></div>
+        <h1 class="landing-h">Turn conflicting screens into a decisive experiment.</h1>
+        <p class="landing-sub">Sera reconciles mRNA and protein CRISPR readouts, challenges the verdict, and shows the matched experiment that would resolve the uncertainty.</p>
+        <div class="landing-start">Choose a starting point</div>
         <div class="landing-prompts" id="landingPrompts">
           <button class="lprompt lprompt-hero" data-q="Find new drug targets in this screen">
-            <span class="lp-k">Start here · Discover</span><span class="lp-t">Don't have a gene yet? Surface the top candidate targets from the whole screen.</span>
-            <span class="lp-ex">"Find new drug targets in this screen"</span></button>
+            <span class="lp-k">Start from the screen</span><span class="lp-t">Surface candidate targets, then open the evidence behind the strongest signals.</span>
+            <span class="lp-ex">Find new drug targets in this screen</span></button>
           <button class="lprompt lprompt-tour" data-q="Prepare a full lab progress report: begin by defining the ITK protein and summarising what the cited literature establishes, show its 3D structure, then reconcile ITK's mRNA and protein readouts, and finish with a decision brief for TSC1.">
-            <span class="lp-k">Full workup · Lab progress report</span><span class="lp-t">Start with protein identity and known biology, then move through structure, paired-screen analysis, and the next experimental decision.</span>
-            <span class="lp-ex">Protein foundation · 3D structure · screen reconciliation · decision brief</span></button>
-          <button class="lprompt" data-q="Should TSC1 advance?">
-            <span class="lp-k">Decision brief</span><span class="lp-t">Should a specific target advance to a bench experiment?</span>
-            <span class="lp-ex">"Should TSC1 advance?"</span></button>
-          <button class="lprompt" data-q="Is PTPN2 druggable?">
-            <span class="lp-k">Druggability</span><span class="lp-t">Is a gene a viable drug target?</span>
-            <span class="lp-ex">"Is PTPN2 druggable?"</span></button>
-          <button class="lprompt" data-q="Does Sera recover known biology?">
-            <span class="lp-k">Validate</span><span class="lp-t">Does the tool recover known biology?</span>
-            <span class="lp-ex">"Does it recover known biology?"</span></button>
+            <span class="lp-k">Review one target end to end</span><span class="lp-t">Build a lab progress report from protein identity through the next experimental decision.</span>
+            <span class="lp-ex">Identity · literature · 3D structure · paired screens · decision brief</span></button>
+          <div class="landing-secondary">
+            <button class="lprompt" data-q="Should TSC1 advance?">
+              <span class="lp-k">Draft a decision brief</span><span class="lp-t">Should TSC1 advance?</span>
+              <span class="lp-ex">"Should TSC1 advance?"</span></button>
+            <button class="lprompt" data-q="Is PTPN2 druggable?">
+              <span class="lp-k">Review druggability</span><span class="lp-t">Is PTPN2 a viable target?</span>
+              <span class="lp-ex">"Is PTPN2 druggable?"</span></button>
+            <button class="lprompt" data-q="Does Sera recover known biology?">
+              <span class="lp-k">Check known biology</span><span class="lp-t">Does Sera recover expected regulators?</span>
+              <span class="lp-ex">"Does it recover known biology?"</span></button>
+          </div>
         </div>
         <div class="landing-genes" id="landingGenes" aria-label="Example targets from the screens">
           <span class="landing-genes-label">Explore a target</span>
@@ -1352,128 +1507,286 @@ ZNF250</div>
            value, and the design thesis using the app's own serif/mono + two-channel grammar. -->
       <div id="howView" class="hidden">
 
-        <section class="how-sec">
-          <div class="how-kicker">Sera · mRNA × protein</div>
-          <h1 class="how-hero-h">When the transcript says one thing and the protein says another.</h1>
-          <p class="how-lede">You perturbed the same gene in two screens — one reading messenger RNA, one reading the protein it makes — and they disagree. Sera is the workspace that tells you which reading to trust, what the evidence can and can’t prove, and the single experiment that settles it.</p>
-        </section>
+        <div class="how-subnav" role="tablist" aria-label="How it works — sections">
+          <button class="how-subtab" id="hsOverview" role="tab" aria-selected="true" aria-controls="howOverview"><span class="st-n">01</span>Overview</button>
+          <button class="how-subtab" id="hsScience" role="tab" aria-selected="false" aria-controls="howScience"><span class="st-n">02</span>The science</button>
+          <button class="how-subtab" id="hsArch" role="tab" aria-selected="false" aria-controls="howArch"><span class="st-n">03</span>Architecture</button>
+        </div>
 
-        <section class="how-sec">
-          <div class="how-kicker">The problem</div>
-          <h2 class="how-h">Two screens, one gene, two answers.</h2>
-          <p class="how-p">Functional-genomics screens measure a perturbation through whatever readout the assay reports. A <span class="mrna">transcript</span> screen counts messenger RNA; a <span class="protein">protein</span> screen counts the protein itself. When they agree, the call is easy. When they split — a transcript hit that vanishes at the protein level, or a protein hit with no transcript signal — you’re left guessing which layer of biology is real and which is noise.</p>
-          <p class="how-p">That gap is where good targets get abandoned and bad ones get chased. Sera exists to close it with evidence, not intuition.</p>
-          <div class="how-channels">
-            <div class="how-chan mrna"><span class="dot" aria-hidden="true"></span><div><span class="ck">mRNA</span><span class="cd">The transcript readout — how much messenger RNA the perturbation changed.</span></div></div>
-            <div class="how-chan protein"><span class="dot" aria-hidden="true"></span><div><span class="ck">Protein</span><span class="cd">The protein readout — what actually reached the functional layer of the cell.</span></div></div>
-          </div>
-        </section>
+        <!-- ═══ PAGE 1 · OVERVIEW — what Sera is, the problem, the honest hook, what you can ask, trust ═══ -->
+        <div class="how-page" id="howOverview" role="tabpanel" aria-labelledby="hsOverview">
 
-        <section class="how-sec">
-          <div class="how-kicker">How it works</div>
-          <h2 class="how-h">Five deterministic stages. Code computes; the agent narrates.</h2>
-          <p class="how-p">Every number you see is produced by a pure Python core — the same target and data always yield the same result. Ask about a gene and it runs the same five stages, in order.</p>
-          <ol class="how-steps">
-            <li class="how-step"><h4>Load the screen</h4><p>Raw CRISPR-screen data enters at one boundary and becomes immutable records. A schema maps each screen's own columns onto a shared shape, so Sera runs on this dataset — or a screen you bring. Signals a screen doesn't carry are marked absent, never faked as zero.</p></li>
-            <li class="how-step"><h4>Rank impact</h4><p>Each knockdown is scored by how broad and how strong its effect is, across resting and stimulated conditions (8 h and 48 h), with a flag for effects that appear in only one condition.</p></li>
-            <li class="how-step"><h4>Reconcile <span class="mrna">mRNA</span> against <span class="protein">protein</span> — the keystone</h4><p>The two screens are crossed by biological direction and land in one of five honest verdicts. A sign conflict — both screens fire but disagree on direction — gets its own box rather than being smoothed into “replicated.” The disagreement is the finding, not noise to bury.</p></li>
-            <li class="how-step"><h4>Adversarially verify — try to refute it</h4><p>Each candidate is attacked with computed checks. Gates can reject it outright: is the knockdown real, powered, clean, and reproducible across the four donors and across independent guides? Independent published screens can only add corroboration, never manufacture it.</p></li>
-            <li class="how-step"><h4>Decide, and name the experiment</h4><p>A go / no-go brief that folds in druggability, disease relevance, and data quality — plus the single, concrete bench experiment that would settle the disagreement. A decision you can defend, with the next step already written.</p></li>
-          </ol>
+          <section class="how-sec how-hero">
+            <div class="how-kicker">Sera · experimental decision support</div>
+            <h1 class="how-hero-h">Sera converts conflicting screens into a decisive experiment.</h1>
+            <p class="how-lede">For each candidate gene, Sera reconciles independent <b>IL-2 mRNA and protein CRISPR screens</b>, tests the result against predefined quality criteria, and produces a traceable advance-or-hold recommendation. When the assays disagree, it specifies the matched experiment and decision rule required to resolve the uncertainty.</p>
+            <div class="how-output" aria-label="Sera output">
+              <div class="how-output-item"><span class="how-output-k">01 · Result</span><span class="how-output-v"><b>Direction-resolved verdict</b>Replicated, discordant, mRNA-only, protein-only, or neither.</span></div>
+              <div class="how-output-item"><span class="how-output-k">02 · Interpretation</span><span class="how-output-v"><b>Evidence boundary</b>Observed result, supported inference, and unresolved uncertainty kept distinct.</span></div>
+              <div class="how-output-item"><span class="how-output-k">03 · Decision</span><span class="how-output-v"><b>Falsifiable next step</b>Controls, paired readouts, expected outcomes, and an explicit stop/go rule.</span></div>
+            </div>
+          </section>
 
-          <div class="how-figframe">
-            <svg class="how-diagram" viewBox="0 0 640 452" role="img" aria-labelledby="howDiagTitle howDiagDesc">
-              <title id="howDiagTitle">Sera architecture</title>
-              <desc id="howDiagDesc">CRISPR screens and annotation APIs feed a deterministic five-stage core — load, rank, reconcile, verify, decide — that outputs an advance-or-hold decision. A Claude agent reads the code-computed results and narrates them without recomputing any verdict.</desc>
-              <defs><marker id="hdArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+          <section class="how-sec how-thesis">
+            <div class="how-kicker">The problem</div>
+            <div class="how-thesis-copy">
+              <h2 class="how-h">A screen reports an assay, not the complete biology.</h2>
+              <p class="how-p">Genome-scale perturbation studies often measure different molecular layers, time points, and cell-state summaries. Here, one CRISPRi screen quantifies <span class="mrna">IL-2 transcript abundance</span>; an independent FACS screen measures the <span class="protein">distribution of IL-2 protein</span>. Agreement across these assays strengthens a candidate. Disagreement may reflect post-transcriptional regulation, kinetics, population heterogeneity, or an assay-specific effect.</p>
+              <p class="how-p">A global correlation cannot distinguish these explanations for an individual gene. Consequently, a candidate may be advanced on incomplete evidence or discarded before the discrepancy is tested directly. Sera treats this disagreement as a decision problem: <b>what is established, what remains uncertain, and which experiment will discriminate among the alternatives?</b></p>
+            </div>
+          </section>
 
-              <!-- inputs -->
-              <text x="20" y="24" class="d-k">Inputs · CRISPR screens</text>
-              <g><rect x="20" y="32" width="180" height="46" rx="7" class="d-box"/><text x="34" y="54" class="d-m d-mrna">Marson Perturb-seq</text><text x="34" y="69" class="d-m">primary mRNA screen</text></g>
-              <g><rect x="212" y="32" width="180" height="46" rx="7" class="d-box"/><text x="226" y="54" class="d-m">Schmidt / Freimer</text><text x="226" y="69" class="d-m">held-out validation</text></g>
-              <g><rect x="404" y="32" width="216" height="46" rx="7" class="d-box"/><text x="418" y="54" class="d-m">Robustness tables</text><text x="418" y="69" class="d-m">donor + guide correlation</text></g>
+          <section class="how-sec">
+            <div class="how-kicker">Analytical workflow</div>
+            <h2 class="how-h">From paired evidence to an executable decision.</h2>
+            <p class="how-p">The workflow preserves each assay's statistical definition and makes the inferential boundary explicit at every stage.</p>
+            <div class="how-method" aria-label="Four-stage analytical workflow">
+              <div class="how-method-step"><span class="how-method-n">01</span><strong>Reconcile</strong><p>Cross the two assays by gene, condition, significance, and biological direction.</p></div>
+              <div class="how-method-step"><span class="how-method-n">02</span><strong>Challenge</strong><p>Test knockdown efficacy, cell number, donor agreement, and guide concordance.</p></div>
+              <div class="how-method-step"><span class="how-method-n">03</span><strong>Contextualize</strong><p>Add disease genetics, tractability, known biology, and held-out evidence.</p></div>
+              <div class="how-method-step"><span class="how-method-n">04</span><strong>Resolve</strong><p>Define a paired assay whose possible outcomes map to explicit decisions.</p></div>
+            </div>
+          </section>
 
-              <line x1="110" y1="78" x2="110" y2="104" class="d-arr" marker-end="url(#hdArrow)"/>
-              <line x1="302" y1="78" x2="302" y2="104" class="d-arr" marker-end="url(#hdArrow)"/>
-              <line x1="512" y1="78" x2="512" y2="262" class="d-arr" marker-end="url(#hdArrow)"/>
+          <section class="how-sec">
+            <div class="how-kicker">Scientific integrity</div>
+            <h2 class="how-h">Computation determines the result; the agent communicates it.</h2>
+            <p class="how-p">Deterministic code computes every gene-level verdict from versioned source data. The language model receives only code-produced values and retrieved evidence; it may select and explain them, but it cannot generate a gene identifier, statistic, verdict, or citation. The same inputs therefore yield the same analytical result without a model call.</p>
+            <div class="how-voices">
+              <div class="how-voice narrate"><div class="vk">Agent interpretation</div><p class="vt">“Knockdown reduced both IL-2 transcript abundance and the IL-2-high protein fraction. The concordant direction supports this gene as a positive regulator under the tested conditions.”</p></div>
+              <div class="how-voice machine"><div class="vt"><div class="vk" style="color:var(--ink-faint)">Computed record</div>verdict: <span class="lock">replicated</span><br>direction: promotes IL-2<br>condition: Stim48hr · source: [3]</div></div>
+            </div>
+            <ul class="how-trust">
+              <li><span class="tk">Reproducible</span><span class="td"><b>Verdicts are functions of the input data and fixed thresholds.</b> Model variability cannot alter the result.</span></li>
+              <li><span class="tk">Source constrained</span><span class="td"><b>Citations are selected by index from retrieved records.</b> Unsupported identifiers and statistics are excluded by construction.</span></li>
+              <li><span class="tk">Traceable</span><span class="td"><b>Each claim retains its source, condition, and analytical provenance.</b> Readers can inspect the evidence behind the recommendation.</span></li>
+              <li><span class="tk">Uncertainty aware</span><span class="td"><b>Observed data, mechanistic hypotheses, and unresolved limitations are reported separately.</b> Discordance is not mislabeled as mechanism.</span></li>
+            </ul>
+          </section>
 
-              <!-- deterministic core -->
-              <text x="20" y="98" class="d-k d-mrna">Deterministic core · computes every verdict</text>
-              <g><rect x="20" y="106" width="600" height="40" rx="7" class="d-core"/><text x="34" y="124" class="d-t">1 · Load screen</text><text x="34" y="138" class="d-m">any screen's columns → immutable records; missing signals stay absent</text></g>
-              <line x1="320" y1="146" x2="320" y2="160" class="d-arr" marker-end="url(#hdArrow)"/>
-              <g><rect x="20" y="162" width="600" height="40" rx="7" class="d-core"/><text x="34" y="180" class="d-t">2 · Rank impact</text><text x="34" y="194" class="d-m">breadth × strength across conditions; flag context-specific effects</text></g>
-              <line x1="320" y1="202" x2="320" y2="216" class="d-arr" marker-end="url(#hdArrow)"/>
+          <section class="how-sec">
+            <div class="how-kicker">Worked example</div>
+            <h2 class="how-h">Evaluate a discordant candidate end to end.</h2>
+            <p class="how-p">TSC1 produces opposing transcript- and protein-level signals in the source screens. Open its decision brief to inspect the measurements, alternative explanations, evidence limits, and matched validation experiment.</p>
+            <div class="how-cta">
+              <button class="go" id="howStart" data-q="Should TSC1 advance?">Open the TSC1 decision brief →</button>
+              <span class="cta-note">computed verdict · cited evidence · explicit decision rule</span>
+            </div>
+          </section>
 
-              <!-- reconcile with 5 verdicts -->
-              <g><rect x="20" y="218" width="600" height="92" rx="7" class="d-core"/>
-                <text x="34" y="238" class="d-t">3 · Reconcile <tspan class="d-mrna">mRNA</tspan> × <tspan class="d-protein">protein</tspan> — the keystone</text>
-                <text x="34" y="252" class="d-m">cross the two screens by biological direction → one of five honest verdicts</text>
-                <rect x="34" y="262" width="108" height="38" rx="5" class="d-verdict"/><text x="88" y="279" text-anchor="middle" class="d-m d-on-dark">replicated</text><text x="88" y="292" text-anchor="middle" class="d-m d-on-dark-sub">agree</text>
-                <rect x="150" y="262" width="108" height="38" rx="5" class="d-conflict"/><text x="204" y="279" text-anchor="middle" class="d-m d-protein">discordant</text><text x="204" y="292" text-anchor="middle" class="d-m">sign conflict</text>
-                <rect x="266" y="262" width="108" height="38" rx="5" class="d-box"/><text x="320" y="279" text-anchor="middle" class="d-m">mrna only</text><text x="320" y="292" text-anchor="middle" class="d-m">one side</text>
-                <rect x="382" y="262" width="108" height="38" rx="5" class="d-box"/><text x="436" y="279" text-anchor="middle" class="d-m">protein only</text><text x="436" y="292" text-anchor="middle" class="d-m">one side</text>
-                <rect x="498" y="262" width="108" height="38" rx="5" class="d-box"/><text x="552" y="279" text-anchor="middle" class="d-m">neither</text><text x="552" y="292" text-anchor="middle" class="d-m">no hit</text>
-              </g>
-              <line x1="320" y1="310" x2="320" y2="324" class="d-arr" marker-end="url(#hdArrow)"/>
-              <g><rect x="20" y="326" width="600" height="40" rx="7" class="d-core"/><text x="34" y="344" class="d-t">4 · Adversarially verify — try to refute it</text><text x="34" y="358" class="d-m">gates reject: real KD · powered · clean · donor-robust · guide-robust</text></g>
-              <line x1="320" y1="366" x2="320" y2="380" class="d-arr" marker-end="url(#hdArrow)"/>
-              <g><rect x="20" y="382" width="388" height="40" rx="7" class="d-verdict"/><text x="34" y="400" class="d-t d-on-dark">5 · Decide — advance or hold</text><text x="34" y="414" class="d-m d-on-dark-sub">+ the one experiment that settles the split</text></g>
+        </div><!-- /howOverview -->
 
-              <!-- annotation overlay -->
-              <g><rect x="420" y="382" width="200" height="40" rx="7" class="d-box"/><text x="434" y="400" class="d-m">Open Targets · trials</text><text x="434" y="414" class="d-m">druggable? in the clinic?</text></g>
-              <line x1="420" y1="402" x2="410" y2="402" class="d-arr" marker-end="url(#hdArrow)"/>
+        <!-- ═══ PAGE 2 · THE SCIENCE — the biology, the database, why they disagree, what a verdict means ═══ -->
+        <div class="how-page" id="howScience" role="tabpanel" aria-labelledby="hsScience" hidden>
 
-              <!-- agent rim -->
-              <rect x="20" y="430" width="600" height="14" rx="7" class="d-agent"/>
-              <text x="320" y="440" text-anchor="middle" class="d-k">Claude agent · reads the computed results and narrates — never recomputes a verdict or authors an ID</text>
-            </svg>
-          </div>
-          <p class="how-figcap">The core computes; the agent narrates. Colour is meaning: <span class="mrna">mRNA</span> and <span class="protein">protein</span> are the two data channels, <span style="color:var(--lock);font-weight:600">blue-grey</span> is a locked deterministic verdict.</p>
-        </section>
+          <section class="how-sec">
+            <div class="how-kicker">The question</div>
+            <h2 class="how-h">Which knockdowns change how a CD4+ T cell makes IL-2?</h2>
+            <p class="how-p"><b>IL-2 is the cytokine a helper T cell releases to command an immune response</b> — it drives T cells to proliferate and defines regulatory-T-cell (Treg) identity through the IL-2 / IL2RA / STAT5 axis. It sits at the centre of three live therapeutic programs: low-dose and Treg-biased IL-2 muteins for <b>autoimmunity</b> (lupus, type-1 diabetes, graft-versus-host); IL-2 as a persistence and exhaustion lever in <b>CAR-T and TIL cancer therapy</b>; and Treg engineering. A validated <em>upstream regulator</em> of IL-2 is a way to tune cytokine output without dosing the cytokine itself.</p>
+            <p class="how-p">So the hunt is for genes whose loss raises or lowers IL-2 — and the honest complication is that “raises IL-2” looks different depending on whether you measure the transcript or the protein.</p>
+          </section>
 
-        <section class="how-sec">
-          <div class="how-kicker">The evidence</div>
-          <h2 class="how-h">Two layers of evidence. One says it's real; the other says it's worth doing.</h2>
-          <p class="how-p"><b>The screens tell you the biology is real and reproducible.</b> The primary <span class="mrna">mRNA</span> screen supplies the signal; two independent published screens corroborate it; and precomputed cross-donor and cross-guide correlations prove the effect holds up rather than riding on one lucky donor or one off-target guide.</p>
-          <p class="how-p"><b>The annotations tell you the target is worth acting on.</b> Live lookups add whether the gene is druggable, whether human genetics ties it to immune disease, and whether a molecule against it is already in clinical trials. A gene has to clear both layers to earn “advance” — reproducible biology and an actionable target.</p>
-        </section>
+          <section class="how-sec">
+            <div class="how-kicker">The database</div>
+            <h2 class="how-h">The screens Sera reconciles.</h2>
+            <p class="how-p">All data is public and was downloaded before the hackathon. The mRNA side is a genome-scale <b>CRISPRi Perturb-seq</b> of human CD4+ T cells; the protein side is the loss-of-function arm of an independent FACS screen of the same IL-2 phenotype. They use different instruments on purpose — that is what makes an agreement meaningful and a disagreement interesting.</p>
+            <div class="sci-stats">
+              <div class="sci-stat"><span class="n">33,983</span><span class="l">perturbation × condition results (mRNA screen)</span></div>
+              <div class="sci-stat"><span class="n">10,282</span><span class="l">genes measured in the DE readout</span></div>
+              <div class="sci-stat"><span class="n">4</span><span class="l">donors — the unit of reproducibility</span></div>
+              <div class="sci-stat"><span class="n">3</span><span class="l">conditions — Rest, Stim&nbsp;8&nbsp;h, Stim&nbsp;48&nbsp;h</span></div>
+            </div>
+            <div class="sci-tablewrap">
+            <table class="sci-table">
+              <thead><tr><th>Source</th><th>Assay</th><th>Reads</th><th>Statistic</th><th>Varies over</th><th>Role</th></tr></thead>
+              <tbody>
+                <tr><td class="g">Marson Perturb-seq<br><span class="role">Zhu et&nbsp;al. 2025</span></td><td>CRISPRi, pooled single-cell</td><td class="mrna">IL-2 mRNA</td><td>DESeq2 z, adj-p</td><td>Rest · 8&nbsp;h · 48&nbsp;h</td><td class="role">mRNA side</td></tr>
+                <tr><td class="g">Schmidt &amp; Steinhart 2022<br><span class="role">Science · CRISPRi arm</span></td><td>CRISPRi FACS sort</td><td class="protein">IL-2 protein</td><td>MAGeCK lfc, FDR</td><td>one stimulated sort</td><td class="role">protein side</td></tr>
+                <tr><td class="g">Freimer 2022<br><span class="role">Nat&nbsp;Genet · knockout</span></td><td>Cas9 knockout FACS</td><td class="protein">IL2RA / CTLA4 / IL-2</td><td>MAGeCK</td><td>one sort (marker-low)</td><td class="role">held-out</td></tr>
+                <tr><td class="g">Robustness tables</td><td>precomputed correlations</td><td>cross-donor · cross-guide</td><td>Spearman ρ</td><td>per gene × condition</td><td class="role">verifier gates</td></tr>
+                <tr><td class="g">Open Targets · trials · Enrichr · UniProt</td><td>live annotation APIs</td><td>druggability · disease · structure</td><td>—</td><td>—</td><td class="role">actionability</td></tr>
+              </tbody>
+            </table>
+            </div>
+            <p class="how-figcap">The mRNA screen is measured on pseudobulked counts with <span class="mono">design ~ log10_n_cells + donor + target</span> vs a non-targeting control — donor is a covariate, so each donor is a replicate, not each cell. The heavy per-gene matrix (16.8&nbsp;GB) never touches the request path; the app serves a compact precomputed verdict table.</p>
+          </section>
 
-        <section class="how-sec">
-          <div class="how-kicker">What you can ask</div>
-          <h2 class="how-h">Four ways in.</h2>
-          <div class="how-cap-grid" id="howCaps">
-            <button class="how-cap" data-q="Should TSC1 advance?"><span class="capk">Decision brief</span><span class="capt">Should this target advance to a bench experiment?</span><span class="capex">“Should TSC1 advance?”</span></button>
-            <button class="how-cap" data-q="Is PTPN2 druggable?"><span class="capk">Druggability</span><span class="capt">Is this gene a viable drug target?</span><span class="capex">“Is PTPN2 druggable?”</span></button>
-            <button class="how-cap" data-q="What could make the TSC1 result fail?"><span class="capk">Stress-test</span><span class="capt">Surface the assumptions and failure modes first.</span><span class="capex">“What could make TSC1 fail?”</span></button>
-            <button class="how-cap" data-q="Does Sera recover known biology?"><span class="capk">Validate</span><span class="capt">Does the tool recover biology we already know?</span><span class="capex">“Does it recover known biology?”</span></button>
-          </div>
-        </section>
+          <section class="how-sec">
+            <div class="how-kicker">The verdict</div>
+            <h2 class="how-h">One of five honest calls — with a direction, not just a hit.</h2>
+            <p class="how-p">For every gene × condition, the core crosses the two screens by <b>biological direction</b>. Sign convention, stated once: a <b>negative</b> effect means the gene <em>promotes</em> IL-2 (knocking it down lowers the readout); a positive effect means the gene is a <em>brake</em>. A side counts as a hit only if it was assayed <em>and</em> significant — <b>untested is never treated as tested-negative</b>.</p>
+            <div class="how-cap-grid" style="margin-top:14px">
+              <div class="how-cap" style="cursor:default"><span class="capk" style="color:var(--mrna)">replicated</span><span class="capt">Both screens fire in the same direction. Corroboration across independent assays.</span></div>
+              <div class="how-cap" style="cursor:default"><span class="capk" style="color:var(--protein)">discordant</span><span class="capt">Both fire but disagree on direction — a real sign conflict, kept out of “replicated”.</span></div>
+              <div class="how-cap" style="cursor:default"><span class="capk">mrna&nbsp;only / protein&nbsp;only</span><span class="capt">One assay fired; the bridge to the other layer is the open question.</span></div>
+              <div class="how-cap" style="cursor:default"><span class="capk">neither</span><span class="capt">No significant hit in either screen at this condition.</span></div>
+            </div>
+          </section>
 
-        <section class="how-sec">
-          <div class="how-kicker">Why you can trust it</div>
-          <h2 class="how-h">Code decides. The agents narrate and cite — they don’t decide.</h2>
-          <p class="how-p">Every verdict on this page is computed by deterministic code from the underlying data. The language model’s job is to explain that result and point to its sources — never to invent the number, the gene, or the citation. That division of labour is the whole design.</p>
-          <div class="how-voices">
-            <div class="how-voice narrate"><div class="vk">The agent — narrating</div><p class="vt">“At 48 hours post-stimulation the protein signal holds while the transcript falls away — trust the protein reading here.”</p></div>
-            <div class="how-voice machine"><div class="vt"><div class="vk" style="color:var(--ink-faint)">The machine — verdict</div>verdict: <span class="lock">TRUST_PROTEIN</span><br>condition: Stim48h<br>source: [3]</div></div>
-          </div>
-          <ul class="how-trust">
-            <li><span class="tk">Deterministic verdict</span><span class="td"><b>The call comes from code, not a chat.</b> The same target and data always produce the same verdict — no run-to-run drift.</span></li>
-            <li><span class="tk">Cite by index</span><span class="td"><b>The agent selects from a closed set of retrieved facts</b> and cites each one by index. It cannot author an ID, a statistic, or a reference that isn’t there.</span></li>
-            <li><span class="tk">Two voices</span><span class="td"><b>Serif is the agent’s prose; mono is the machine’s output</b> — numbers, verdicts, provenance. If it’s in mono, code produced it.</span></li>
-            <li><span class="tk">Chain of custody</span><span class="td"><b>Every claim traces back to a source you can open.</b> The evidence panel shows the trail behind each statement.</span></li>
-          </ul>
-        </section>
+          <section class="how-sec">
+            <div class="how-kicker">Why the screens disagree</div>
+            <h2 class="how-h">Transcript and protein are different layers of biology.</h2>
+            <p class="how-p">A discordant or one-sided call is <b>expected</b> for whole classes of genes, not a contradiction. The IL-2 transcript is only the first of several serial checkpoints, and the two screens differ on more than one axis at once — so mRNA-vs-protein biology is one candidate explanation, never a proven one.</p>
+            <div class="sci-insights">
+              <div class="sci-insight"><span class="it">Post-transcriptional control</span><p>The IL-2 message carries <b>AU-rich elements</b> in its 3′UTR that ZFP36 / tristetraprolin actively degrade. A gene acting on mRNA decay, translation, or protein stability can move the <span class="protein">protein</span> while the steady-state <span class="mrna">transcript</span> barely shifts — or the reverse.</p></div>
+              <div class="sci-insight"><span class="it">Mean vs distribution</span><p>The protein screen is a <b>FACS sort of IL-2-high vs IL-2-low cells</b> — it reads the <em>fraction of producers</em>. Perturb-seq reads the population-mean transcript. A gene that changes how many cells produce IL-2, not the average, is a strong protein hit and a weak mRNA one.</p></div>
+              <div class="sci-insight"><span class="it">Four axes differ</span><p>The screens differ in modality (transcript vs protein sort), statistic (DESeq2 vs MAGeCK — never pooled), and readout construction. When they split, an assay or context difference is <b>always co-present</b> with any biological story.</p></div>
+              <div class="sci-insight"><span class="it">Timing</span><p>The protein sort is a <b>single stimulated snapshot</b>; the transcript is resolved over three timepoints. A 48-hour transcript compared to an untimed protein readout can disagree purely because IL-2 is being switched off by feedback at 48&nbsp;hours (below).</p></div>
+            </div>
+          </section>
 
-        <section class="how-sec">
-          <div class="how-kicker">Start here</div>
-          <h2 class="how-h">Try it on a real disagreement.</h2>
-          <p class="how-p">Ask the decision brief its headline question and watch the whole flow run end to end.</p>
-          <div class="how-cta">
-            <button class="go" id="howStart" data-q="Should TSC1 advance?">Should TSC1 advance? →</button>
-            <span class="cta-note">the verdict is deterministic · the agents narrate and cite</span>
-          </div>
-        </section>
+          <section class="how-sec">
+            <div class="how-kicker">The time-course</div>
+            <h2 class="how-h">Rest → 8 h → 48 h: IL-2 runs on a schedule.</h2>
+            <p class="how-p">IL-2 is the prototypical <b>immediate-early</b> activation gene. After the T-cell receptor and CD28 engage, NFAT, AP-1 and NF-κB converge on the IL2 promoter and transcription spikes within hours — then autocrine IL-2 → STAT5 feedback and repressors switch it back off by roughly 24–48&nbsp;hours. The same gene can read as a promoter at 8&nbsp;h and neutral or opposite at 48&nbsp;h. <b>The time axis belongs to the mRNA screen only</b> — the protein screen is one stimulated sort — so Sera states the timepoint on every call and never implies the protein side was resolved over the same three points.</p>
+          </section>
+
+          <section class="how-sec">
+            <div class="how-kicker">What a verdict does and doesn’t mean</div>
+            <h2 class="how-h">Limits, stated up front.</h2>
+            <ul class="how-trust">
+              <li><span class="tk">Replicated ≠ validated</span><span class="td">Two independent screens agreeing is <b>corroboration</b>, not validation in your hands. It means both assays fired the same direction — reproduce it in your own cells before you advance.</span></li>
+              <li><span class="tk">Discordant is a fork</span><span class="td">A sign conflict is a <b>real biological decoupling or an assay/context difference</b> — Sera does not presume which. That’s exactly what the discriminating experiment is for.</span></li>
+              <li><span class="tk">Untested ≠ negative</span><span class="td">The protein library was smaller than the genome-wide mRNA screen. “Not a protein hit” for a gene the protein screen <b>never assayed</b> is absence of evidence, not evidence of absence — and Sera keeps them distinct.</span></li>
+              <li><span class="tk">Near-zero on purpose</span><span class="td">Genome-wide the two screens correlate at ≈&nbsp;−0.01. That’s <b>expected</b> — steady-state mRNA and protein decouple, and a <em>high</em> correlation would mean the join collapsed two screens into one. The value is the per-gene calls, not a global number.</span></li>
+            </ul>
+          </section>
+
+          <section class="how-sec">
+            <div class="how-kicker">What it recovers</div>
+            <h2 class="how-h">Controls first — it must recover known biology before showing anything new.</h2>
+            <p class="how-p">Before a single novel pick is shown, Sera has to reproduce the screen’s established regulators. If the controls don’t come back, it refuses to rank. These are checkable T-cell biology, not vibes:</p>
+            <div class="sci-chips">
+              <span class="sci-chip">RASA2<small>RAS-GAP brake · loss boosts activation</small></span>
+              <span class="sci-chip">IL2RA<small>IL-2 receptor · Treg identity</small></span>
+              <span class="sci-chip">CTLA4<small>checkpoint · Treg function</small></span>
+              <span class="sci-chip">FOXP3<small>Treg master transcription factor</small></span>
+              <span class="sci-chip">TNFAIP3<small>A20 · NF-κB brake</small></span>
+            </div>
+            <p class="how-p" style="margin-top:18px">The canonical TCR-proximal promoters replicate too — <span class="mono">ITK</span> (Tec-family kinase), the <span class="mono">CBM</span> complex (<span class="mono">BCL10</span> / <span class="mono">CARD11</span> / <span class="mono">MALT1</span>) driving NF-κB, and phosphatase brakes like <span class="mono">PTPN2</span>. <span class="mono">TSC1</span> is the honest hard case: an mTORC1 brake that can lower the transcript while raising the protein through translational control — a genuine <span class="protein">discordant</span> call, and one Sera flags as a hypothesis to test, not a fact.</p>
+          </section>
+
+        </div><!-- /howScience -->
+
+        <!-- ═══ PAGE 3 · ARCHITECTURE — the deterministic core, the verifier, the agent rim, the tools ═══ -->
+        <div class="how-page" id="howArch" role="tabpanel" aria-labelledby="hsArch" hidden>
+
+          <section class="how-sec">
+            <div class="how-kicker">The pipeline</div>
+            <h2 class="how-h">Five deterministic stages. Code computes; the agent narrates.</h2>
+            <p class="how-p">Every number is produced by a pure Python core — the same target and data always yield the same result. A gene runs the same five stages, in order, and the agent reads the output.</p>
+            <ol class="how-steps">
+              <li class="how-step"><h4>Load the screen</h4><p>Raw screen data enters at one boundary and becomes immutable records. A schema maps each screen’s own columns onto a shared shape, and a gate validates the mapping — dropping on-target self-knockdown rows and refusing to mix two significance regimes. Signals a screen doesn’t carry stay absent, never faked as zero.</p></li>
+              <li class="how-step"><h4>Rank impact</h4><p>Each knockdown is scored by how broad and how strong its effect is across Rest, 8 h and 48 h, with obvious TCR machinery damped so novel candidates surface rather than the textbook hits.</p></li>
+              <li class="how-step"><h4>Reconcile <span class="mrna">mRNA</span> against <span class="protein">protein</span> — the keystone</h4><p>The two screens are crossed by biological direction into one of five verdicts. A sign conflict gets its own box rather than being smoothed into “replicated.” The disagreement is the finding.</p></li>
+              <li class="how-step"><h4>Adversarially verify — try to refute it</h4><p>Each candidate is attacked with typed, computed checks. Any failed gate rejects it outright. Independent published screens can add corroboration, never manufacture it.</p></li>
+              <li class="how-step"><h4>Decide, and name the experiment</h4><p>A go / no-go brief folding in druggability, disease genetics and data quality — plus the single arrayed-CRISPRi experiment (2 guides + control, ≥3 donors, paired transcript + protein readout) that would settle the split.</p></li>
+            </ol>
+
+            <div class="how-figframe">
+              <svg class="how-diagram" viewBox="0 0 640 452" role="img" aria-labelledby="howDiagTitle howDiagDesc">
+                <title id="howDiagTitle">Sera architecture</title>
+                <desc id="howDiagDesc">A CRISPRi mRNA screen and a CRISPRi protein screen, plus a held-out knockout screen, robustness tables and annotation APIs, feed a deterministic five-stage core — load, rank, reconcile, verify, decide — that outputs an advance-or-hold decision. A Claude agent reads the code-computed results and narrates them without recomputing any verdict.</desc>
+                <defs><marker id="hdArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+                <!-- inputs -->
+                <text x="20" y="24" class="d-k">Inputs · two screens + held-out + tables</text>
+                <g><rect x="20" y="32" width="180" height="46" rx="7" class="d-box"/><text x="34" y="54" class="d-m d-mrna">Marson Perturb-seq</text><text x="34" y="69" class="d-m">CRISPRi · mRNA side</text></g>
+                <g><rect x="212" y="32" width="180" height="46" rx="7" class="d-box"/><text x="226" y="54" class="d-m d-protein">Schmidt 2022</text><text x="226" y="69" class="d-m">CRISPRi FACS · protein side</text></g>
+                <g><rect x="404" y="32" width="216" height="46" rx="7" class="d-box"/><text x="418" y="54" class="d-m">Freimer + robustness</text><text x="418" y="69" class="d-m">held-out KO · donor/guide corr</text></g>
+
+                <line x1="110" y1="78" x2="110" y2="104" class="d-arr" marker-end="url(#hdArrow)"/>
+                <line x1="302" y1="78" x2="302" y2="104" class="d-arr" marker-end="url(#hdArrow)"/>
+                <line x1="512" y1="78" x2="512" y2="262" class="d-arr" marker-end="url(#hdArrow)"/>
+
+                <!-- deterministic core -->
+                <text x="20" y="98" class="d-k d-mrna">Deterministic core · computes every verdict</text>
+                <g><rect x="20" y="106" width="600" height="40" rx="7" class="d-core"/><text x="34" y="124" class="d-t">1 · Load screen</text><text x="34" y="138" class="d-m">any screen's columns → immutable records; missing signals stay absent</text></g>
+                <line x1="320" y1="146" x2="320" y2="160" class="d-arr" marker-end="url(#hdArrow)"/>
+                <g><rect x="20" y="162" width="600" height="40" rx="7" class="d-core"/><text x="34" y="180" class="d-t">2 · Rank impact</text><text x="34" y="194" class="d-m">breadth × strength across conditions; obvious TCR machinery damped</text></g>
+                <line x1="320" y1="202" x2="320" y2="216" class="d-arr" marker-end="url(#hdArrow)"/>
+
+                <!-- reconcile with 5 verdicts -->
+                <g><rect x="20" y="218" width="600" height="92" rx="7" class="d-core"/>
+                  <text x="34" y="238" class="d-t">3 · Reconcile <tspan class="d-mrna">mRNA</tspan> × <tspan class="d-protein">protein</tspan> — the keystone</text>
+                  <text x="34" y="252" class="d-m">cross the two screens by biological direction → one of five honest verdicts</text>
+                  <rect x="34" y="262" width="108" height="38" rx="5" class="d-verdict"/><text x="88" y="279" text-anchor="middle" class="d-m d-on-dark">replicated</text><text x="88" y="292" text-anchor="middle" class="d-m d-on-dark-sub">agree</text>
+                  <rect x="150" y="262" width="108" height="38" rx="5" class="d-conflict"/><text x="204" y="279" text-anchor="middle" class="d-m d-protein">discordant</text><text x="204" y="292" text-anchor="middle" class="d-m">sign conflict</text>
+                  <rect x="266" y="262" width="108" height="38" rx="5" class="d-box"/><text x="320" y="279" text-anchor="middle" class="d-m">mrna only</text><text x="320" y="292" text-anchor="middle" class="d-m">one side</text>
+                  <rect x="382" y="262" width="108" height="38" rx="5" class="d-box"/><text x="436" y="279" text-anchor="middle" class="d-m">protein only</text><text x="436" y="292" text-anchor="middle" class="d-m">one side</text>
+                  <rect x="498" y="262" width="108" height="38" rx="5" class="d-box"/><text x="552" y="279" text-anchor="middle" class="d-m">neither</text><text x="552" y="292" text-anchor="middle" class="d-m">no hit</text>
+                </g>
+                <line x1="320" y1="310" x2="320" y2="324" class="d-arr" marker-end="url(#hdArrow)"/>
+                <g><rect x="20" y="326" width="600" height="40" rx="7" class="d-core"/><text x="34" y="344" class="d-t">4 · Adversarially verify — try to refute it</text><text x="34" y="358" class="d-m">gates reject: real KD · powered · clean · donor-robust · guide-robust</text></g>
+                <line x1="320" y1="366" x2="320" y2="380" class="d-arr" marker-end="url(#hdArrow)"/>
+                <g><rect x="20" y="382" width="388" height="40" rx="7" class="d-verdict"/><text x="34" y="400" class="d-t d-on-dark">5 · Decide — advance or hold</text><text x="34" y="414" class="d-m d-on-dark-sub">+ the one experiment that settles the split</text></g>
+
+                <!-- annotation overlay -->
+                <g><rect x="420" y="382" width="200" height="40" rx="7" class="d-box"/><text x="434" y="400" class="d-m">Open Targets · trials</text><text x="434" y="414" class="d-m">druggable? in the clinic?</text></g>
+                <line x1="420" y1="402" x2="410" y2="402" class="d-arr" marker-end="url(#hdArrow)"/>
+
+                <!-- agent rim -->
+                <rect x="20" y="430" width="600" height="14" rx="7" class="d-agent"/>
+                <text x="320" y="440" text-anchor="middle" class="d-k">Claude agent · reads the computed results and narrates — never recomputes a verdict or authors an ID</text>
+              </svg>
+            </div>
+            <p class="how-figcap">Two CRISPRi screens of the same phenotype (<span class="mrna">mRNA</span> · <span class="protein">protein</span>), a held-out knockout screen and annotation APIs feed the core; <span style="color:var(--lock);font-weight:600">blue-grey</span> is a locked deterministic verdict. The agent sits on the rim.</p>
+          </section>
+
+          <section class="how-sec">
+            <div class="how-kicker">The verifier</div>
+            <h2 class="how-h">Every candidate is attacked before it’s trusted.</h2>
+            <p class="how-p">Verification is adversarial — the checks try to <em>refute</em> the pick. A failed <span style="color:var(--protein);font-weight:600">gate</span> rejects it outright; a <span style="color:var(--lock);font-weight:600">score</span> weights it; a <span style="color:var(--mrna);font-weight:600">bonus</span> can corroborate but never rescue. Thresholds are frozen and re-parametrizable, so you can re-run stricter on demand.</p>
+            <ul class="arch-gates">
+              <li class="arch-gate"><span class="gtype gate">gate</span><span class="gd"><b>Real knockdown.</b> The guide actually silenced its target — a clean, significant on-target self-knockdown. This tests <em>did the perturbation work</em>, not whether the effect is big.</span><span class="gthr">|log2 self-KD| ≥ 2.0</span></li>
+              <li class="arch-gate"><span class="gtype gate">gate</span><span class="gd"><b>Enough cells.</b> The perturbation was seen in enough single cells to trust the estimate.</span><span class="gthr">peak n_cells ≥ 100</span></li>
+              <li class="arch-gate"><span class="gtype gate">gate</span><span class="gd"><b>Donor-robust.</b> The effect holds across the four human donors — low or negative correlation means a single-donor idiosyncrasy, not a general regulator.</span><span class="gthr">cross-donor ρ ≥ 0.10</span></li>
+              <li class="arch-gate"><span class="gtype gate">gate</span><span class="gd"><b>Guide-robust.</b> Two guides against the same gene have different off-target seeds; if their downstream signatures disagree, suspect an off-target, not on-target biology.</span><span class="gthr">cross-guide ρ ≥ 0.10</span></li>
+              <li class="arch-gate"><span class="gtype score">score</span><span class="gd"><b>Cross-condition.</b> Reproduces in at least one of the three conditions — breadth beyond a single timepoint.</span><span class="gthr">≥ 1 of 3</span></li>
+              <li class="arch-gate"><span class="gtype bonus">bonus</span><span class="gd"><b>Held-out screen.</b> An independent hit in Schmidt&nbsp;2022 or the knockout Freimer&nbsp;2022 screen — corroboration, never a manufactured pass.</span><span class="gthr">independent</span></li>
+            </ul>
+            <p class="how-figcap">Before any of this runs, a controls-first gate checks the screen recovers its known regulators (RASA2, IL2RA, CTLA4, FOXP3, TNFAIP3). No controls, no picks.</p>
+          </section>
+
+          <section class="how-sec">
+            <div class="how-kicker">Agents on the rim</div>
+            <h2 class="how-h">The model narrates. It never authors a fact.</h2>
+            <p class="how-p">The doctrine is testable, not a slogan: the language model selects from closed sets the code owns — the verdict, the trust stance, the recommendation — and cites literature <b>by index only</b>. It cannot write a PMID, a gene ID, a statistic, or a verdict. Everything it says is reproducible by the control tests with no model call. These are the ten tools it can reach; each returns code-computed facts plus a plain-language summary.</p>
+            <div class="arch-tools">
+              <div class="arch-tool"><span class="tn">reconcile_gene</span><span class="tg">One gene’s mRNA-vs-protein verdict at one condition.</span></div>
+              <div class="arch-tool"><span class="tn">compare_conditions</span><span class="tg">The same gene’s verdict across the Rest → 8 h → 48 h time-course.</span></div>
+              <div class="arch-tool"><span class="tn">draft_decision_brief</span><span class="tg">The full go/no-go brief + the one discriminating experiment.</span></div>
+              <div class="arch-tool"><span class="tn">gene_evidence</span><span class="tg">Druggability (small-molecule and antibody, separately), disease genetics, QC tier.</span></div>
+              <div class="arch-tool"><span class="tn">rank_targets</span><span class="tg">Discovery — ranks and verifies every significant gene into a shortlist.</span></div>
+              <div class="arch-tool"><span class="tn">known_biology</span><span class="tg">How many canonical IL-2 regulators are recovered, and how TSC1 lands.</span></div>
+              <div class="arch-tool"><span class="tn">hitlist_biology</span><span class="tg">Shared Reactome pathways of the replicated hit set.</span></div>
+              <div class="arch-tool"><span class="tn">pathway_map / sketch_gene</span><span class="tg">Places the gene among cited pathway partners, or a bench-notebook figure.</span></div>
+              <div class="arch-tool"><span class="tn">protein_report</span><span class="tg">UniProt identity + best 3D structure + cited literature.</span></div>
+            </div>
+          </section>
+
+          <section class="how-sec">
+            <div class="how-kicker">External evidence</div>
+            <h2 class="how-h">Live annotation, cached and cited.</h2>
+            <p class="how-p"><b>The screens tell you the biology is real; the annotations tell you the target is worth acting on.</b> A gene has to clear both to earn “advance.” Every external fact is retrieved from a real source and cited — the model chooses which to show, never what it says.</p>
+            <div class="arch-tools">
+              <div class="arch-tool"><span class="tn">Open Targets</span><span class="tg">GraphQL — small-molecule and antibody tractability, immune-disease genetic association, clinical stage.</span></div>
+              <div class="arch-tool"><span class="tn">ClinicalTrials.gov</span><span class="tg">v2 API — is a molecule against this target already in the clinic (NCT id + phase)?</span></div>
+              <div class="arch-tool"><span class="tn">Enrichr / Reactome</span><span class="tg">Pathway enrichment for the replicated hit set.</span></div>
+              <div class="arch-tool"><span class="tn">UniProt · RCSB · AlphaFold</span><span class="tg">Protein identity and the best structure — experimental when it exists, AlphaFold labelled as predicted.</span></div>
+            </div>
+          </section>
+
+          <section class="how-sec">
+            <div class="how-kicker">Start here</div>
+            <h2 class="how-h">See the whole pipeline run on one gene.</h2>
+            <div class="how-cta">
+              <button class="go" data-q="Should TSC1 advance?">Should TSC1 advance? →</button>
+              <span class="cta-note">load → rank → reconcile → verify → decide</span>
+            </div>
+          </section>
+
+        </div><!-- /howArch -->
 
       </div>
     </div><!-- /convo-scroll -->
@@ -1487,7 +1800,7 @@ ZNF250</div>
           <div class="user-msg js-user"></div>
         </div>
         <div class="reply-turn agent">
-          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="ava" aria-hidden="true"><svg class="sera-mark" viewBox="0 0 72 44" focusable="false"><use href="#seraConvergenceMark"/></svg></div>
           <div class="reply-body">
             <div class="cond-row">
               <span class="cond-inline js-tabs" role="tablist">
@@ -1503,52 +1816,73 @@ ZNF250</div>
             </section>
             <div class="brief-shell">
               <article class="brief-main">
-                <section class="interpretation-block" aria-label="Scientific interpretation">
-                  <span class="brief-k">Biological interpretation</span>
-                  <p class="prose js-proseOpen"></p>
-                  <p class="prose result-narrative js-resultNarrative"></p>
+                <section class="reconcile-section result-section" aria-labelledby="resultSectionTitle">
+                  <header class="reconcile-section-head">
+                    <span class="reconcile-section-num">01</span>
+                    <div><span class="reconcile-section-k">Paired result</span><h3 class="reconcile-section-title" id="resultSectionTitle">What the two screens measured</h3><p class="reconcile-section-deck">Read the direction within each assay first, then check whether the transcript and protein layers agree.</p></div>
+                  </header>
+                  <figure class="fig">
+                    <div class="fig-frame">
+                      <div class="fig-eyebrow js-figEyebrow">Figure 1 · paired effect on IL-2</div>
+                      <svg class="js-effectFig" viewBox="0 0 560 210" role="img" aria-label="Paired effect figure" font-family="IBM Plex Mono, monospace"></svg>
+                      <figcaption class="cap js-figCap"></figcaption>
+                    </div>
+                  </figure>
+                  <section class="evidence-ledger" aria-label="Evidence ledger">
+                    <div class="brief-section-head"><span class="brief-k">Evidence ledger</span><span>What the decision rests on</span></div>
+                    <div class="js-evidenceLedger"></div>
+                  </section>
                 </section>
-            <section class="evidence-boundary" aria-label="Evidence boundary">
-              <div class="boundary observed"><div class="brief-k">1 · Observed</div><div class="js-observed"></div></div>
-              <div class="boundary inferred"><div class="brief-k">2 · Interpretation</div><div class="js-inferred"></div></div>
-              <div class="boundary unknown"><div class="brief-k">3 · Decision gap</div><div class="js-unknown"></div></div>
-            </section>
-            <figure class="fig">
-              <div class="fig-frame">
-                <div class="fig-eyebrow js-figEyebrow">Figure 1 · paired effect on IL-2</div>
-                <svg class="js-effectFig" viewBox="0 0 560 210" role="img" aria-label="Paired effect figure" font-family="IBM Plex Mono, monospace"></svg>
-                <figcaption class="cap js-figCap"></figcaption>
-              </div>
-            </figure>
-            <section class="evidence-ledger" aria-label="Evidence ledger">
-              <div class="brief-section-head"><span class="brief-k">Evidence ledger</span><span>What the decision rests on</span></div>
-              <div class="js-evidenceLedger"></div>
-            </section>
-              </article>
-              <aside class="bench-workspace" aria-label="Experimental planning workspace">
-            <section class="threats">
-              <div class="brief-section-head"><span class="brief-k">Why not decide yet</span><span>Limits of the current evidence</span></div>
-              <div class="js-threats"></div>
-            </section>
-            <section class="resolution js-resolution" aria-label="Resolution experiment">
-              <div class="resolution-head">
-                <div>
-                  <div class="resolution-k">Decisive next experiment</div>
-                  <h3 class="resolution-h js-resolutionTitle">Run one matched experiment</h3>
-                  <p class="resolution-copy js-resolutionCopy"></p>
-                </div>
-                <span class="resolution-tag">bench-ready outline</span>
-              </div>
-              <div class="bench-spec js-benchSpec"></div>
-              <div class="outcomes-label">How each result changes the decision</div>
-              <div class="outcomes js-outcomes"></div>
-              <div class="resolution-preview js-resolutionPreview">Choose a possible result to preview how the interpretation would change.</div>
-            </section>
-            <div class="chain js-chain" aria-label="Chain of custody"></div>
-            <p class="prose js-proseVerdict"><span class="js-verdictLead"></span><span class="js-explainText"></span></p>
-            <p class="prose interp js-interpSay"></p>
-            <div class="js-sourcesBody"></div>
-            <div class="foot js-provFoot"></div>
+
+                <section class="reconcile-section interpretation-section" aria-labelledby="interpretationSectionTitle">
+                  <header class="reconcile-section-head">
+                    <span class="reconcile-section-num">02</span>
+                    <div><span class="reconcile-section-k">Interpretation</span><h3 class="reconcile-section-title" id="interpretationSectionTitle">What the result supports</h3><p class="reconcile-section-deck">Separate the observed measurements from the biological inference and the remaining decision gap.</p></div>
+                  </header>
+                  <div class="interpretation-block" aria-label="Scientific interpretation">
+                    <p class="prose js-proseOpen"></p>
+                    <p class="prose result-narrative js-resultNarrative"></p>
+                  </div>
+                  <section class="evidence-boundary" aria-label="Evidence boundary">
+                    <div class="boundary observed"><div class="brief-k">Observed</div><div class="js-observed"></div></div>
+                    <div class="boundary inferred"><div class="brief-k">Interpretation</div><div class="js-inferred"></div></div>
+                    <div class="boundary unknown"><div class="brief-k">Decision gap</div><div class="js-unknown"></div></div>
+                  </section>
+                </section>
+
+                <section class="reconcile-section limits-section" aria-labelledby="limitsSectionTitle">
+                  <header class="reconcile-section-head">
+                    <span class="reconcile-section-num">03</span>
+                    <div><span class="reconcile-section-k">Evidence boundary</span><h3 class="reconcile-section-title" id="limitsSectionTitle">What this comparison cannot resolve</h3><p class="reconcile-section-deck">These comparability limits define how narrowly the current result should be interpreted.</p></div>
+                  </header>
+                  <section class="threats" aria-label="Limits of the current evidence"><div class="js-threats"></div></section>
+                </section>
+
+                <section class="reconcile-section experiment-section" aria-labelledby="experimentSectionTitle">
+                  <header class="reconcile-section-head">
+                    <span class="reconcile-section-num">04</span>
+                    <div><span class="reconcile-section-k">Validation</span><h3 class="reconcile-section-title" id="experimentSectionTitle">The experiment that settles the decision</h3><p class="reconcile-section-deck">Pair both molecular layers in the same samples so every possible outcome changes the recommendation explicitly.</p></div>
+                  </header>
+                  <section class="resolution js-resolution" aria-label="Resolution experiment">
+                    <div class="resolution-head">
+                      <div>
+                        <div class="resolution-k">Decisive next experiment</div>
+                        <h3 class="resolution-h js-resolutionTitle">Run one matched experiment</h3>
+                        <p class="resolution-copy js-resolutionCopy"></p>
+                      </div>
+                      <span class="resolution-tag">bench-ready outline</span>
+                    </div>
+                    <div class="bench-spec js-benchSpec"></div>
+                    <div class="outcomes-label">How each result changes the decision</div>
+                    <div class="outcomes js-outcomes"></div>
+                    <div class="resolution-preview js-resolutionPreview">Choose a possible result to preview how the interpretation would change.</div>
+                  </section>
+                  <div class="chain js-chain" aria-label="Chain of custody"></div>
+                  <p class="prose js-proseVerdict"><span class="js-verdictLead"></span><span class="js-explainText"></span></p>
+                  <p class="prose interp js-interpSay"></p>
+                  <div class="js-sourcesBody"></div>
+                  <div class="foot js-provFoot"></div>
+                </section>
 
             <!-- dossier -->
             <div class="dossier">
@@ -1579,13 +1913,14 @@ ZNF250</div>
             </div>
             <div class="srcline">sources · Zhu 2025 DE_stats + QC · Schmidt 2022 FACS · Open Targets · GWAS Catalog</div>
 
+              </article>
+
             <!-- follow-up chips: ask the agent to produce the plan or the known-biology check inline -->
             <div class="followups js-followups">
               <button class="fchip" data-follow="druggability"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z"/><path d="M8.5 8.5l7 7"/></svg>Review druggability and evidence</button>
               <button class="fchip" data-follow="plan"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Draft a validation plan</button>
               <button class="fchip" data-follow="truth"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>Check against known biology</button>
             </div>
-              </aside>
             </div>
           </div>
         </div>
@@ -1597,7 +1932,7 @@ ZNF250</div>
       <div class="turn turn-follow plan-sheet">
         <div class="reply-turn user-row"><div class="user-msg js-user"></div></div>
         <div class="reply-turn agent">
-          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="ava" aria-hidden="true"><svg class="sera-mark" viewBox="0 0 72 44" focusable="false"><use href="#seraConvergenceMark"/></svg></div>
           <div class="reply-body">
             <div class="planbar">
               <div class="pt-title">Validation plan · <span class="js-planGene"></span></div>
@@ -1632,7 +1967,7 @@ ZNF250</div>
       <div class="turn turn-follow">
         <div class="reply-turn user-row"><div class="user-msg js-user">Does Sera recover known biology?</div></div>
         <div class="reply-turn agent">
-          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="ava" aria-hidden="true"><svg class="sera-mark" viewBox="0 0 72 44" focusable="false"><use href="#seraConvergenceMark"/></svg></div>
           <div class="reply-body">
             <div class="gt-claim">
               <div class="gt-h">Does Sera recover known biology?</div>
@@ -1661,7 +1996,7 @@ ZNF250</div>
       <div class="turn turn-follow">
         <div class="reply-turn user-row"><div class="user-msg js-user"></div></div>
         <div class="reply-turn agent">
-          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="ava" aria-hidden="true"><svg class="sera-mark" viewBox="0 0 72 44" focusable="false"><use href="#seraConvergenceMark"/></svg></div>
           <div class="reply-body">
             <div class="fig-eyebrow js-cmpEyebrow">Across conditions · IL-2</div>
             <div class="gt-col js-cmpStrip" style="margin-top:8px"></div>
@@ -1681,7 +2016,7 @@ ZNF250</div>
       <div class="turn turn-follow">
         <div class="reply-turn user-row"><div class="user-msg js-user"></div></div>
         <div class="reply-turn agent">
-          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="ava" aria-hidden="true"><svg class="sera-mark" viewBox="0 0 72 44" focusable="false"><use href="#seraConvergenceMark"/></svg></div>
           <div class="reply-body">
             <p class="prose js-facetLead"></p>
             <div class="card soft js-facetCard" style="max-width:540px;margin-top:14px"></div>
@@ -1700,7 +2035,7 @@ ZNF250</div>
       <div class="turn turn-follow">
         <div class="reply-turn user-row"><div class="user-msg js-user"></div></div>
         <div class="reply-turn agent">
-          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="ava" aria-hidden="true"><svg class="sera-mark" viewBox="0 0 72 44" focusable="false"><use href="#seraConvergenceMark"/></svg></div>
           <div class="reply-body">
             <p class="prose js-helpLead"></p>
             <div class="help-actions js-helpActions"></div>
@@ -1715,7 +2050,7 @@ ZNF250</div>
       <div class="turn turn-follow">
         <div class="reply-turn user-row"><div class="user-msg js-user"></div></div>
         <div class="reply-turn agent">
-          <div class="ava" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
+          <div class="ava" aria-hidden="true"><svg class="sera-mark" viewBox="0 0 72 44" focusable="false"><use href="#seraConvergenceMark"/></svg></div>
           <div class="reply-body">
             <details class="agent-activity js-activity" open hidden>
               <summary><span class="activity-title">Working</span><span class="activity-status"></span></summary>
@@ -1996,6 +2331,7 @@ ZNF250</div>
     showLanding(); $("urlPath").textContent="chat"; $("convoTitle").textContent="Chat";
     renderArtifacts(null);
     loadSessions();
+    try{ var nu=new URL(window.location); nu.searchParams.delete("session"); nu.searchParams.delete("gene"); history.replaceState(null,"",nu); }catch(e){}
   }
 
   // Render ONE saved agent turn from its descriptor: a user bubble + the agent's SAVED narration, and
@@ -2079,6 +2415,9 @@ ZNF250</div>
     currentSession={id:s.id,title:s.title};
     thread.innerHTML=""; setMode("chat"); hideLanding();
     $("convoTitle").textContent="Chat";
+    // Stamp the open chat into the URL so a refresh reopens THIS session (not the hero, not a
+    // different one) — mirrors the existing ?gene= deep-link pattern below.
+    try{ var su=new URL(window.location); su.searchParams.delete("gene"); su.searchParams.set("session",s.id); history.replaceState(null,"",su); }catch(e){}
     _replaying=true;
     try{
       var turns=s.turns||[];
@@ -4015,7 +4354,7 @@ ZNF250</div>
     // the composer is a chat control — hide it in the non-chat views.
     document.querySelector(".composer").style.display=isChat?"":"none";
     if(isBatch){ $("convoTitle").textContent="Hit list"; $("urlPath").textContent="list"; if(!$("batchRows").children.length) renderBatch(); }
-    else if(isHow){ $("convoTitle").textContent="How it works"; $("urlPath").textContent="how"; $("convoScroll").scrollTop=0; }
+    else if(isHow){ $("convoTitle").textContent="How it works"; $("urlPath").textContent="how"; showHowPage("hsOverview"); $("convoScroll").scrollTop=0; }
     else{ $("convoTitle").textContent="Chat"; $("urlPath").textContent=state.gene?("gene/"+state.gene):"chat"; }
   }
   $("mChat").addEventListener("click",function(){setMode("chat");});
@@ -4027,6 +4366,22 @@ ZNF250</div>
   // into a real chat turn with the sample question, reusing the same dispatch as the landing prompts.
   document.querySelectorAll("#howView [data-q]").forEach(function(b){
     b.addEventListener("click",function(){ setMode("chat"); handleMessage(b.dataset.q); });
+  });
+
+  // How-it-works sub-pages (Overview / The science / Architecture). One segmented control toggles
+  // three tabpanels; only one is visible at a time. Switching scrolls back to the top so the reader
+  // starts each page at its heading.
+  var HOW_PAGES=[["hsOverview","howOverview"],["hsScience","howScience"],["hsArch","howArch"]];
+  function showHowPage(tabId){
+    HOW_PAGES.forEach(function(p){
+      var on=p[0]===tabId;
+      $(p[0]).setAttribute("aria-selected",String(on));
+      $(p[1]).hidden=!on;
+    });
+    $("convoScroll").scrollTop=0;
+  }
+  HOW_PAGES.forEach(function(p){
+    $(p[0]).addEventListener("click",function(){ showHowPage(p[0]); });
   });
 
   // ---- collapsible artifacts rail ----
@@ -4091,28 +4446,25 @@ ZNF250</div>
     try{ navigator.clipboard.writeText(parts.join("\n\n")); }catch(e){}
   }
 
-  // ── First load: an EMPTY agentic chat. No pre-loaded example — the user asks, the agent decides
-  // whether to run a workflow or answer conversationally. A ?gene=SYMBOL deep-link still opens that
-  // gene directly (shareable link); only the no-param case shows the greeting landing. ──────────
+  // ── First load / refresh: land where the URL says. No open chat yet → the empty hero landing
+  // (no pre-loaded example — the user asks, the agent decides whether to run a workflow or answer
+  // conversationally). A ?gene=SYMBOL deep-link opens that gene directly (shareable link). A
+  // ?session=ID — stamped into the URL by openSession() the moment a chat is opened — means the
+  // user was IN that chat, so refresh reopens the SAME chat instead of dropping back to the hero.
+  // A brand-new chat (newSession()) clears both params, so hero-then-refresh still shows hero. ──
   (async function init(){
     loadSessions();   // populate the Recent list from persisted sessions
-    var qg=null,newChat=false;
+    var qg=null,qs=null;
     try{
       var u=new URL(window.location);
       qg=u.searchParams.get("gene");
-      newChat=u.searchParams.get("new")==="1";   // explicit "start fresh" escape hatch
+      qs=u.searchParams.get("session");
     }catch(e){}
+    // ?session= wins over ?gene=: once a chat is open, replaying reconstructs the WHOLE thread — a
+    // stray ?gene= from that chat's own turns (stamped by the turn renderer) must not short-circuit
+    // into a single-gene deep-link view and lose the rest of the conversation.
+    if(qs){ await openSession(qs); return; }
     if(qg){ hideLanding(); loadGene(qg.toUpperCase()); return; }
-    // No deep-link: RESTORE the most-recent chat so a refresh keeps the conversation instead of
-    // blanking it (the "content disappears on refresh" report). Falls back to the landing when there
-    // are no saved chats, the store is unavailable, or ?new=1 asked for a clean slate.
-    if(!newChat){
-      try{
-        var r=await fetch("api/sessions");
-        var list=r.ok?((await r.json()).sessions||[]):[];
-        if(list.length){ await openSession(list[0].id); return; }
-      }catch(e){ /* fall through to the landing */ }
-    }
     showLanding(); $("urlPath").textContent="chat"; renderArtifacts(null);
   })();
 })();
