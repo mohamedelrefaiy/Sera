@@ -250,17 +250,19 @@ def _pill_svg(p: Placed, *, focal: bool, focal_colour: str, status: str | None) 
     return "".join(parts)
 
 
-def _membrane_svg() -> str:
+def _membrane_svg(receptor_xs: tuple[float, ...] = ()) -> str:
     """A lipid bilayer across the membrane band: two rows of phospholipid 'lollipops' (head circle +
-    two tails) meeting in the middle. Self-contained; no external image."""
+    two tails) meeting in the middle. Lipids under each membrane receptor's footprint are skipped so
+    the receptor visibly parts the bilayer. Self-contained; no external image."""
     top = _BAND_TOP[1]
     mid = top + _BAND_H / 2
     tint = _BAND_TINT["membrane"]
     parts = [f'<rect x="0" y="{top}" width="{_W}" height="{_BAND_H}" fill="{tint}"/>']
     step = 12
+    half = _PILL_W / 2 + 4      # footprint each receptor clears in the bilayer
     for xi in range(8, _W - 8, step):
-        if 300 < xi < 400:      # skip under the receptor footprint so it parts the bilayer
-            continue
+        if any(abs(xi - rx) < half for rx in receptor_xs):
+            continue            # under a receptor → leave a gap so it parts the bilayer
         parts.append(f'<circle cx="{xi}" cy="{top + 7:.0f}" r="3.4" fill="{_MEM_HEAD}" '
                      f'stroke="{_MEM_TAIL}" stroke-width="0.8"/>')
         parts.append(f'<path d="M{xi - 2} {top + 10:.0f} L{xi - 1} {mid:.0f} M{xi + 2} {top + 10:.0f} '
@@ -350,7 +352,8 @@ def render_topology(
         f'<rect x="0" y="0" width="{_W}" height="{_H}" rx="12" fill="{_PAPER}"/>',
     ]
     parts.append(_bands_svg())
-    parts.append(_membrane_svg())
+    membrane_xs = tuple(p.x for p in pos.values() if COMPARTMENTS[p.band] == "membrane")
+    parts.append(_membrane_svg(membrane_xs))
 
     parts.append(f'<text x="16" y="26" font-size="15" fill="{_INK}" font-weight="700">'
                  f'{focal} in {pw.term}</text>')

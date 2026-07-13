@@ -158,8 +158,93 @@ TCR_IL2 = CuratedPathway(
     ),
 )
 
+# BCR signaling. The B-cell-receptor counterpart to the TCR cascade: antigen engages the BCR (Igα/Igβ
+# = CD79A/CD79B) with CD19 as co-receptor, LYN/SYK fire, the BLNK scaffold recruits BTK + PLCγ2, and
+# the signal splits into the PLCγ2 → PKCβ → CBM → NF-κB/NFAT arm and the PI3K → AKT arm. Transcribed
+# from Reactome "Signaling by the B Cell Receptor (BCR)" (R-HSA-983705) + curated sub-reactions.
+
+BCR = CuratedPathway(
+    id="bcr",
+    term="BCR Signaling",
+    reactome_id="R-HSA-983705",
+    curator="moelrefaiy",
+    curated_on="2026-07-13",
+    nodes=(
+        TopoNode("ANTIGEN", "extracellular", "receptor", label="antigen"),
+        TopoNode("CD79A",  "membrane",   "receptor", label="BCR (Igα/β)"),
+        TopoNode("CD19",   "membrane",   "receptor", label="CD19"),
+        TopoNode("LYN",    "cytoplasm",  "kinase"),
+        TopoNode("SYK",    "cytoplasm",  "kinase"),
+        TopoNode("BLNK",   "cytoplasm",  "adaptor",  label="BLNK/SLP-65"),
+        TopoNode("BTK",    "cytoplasm",  "kinase"),
+        TopoNode("PLCG2",  "cytoplasm",  "phospholipase", label="PLCγ2"),
+        TopoNode("PIK3CD", "cytoplasm",  "kinase",   label="PI3K"),
+        TopoNode("AKT1",   "cytoplasm",  "kinase",   label="AKT"),
+        TopoNode("IP3",    "cytoplasm",  "second_messenger", label="IP₃ / Ca²⁺"),
+        TopoNode("PRKCB",  "cytoplasm",  "kinase",   label="PKCβ"),
+        TopoNode("CARD11", "cytoplasm",  "adaptor",  label="CBM (CARD11)"),
+        TopoNode("NFATC1", "nucleus",    "tf",       label="NFAT"),
+        TopoNode("RELA",   "nucleus",    "tf",       label="NF-κB"),
+    ),
+    edges=(
+        TopoEdge("ANTIGEN", "CD79A", "activation", "Reactome", "R-HSA-983695", pmid="20176268"),
+        TopoEdge("CD19",  "PIK3CD", "activation", "Reactome", "R-HSA-1433557", pmid="19917254"),
+        TopoEdge("CD79A", "LYN",   "activation", "Reactome", "R-HSA-983687", pmid="9697839"),
+        TopoEdge("LYN",   "SYK",   "activation", "Reactome", "R-HSA-983695", pmid="7590236"),
+        TopoEdge("SYK",   "BLNK",  "activation", "Reactome", "R-HSA-983705", pmid="9697839"),
+        TopoEdge("BLNK",  "BTK",   "activation", "Reactome", "R-HSA-983705", pmid="10358156"),
+        TopoEdge("BLNK",  "PLCG2", "activation", "Reactome", "R-HSA-983705", pmid="9697839"),
+        TopoEdge("BTK",   "PLCG2", "activation", "Reactome", "R-HSA-983705", pmid="9697839"),
+        TopoEdge("PIK3CD", "AKT1", "activation", "Reactome", "R-HSA-1433557", pmid="19917254"),
+        TopoEdge("PLCG2", "IP3",   "production",  "Reactome", "R-HSA-983705", pmid="1387923"),
+        TopoEdge("IP3",   "NFATC1", "activation", "Reactome", "R-HSA-2025928", pmid="9184209"),
+        TopoEdge("PLCG2", "PRKCB", "activation", "Reactome", "R-HSA-5607763", pmid="10078528"),
+        TopoEdge("PRKCB", "CARD11", "activation", "Reactome", "R-HSA-5607763", pmid="18158043"),
+        TopoEdge("CARD11", "RELA", "activation", "Reactome", "R-HSA-5607763", pmid="14638857"),
+        TopoEdge("RELA",  "RELA",  "translocation", "Reactome", "R-HSA-1810531", pmid="9865693"),
+    ),
+)
+
+# RAF/MAP kinase (ERK) cascade. The canonical growth-signal relay: an activated RTK recruits GRB2/SOS,
+# which loads RAS-GTP; RAS activates RAF, RAF → MEK → ERK, and ERK enters the nucleus to switch on
+# immediate-early transcription factors (ELK1, FOS, MYC). Transcribed from Reactome "RAF/MAP kinase
+# cascade" (R-HSA-5673001) + "Signaling by Receptor Tyrosine Kinases" sub-reactions.
+
+MAPK = CuratedPathway(
+    id="mapk",
+    term="MAPK/ERK Cascade",
+    reactome_id="R-HSA-5673001",
+    curator="moelrefaiy",
+    curated_on="2026-07-13",
+    nodes=(
+        TopoNode("RTK",    "membrane",   "receptor", label="RTK"),
+        TopoNode("GRB2",   "cytoplasm",  "adaptor"),
+        TopoNode("SOS1",   "cytoplasm",  "adaptor",  label="SOS"),
+        TopoNode("HRAS",   "cytoplasm",  "gtpase",   label="RAS"),
+        TopoNode("RAF1",   "cytoplasm",  "kinase",   label="RAF"),
+        TopoNode("MAP2K1", "cytoplasm",  "kinase",   label="MEK"),
+        TopoNode("MAPK1",  "cytoplasm",  "kinase",   label="ERK"),
+        TopoNode("DUSP6",  "cytoplasm",  "phospholipase", label="DUSP6 (⊣ERK)"),
+        TopoNode("ELK1",   "nucleus",    "tf",       label="ELK1"),
+        TopoNode("FOS",    "nucleus",    "tf",       label="FOS"),
+        TopoNode("MYC",    "nucleus",    "tf",       label="MYC"),
+    ),
+    edges=(
+        TopoEdge("RTK",   "GRB2",  "activation", "Reactome", "R-HSA-179812", pmid="8194527"),
+        TopoEdge("GRB2",  "SOS1",  "activation", "Reactome", "R-HSA-179812", pmid="8194527"),
+        TopoEdge("SOS1",  "HRAS",  "activation", "Reactome", "R-HSA-109796", pmid="8493579"),
+        TopoEdge("HRAS",  "RAF1",  "activation", "Reactome", "R-HSA-5673001", pmid="8524413"),
+        TopoEdge("RAF1",  "MAP2K1", "activation", "Reactome", "R-HSA-5673001", pmid="8388392"),
+        TopoEdge("MAP2K1", "MAPK1", "activation", "Reactome", "R-HSA-5673001", pmid="8388392"),
+        TopoEdge("DUSP6", "MAPK1", "inhibition", "Reactome", "R-HSA-202131", pmid="9832503"),
+        TopoEdge("MAPK1", "ELK1", "transcription", "Reactome", "R-HSA-198765", pmid="7889942"),
+        TopoEdge("MAPK1", "FOS",  "transcription", "Reactome", "R-HSA-198765", pmid="8455624"),
+        TopoEdge("MAPK1", "MYC",  "transcription", "Reactome", "R-HSA-198765", pmid="8455624"),
+    ),
+)
+
 # The closed set. The LLM selects an id from here and nothing else; it never edits a record.
-CURATED_PATHWAYS: tuple[CuratedPathway, ...] = (TCR_IL2,)
+CURATED_PATHWAYS: tuple[CuratedPathway, ...] = (TCR_IL2, BCR, MAPK)
 
 
 def select_for(gene: str) -> CuratedPathway | None:

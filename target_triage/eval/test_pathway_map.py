@@ -265,3 +265,40 @@ def test_render_is_deterministic():
     b = _topo("ITK")
     assert a.svg == b.svg
     assert a.topology_edges == b.topology_edges
+
+
+# --- every curated pathway is part of the positive-control gate ----------------------------------
+# One representative focal gene per curated pathway. Each must render a real topology figure whose
+# nodes/edges all trace to its curated record — the same honesty pins, applied pathway-by-pathway.
+_PATHWAY_PROBES = (
+    ("ITK", "tcr_il2", "R-HSA-202403"),
+    ("SYK", "bcr", "R-HSA-983705"),
+    ("RAF1", "mapk", "R-HSA-5673001"),
+)
+
+
+def test_each_curated_pathway_renders_a_traceable_topology_figure():
+    for gene, pid, reactome in _PATHWAY_PROBES:
+        m = build_pathway_map(_row(gene, "discordant"), _tcr_pathways())
+        curated = select_for(gene)
+        assert curated is not None and curated.id == pid, f"{gene} should select {pid}"
+        assert m.style == "topology", f"{gene} should render the topology figure"
+        assert m.pathway == reactome
+        # nothing on screen that the chosen pathway's record doesn't assert
+        assert set(m.topology_nodes) <= curated.node_ids()
+        curated_edges = {(e.src, e.dst, e.type) for e in curated.edges}
+        for edge in m.topology_edges:
+            assert edge in curated_edges, f"{gene}: rendered edge {edge} not in curated record"
+        # the focal gene is actually in the figure it anchors
+        assert gene in m.topology_nodes
+        # self-contained
+        for bad in ("<script", "xlink:href", "url(", 'href="http', "<marker"):
+            assert bad not in m.svg
+
+
+def test_edge_type_vocabulary_is_exercised_across_pathways():
+    # the CST idiom needs more than activation arrows — assert the curated set uses inhibition,
+    # production, translocation and transcription somewhere, so the renderer's grammar is covered.
+    seen = {e.type for pw in CURATED_PATHWAYS for e in pw.edges}
+    for needed in ("activation", "inhibition", "production", "translocation", "transcription"):
+        assert needed in seen, f"no curated edge exercises {needed!r}"
