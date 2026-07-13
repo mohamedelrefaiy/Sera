@@ -160,6 +160,26 @@ def test_prompt_lets_reconcile_take_a_named_condition():
     assert "condition" in p, "prompt never tells the agent it can pass a condition to reconcile_gene"
 
 
+def test_prompt_fulfils_the_featured_multi_part_workup_without_cross_tool_drift():
+    """The landing-page tour is deliberately one compound request: reconcile ITK, show ITK's
+    protein report, then build TSC1's decision brief. The prompt must not collapse it to the old
+    one-branch router or narrate a time course that no tool was asked to compute."""
+    p = concord_prompt.CONCORD_SYSTEM_PROMPT.lower()
+    assert "explicit multi-part request" in p
+    assert "`reconcile_gene` for itk" in p
+    assert "`protein_report` for itk" in p
+    assert "`draft_decision_brief` for tsc1" in p
+    assert "compact executive summary" in p
+    assert "scientific reading order" in p
+    assert "establish protein identity and cited" in p
+    assert "report order takes precedence" in p
+    assert "unless you called `compare_conditions`" in p
+    assert "do not transfer that recommendation to another gene" in p
+    assert "loading tools" in p and "working in parallel" in p
+    assert "mrna is generally a reliable proxy" in p and "broader validation" in p
+    assert "do not casually rewrite them as knockout experiments" in p
+
+
 # ── 4. decision-brief tool (the 'what should I do' path) ─────────────────────────────────
 
 

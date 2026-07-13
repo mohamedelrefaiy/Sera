@@ -684,10 +684,12 @@ async def draft_decision_brief(args):
         {"gene": gene, "verdict": brief["snapshot"]["verdict"],
          "comparability": brief["comparability"], "feasible": brief["feasible"],
          "recommendation": brief["recommendation"],
-         "note": "One plain lead-in sentence only. Reflect the code-computed advancement stance in "
-                 "plain words (advance / validate first / hold as a weak target / deprioritise) — "
-                 "e.g. 'Real biology, but a weak drug target — here's how I'd resolve the " + gene
-                 + " split.'. The card carries the detail — do NOT restate the experiment, "
+         "note": "One plain lead-in sentence only. Reflect both the code-computed advancement "
+                 "stance and the unresolved evidence in plain words (advance / validate first / "
+                 "hold as a weak target / deprioritise) — e.g. '" + gene
+                 + " is discordant and weakly actionable; validate the split before committing "
+                 "to it as a target.'. Never call the biology real or validated before the matched "
+                 "experiment reproduces it. The card carries the detail — do NOT restate the experiment, "
                  "explanations, dossier scores, or numbers."},
         {"action": "plan", "gene": gene, "decision_brief": brief},
     )

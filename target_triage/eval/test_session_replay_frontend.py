@@ -107,6 +107,29 @@ def check_refresh_restores_last_session() -> tuple[bool, str]:
     return True, "init() restores the most-recent saved chat when there is no ?gene= deep-link"
 
 
+# --- gate 4: a complete workup is one ordered report on live render and replay ---
+
+def check_full_workup_has_report_structure() -> tuple[bool, str]:
+    html = _html()
+    builder = _slice(html, "buildWorkupReport")
+    live = _slice(html, "runAgent")
+    replay = _slice(html, "replayAgentTurn")
+    order = _slice(html, "workupRank")
+
+    required = ("protein_report", "reconcile", "plan")
+    if any(action not in builder for action in required):
+        return False, "the report builder no longer requires protein, reconciliation, and decision"
+    if "workup-report" not in builder or "workup-section" not in builder:
+        return False, "the compound response is no longer grouped into one report with sections"
+    if not (order.index("protein_report") < order.index("reconcile") < order.index("plan")):
+        return False, "the report no longer orders protein foundation before analysis and decision"
+    if "buildWorkupReport(" not in live or "buildWorkupReport(" not in replay:
+        return False, "live rendering and saved-chat replay no longer share the report layout"
+    if "summary.appendChild(narration)" not in builder:
+        return False, "the executive summary has escaped the report cover"
+    return True, "full workups render as one ordered, replay-safe lab progress report"
+
+
 # --- pytest entry points ---
 
 def test_replay_uses_agent_turns() -> None:
@@ -124,12 +147,18 @@ def test_refresh_restores_last_session() -> None:
     assert passed, reason
 
 
+def test_full_workup_has_report_structure() -> None:
+    passed, reason = check_full_workup_has_report_structure()
+    assert passed, reason
+
+
 if __name__ == "__main__":
     print("SESSION-REPLAY PARITY GATE — reopening a chat must render what was persisted\n")
     checks = (
         ("openSession renders agent turns", check_replay_uses_agent_turns),
         ("replay reconstructs (no live re-run)", check_replay_does_not_rerun_agent),
         ("refresh restores the last chat", check_refresh_restores_last_session),
+        ("full workup stays one report", check_full_workup_has_report_structure),
     )
     results = [(name, *fn()) for name, fn in checks]
     width = max(len(name) for name, _, _ in results)

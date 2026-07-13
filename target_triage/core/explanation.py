@@ -33,7 +33,7 @@ SYSTEM_PROMPT = (
     "screens but does not read statistics off the top of their head. The record gives you a `plain` "
     "summary of what the two screens found, plus a one-line gene annotation.\n"
     "How to write:\n"
-    "- Speak their language: what the knockout DID, what each screen SAW, and why it matters for "
+    "- Speak their language: what the gene perturbation DID, what each screen SAW, and why it matters for "
     "the next decision. Follow the arc: perturbation, transcript result, protein result, practical "
     "consequence, unresolved question.\n"
     "- NEVER quote a statistic in your sentences. Do not write a z-score, log-fold-change, p-value, "
@@ -58,6 +58,8 @@ SYSTEM_PROMPT = (
     "- Never say the pattern 'makes sense' unless the supplied record contains direct evidence for "
     "the mechanism. Do not infer translation, protein stability, feedback, or secretion from a gene "
     "annotation alone.\n"
+    "- Call the intervention a gene perturbation or suppression, not a knockout; these screens use "
+    "CRISPRi and the supplied record does not establish complete loss of function.\n"
     "- 2-4 sentences. No hedging boilerplate. Do NOT claim novelty; this is a reconciliation, not a "
     "discovery. Do NOT open with the verdict word as a header — write in flowing prose."
 )

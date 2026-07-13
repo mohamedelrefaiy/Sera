@@ -357,7 +357,7 @@ def _recommendation(snap: ConcordanceSnapshot, dossier: TargetDossier | None) ->
     Decision order (most-decisive first):
       - no dossier          -> 'unknown'          (honest: absence of input, never a fabricated call)
       - verdict 'neither'   -> 'deprioritize'     (no signal to chase, regardless of dossier)
-      - not tractable AND no disease genetics -> 'hold_weak_target' (biology may be real; no program)
+      - not tractable AND no disease genetics -> 'hold_weak_target' (unresolved signal; no program)
       - replicated + tractable + disease + High QC -> 'advance'     (the only green light)
       - otherwise           -> 'validate_first'   (worth resolving the disagreement before committing)
     """
@@ -374,9 +374,10 @@ def _recommendation(snap: ConcordanceSnapshot, dossier: TargetDossier | None) ->
 
     if not dossier.tractable and not dossier.has_disease_rationale:
         return "hold_weak_target", (
-            f"{g} looks biologically real, but it has no tractable drug handle (neither a "
-            "small-molecule nor an antibody route) and no immune-disease genetics behind it — worth "
-            "understanding as biology, but not worth advancing as a program yet.")
+            f"{g} is biologically interesting but still unresolved: the screens disagree, and it "
+            "has no tractable drug handle (neither a small-molecule nor an antibody route) or "
+            "immune-disease genetics behind it. Validate the split if the mechanism matters, but "
+            "do not advance it as a target program yet.")
 
     strong_qc = (dossier.qc_confidence or "").lower() == "high"
     if (snap.verdict == "replicated" and dossier.tractable

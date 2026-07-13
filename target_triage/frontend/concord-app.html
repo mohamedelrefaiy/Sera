@@ -228,6 +228,70 @@
   .lprompt-tour .lp-k{color:var(--protein)}
   .lprompt-tour .lp-ex{color:var(--ink-soft)}
 
+  /* A compound "full workup" is one scientific report, not a stack of unrelated chat cards. */
+  .turn:has(.workup-report){max-width:1160px}
+  .workup-summary-block{margin:20px 0 4px;padding:16px 18px;border-left:3px solid var(--accent);
+    background:color-mix(in srgb,var(--surface) 76%,transparent);border-radius:0 12px 12px 0}
+  .workup-summary-label{margin-bottom:6px;font:600 9px/1.4 var(--font-mono);letter-spacing:.11em;
+    text-transform:uppercase;color:var(--ink-faint)}
+  .workup-summary{max-width:82ch!important;font-size:14px!important;line-height:1.62!important;
+    color:var(--ink-soft)!important;white-space:pre-line;margin:0!important}
+  .workup-report{overflow:hidden;border:1px solid var(--line-strong);border-radius:20px;
+    background:color-mix(in srgb,var(--surface) 92%,transparent);box-shadow:0 26px 70px -58px rgba(20,43,50,.5)}
+  .workup-cover{padding:26px 30px 24px;border-bottom:1px solid var(--line);
+    background:radial-gradient(circle at 12% 0,var(--mrna-soft),transparent 34%),
+               radial-gradient(circle at 90% 18%,var(--protein-soft),transparent 35%),var(--surface)}
+  .workup-k{font:600 10px/1.4 var(--font-mono);letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}
+  .workup-title{margin:9px 0 7px;font:650 28px/1.15 var(--font-serif);letter-spacing:-.025em;color:var(--ink);text-wrap:balance}
+  .workup-deck{margin:0;max-width:70ch;color:var(--ink-soft);font-size:14px;line-height:1.55}
+  .workup-route{display:grid;grid-template-columns:repeat(3,1fr);margin-top:22px;border-top:1px solid var(--line)}
+  .workup-route a{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;padding:14px 16px 0 0;
+    color:var(--ink-soft);text-decoration:none;font-size:12px;line-height:1.35;transition:color .18s ease}
+  .workup-route a:hover{color:var(--ink)}
+  .workup-route .n{display:grid;place-items:center;width:24px;height:24px;border:1px solid var(--line-strong);
+    border-radius:50%;font:600 9px/1 var(--font-mono);color:var(--ink-faint);background:var(--surface)}
+  .workup-route b{display:block;color:var(--ink);font-weight:600}
+  .workup-section{padding:30px;border-bottom:1px solid var(--line);scroll-margin-top:80px}
+  .workup-section:last-child{border-bottom:0}
+  .workup-section-head{display:block;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+  .workup-section-eyebrow{display:flex;align-items:center;gap:9px}
+  .workup-section-num{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;
+    border:1px solid var(--line-strong);background:var(--surface);font:650 9px/1 var(--font-mono);color:var(--ink-faint)}
+  .workup-section-k{font:650 10px/1.4 var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .workup-section h3{margin:10px 0 5px;font:700 25px/1.16 var(--font-serif);letter-spacing:-.025em;color:var(--ink);text-wrap:balance}
+  .workup-section-head p{margin:0;max-width:72ch;color:var(--ink-soft);font-size:13.5px;line-height:1.55}
+  .workup-section-body{min-width:0}
+  .workup-section .protein-card{max-width:none;margin:0;padding:0;border:0;border-radius:0;background:transparent}
+  .workup-section .protein-eyebrow{display:none}
+  .workup-section .protein-id{padding:14px 16px;margin-bottom:18px;border-radius:12px}
+  .workup-section .protein-id .pname{font-size:17px}
+  .workup-section .protein-report-grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(330px,.92fr);
+    gap:24px;align-items:start}
+  .workup-section .protein-lit,.workup-section .protein-struct{min-width:0;margin:0}
+  .workup-section .protein-lit{padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+  .workup-section .protein-struct{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+  .workup-section .viewer3d{height:330px}
+  .workup-section .protein-cap{margin-top:18px}
+  .workup-section .inline-evidence{margin:0;padding:0}
+  .workup-section .inline-evidence::before{display:none}
+  .workup-section .inline-evidence>.reply-turn.agent{display:block}
+  .workup-section .inline-evidence .reply-body{width:100%}
+  .workup-section .inline-evidence .brief-shell{grid-template-columns:1fr;gap:0}
+  .workup-section .inline-evidence .bench-workspace{display:none}
+  .workup-section .inline-evidence .followups{display:none}
+  .workup-section .inline-evidence .fig-frame,.workup-section .inline-evidence .cap{max-width:720px}
+  .workup-section .inline-plan{max-width:none!important;margin:0!important;padding:0!important;border-top:0!important}
+  .workup-section .inline-plan .followups{display:none}
+  @media(max-width:900px){
+    .workup-section .protein-report-grid{grid-template-columns:1fr}
+    .workup-section .protein-lit{order:1}.workup-section .protein-struct{order:2}
+  }
+  @media(max-width:700px){
+    .workup-cover,.workup-section{padding:22px 18px}.workup-title{font-size:24px}
+    .workup-route{grid-template-columns:1fr}.workup-route a{padding-top:10px}
+    .workup-section-head{margin-bottom:20px;padding-bottom:16px}
+  }
+
   .thread{display:flex;flex-direction:column}
   .turn{max-width:680px;margin:0 auto;width:100%;padding:22px 0}
   .turn+.turn{border-top:0}
@@ -435,7 +499,10 @@
   .protein-id .kv{color:var(--ink-faint)} .protein-id .kv b{color:var(--ink-soft);font-weight:500}
   .protein-id a{color:var(--protein);text-decoration:none;border-bottom:1px solid var(--protein-soft)}
   /* structure block — the 3Dmol viewport, framed like a figure; a mono strap line names the model. */
+  .protein-report-grid{display:flex;flex-direction:column}
   .protein-struct{margin:0 0 14px}
+  .protein-struct>.lit-head{font-family:var(--font-mono);font-size:10px;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--ink-faint);margin:2px 0 9px}
   .protein-struct .strap{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;
     color:var(--ink-faint);margin-bottom:7px;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
   .protein-struct .strap .pdbid{color:var(--lock)} .protein-struct .strap .tag{font-size:9px;
@@ -1192,14 +1259,14 @@
       <div id="landing" class="landing">
         <div class="landing-mark" aria-hidden="true"><span class="merge"><i class="g"></i><i class="m"></i></span></div>
         <h1 class="landing-h">When the transcript says one thing and the protein says another.</h1>
-        <p class="landing-sub">You knocked out a gene in two screens — one reading mRNA, one reading protein — and they disagree. Ask about the target and Concord tells you which reading to trust, what the evidence can and can’t prove, and the one experiment that settles it.</p>
+        <p class="landing-sub">You suppressed a gene in two CRISPRi screens — one reading mRNA, one reading protein — and they disagree. Ask about the target and Concord tells you which reading to trust, what the evidence can and can’t prove, and the one experiment that settles it.</p>
         <div class="landing-prompts" id="landingPrompts">
           <button class="lprompt lprompt-hero" data-q="Find new drug targets in this screen">
             <span class="lp-k">Start here · Discover</span><span class="lp-t">Don't have a gene yet? Surface the top candidate targets from the whole screen.</span>
             <span class="lp-ex">"Find new drug targets in this screen"</span></button>
-          <button class="lprompt lprompt-tour" data-q="Reconcile ITK's mRNA and protein readouts, then tell me what we know about the ITK protein — pull up its structure and the literature — and finally draft a decision brief for TSC1.">
-            <span class="lp-k">Full workup · See everything</span><span class="lp-t">One prompt, the whole tool: reconcile a gene, then its protein structure and cited literature, then a decision brief.</span>
-            <span class="lp-ex">Reconcile figure · 3D structure · cited literature · decision brief</span></button>
+          <button class="lprompt lprompt-tour" data-q="Prepare a full lab progress report: begin by defining the ITK protein and summarising what the cited literature establishes, show its 3D structure, then reconcile ITK's mRNA and protein readouts, and finish with a decision brief for TSC1.">
+            <span class="lp-k">Full workup · Lab progress report</span><span class="lp-t">Start with protein identity and known biology, then move through structure, paired-screen analysis, and the next experimental decision.</span>
+            <span class="lp-ex">Protein foundation · 3D structure · screen reconciliation · decision brief</span></button>
           <button class="lprompt" data-q="Should TSC1 advance?">
             <span class="lp-k">Decision brief</span><span class="lp-t">Should a specific target advance to a bench experiment?</span>
             <span class="lp-ex">"Should TSC1 advance?"</span></button>
@@ -1546,11 +1613,11 @@ ZNF250</div>
             </div>
             <div class="gt-grid">
               <div class="gt-col">
-                <div class="gt-ct">Canonical IL-2 positive regulators · KO lowers IL-2</div>
+                <div class="gt-ct">Canonical IL-2 positive regulators · suppression lowers IL-2</div>
                 <div class="js-gtPositives"></div>
               </div>
               <div class="gt-col">
-                <div class="gt-ct">Known brakes · KO raises IL-2</div>
+                <div class="gt-ct">Known brakes · suppression raises IL-2</div>
                 <div class="js-gtBrakes"></div>
               </div>
             </div>
@@ -1912,7 +1979,8 @@ ZNF250</div>
   // concordance figure; protein_report re-derives identity+structure from /api/protein (literature
   // is an LLM call, so it is NOT re-run — the card shows the deterministic half + the honest 'ask
   // again' note). Shared by single- and multi-card replay so both produce the same DOM.
-  async function replayCard(added, el, action, cardGene){
+  async function replayCard(added, el, action, cardGene, reportTarget){
+    var target=reportTarget||el.parentElement;
     if(action==="protein_report"){
       // Re-derive identity+structure from CODE; literature is an LLM call so it shows the honest
       // 'ask again' note rather than a summary from memory (the replay:true flag drives that text).
@@ -1922,7 +1990,7 @@ ZNF250</div>
         if(pr.ok){
           var idt=await pr.json();
           var pcard=buildProteinCard(cardGene, idt, {findings:[], resolved:false, replay:true});
-          el.parentElement.appendChild(pcard);
+          target.appendChild(pcard);
           bootStructureViewer(pcard, cardGene, idt);
         }
       }catch(e){ /* narration still stands on its own */ }
@@ -1933,14 +2001,14 @@ ZNF250</div>
       // thread.lastElementChild is still this figure before the next card appends.
       if(!cardGene) return;
       var shown=await loadGene(cardGene, null, "", true);
-      if(shown) attachReconcileFigure(added, el, action);
+      if(shown) attachReconcileFigure(added, el, action, reportTarget||null);
       return;
     }
     // Every OTHER deferred card (plan / evidence / known_biology / hitlist_biology / rank_targets /
     // sketch / pathway_map) is deterministic — replay by routing the reconstructed descriptor
     // through the SAME applyAgentView the live path uses, so the DOM is identical. applyAgentView
     // re-fetches by gene from code; no LLM call is made.
-    await applyAgentView({action:action, gene:cardGene}, "", el.parentElement);
+    await applyAgentView({action:action, gene:cardGene}, "", target);
   }
 
   async function replayAgentTurn(userText, agentText, gene, view, views){
@@ -1961,8 +2029,11 @@ ZNF250</div>
     else if(view){ cards=[{action:view, gene:gene}]; }
     else if(gene){ cards=[{action:"reconcile", gene:gene}]; }
     if(cards){
+      cards=orderWorkupViews(cards);
+      var report=buildWorkupReport(el.parentElement, el, cards);
       for(var ci=0; ci<cards.length; ci++){
-        await replayCard(added, el, cards[ci].action, cards[ci].gene||gene);
+        await replayCard(added, el, cards[ci].action, cards[ci].gene||gene,
+                         report?report.sections[ci]:null);
       }
     }
     return added;
@@ -2218,7 +2289,7 @@ ZNF250</div>
   function resultNarrative2(gene,row){
     if(!row) return "I do not have enough data to interpret this comparison.";
     if(row.prot_tested===false) return whyText2(gene,row)+" A matched protein assay is the next experiment needed before drawing a cross-layer conclusion.";
-    if(row.verdict==="discordant") return "After "+gene+" knockout, IL-2 mRNA decreased while secreted IL-2 protein increased. A transcript-only ranking would therefore predict the functional protein response in the wrong direction. Post-transcriptional regulation, secretion, or screen context could explain the split, but none is established yet. Hold the target until both readouts are repeated in the same wells.";
+    if(row.verdict==="discordant") return "After "+gene+" suppression, IL-2 mRNA decreased while secreted IL-2 protein increased. A transcript-only ranking would therefore predict the functional protein response in the wrong direction. Post-transcriptional regulation, secretion, or screen context could explain the split, but none is established yet. Hold the target until both readouts are repeated in the same wells.";
     if(row.verdict==="replicated") return whyText2(gene,row)+" Because two independent assay layers agree, this is the strongest evidence tier in the screen and a good candidate for targeted validation.";
     if(row.verdict==="mrna_only") return whyText2(gene,row)+" The key uncertainty is whether the transcriptional response propagates to the functional protein phenotype, so protein-level validation should come next.";
     if(row.verdict==="protein_only") return whyText2(gene,row)+" The functional protein phenotype would be missed by transcript-only prioritization, making a matched protein validation especially important.";
@@ -2296,7 +2367,7 @@ ZNF250</div>
     // Taller viewBox: each panel now stacks a plain phrase, the axis, and a two-line label block,
     // and the conclusion sits on its own line above the scale note (no side-by-side collision).
     svg.setAttribute("viewBox","0 0 700 400");
-    svg.innerHTML='<text x="26" y="22" fill="#68777B" font-size="10.5">What the gene knockout did, compared with an untouched (non-targeting) control</text>'
+    svg.innerHTML='<text x="26" y="22" fill="#68777B" font-size="10.5">What gene suppression did, compared with a non-targeting control</text>'
       +panel("A",48,"IL-2 mRNA abundance","Perturb-seq","transcript (mRNA)","z-score",row.z_rna,row.q_rna,row.hit_rna,"#009E73",false,limFor(row.z_rna,3,1))
       +'<line x1="26" y1="192" x2="674" y2="192" stroke="#DEE5E8"/>'
       +panel("B",210,"Secreted IL-2 protein","FACS","secreted protein","log₂ fold change",row.lfc_prot,row.q_prot,row.hit_prot,"#CC79A7",row.prot_tested===false,limFor(row.lfc_prot,1,.5))
@@ -2308,7 +2379,7 @@ ZNF250</div>
   // Caption + the verdict sentence, both grounded in the numbers.
   function figCaption(gene,cond,row){
     if(!row) return "";
-    return '<b>Figure 1.</b> What happened to IL-2 when '+gene+' was knocked out, at '+COND_LABEL[cond]+'. '
+    return '<b>Figure 1.</b> What happened to IL-2 when '+gene+' was suppressed, at '+COND_LABEL[cond]+'. '
       +'Each row is one assay: the top reads the mRNA (transcript) level, the bottom reads the secreted protein. '
       +'The number under each dot is that assay’s effect size — the z-score (top) and log₂ fold change (bottom) measure change on different scales, '
       +'so read whether each went up or down, not which number is bigger. A small q means the screen is confident the change is real.';
@@ -2734,6 +2805,82 @@ ZNF250</div>
     container.open=false;
   }
 
+  // A full workup has a scientific reading order even when tools finish in a different order:
+  // establish the protein first, then interpret the paired screens, then make the next decision.
+  function workupRank(action){
+    if(action==="protein_report") return 10;
+    if(action==="reconcile" || action==="compare") return 20;
+    if(action==="evidence" || action==="pathway_map" || action==="sketch") return 30;
+    if(action==="plan") return 40;
+    return 50;
+  }
+  function orderWorkupViews(views){
+    var list=(views||[]).slice();
+    var acts=list.map(function(v){return v.action;});
+    var full=acts.indexOf("protein_report")>=0 &&
+      (acts.indexOf("reconcile")>=0 || acts.indexOf("compare")>=0) && acts.indexOf("plan")>=0;
+    if(!full) return list;
+    return list.map(function(v,i){return {v:v,i:i};}).sort(function(a,b){
+      return workupRank(a.v.action)-workupRank(b.v.action) || a.i-b.i;
+    }).map(function(x){return x.v;});
+  }
+
+  var _workupSeq=0;
+  function buildWorkupReport(body, narration, views){
+    var acts=(views||[]).map(function(v){return v.action;});
+    var full=acts.indexOf("protein_report")>=0 &&
+      (acts.indexOf("reconcile")>=0 || acts.indexOf("compare")>=0) && acts.indexOf("plan")>=0;
+    if(!full) return null;
+
+    body.classList.add("has-workup");
+    narration.classList.add("workup-summary");
+    var seq=++_workupSeq;
+    var protein=(views.find(function(v){return v.action==="protein_report";})||{}).gene||"Protein";
+    var decision=(views.find(function(v){return v.action==="plan";})||{}).gene||protein;
+    var title=protein===decision ? protein+" evidence workup" : protein+" evidence review → "+decision+" decision";
+    var report=document.createElement("article");
+    report.className="workup-report";
+    report.setAttribute("aria-label",title+" lab progress report");
+    report.innerHTML='<header class="workup-cover">'
+      +'<div class="workup-k">Lab progress report · evidence-led</div>'
+      +'<h2 class="workup-title">'+esc(title)+'</h2>'
+      +'<p class="workup-deck">A structured record of what the protein is, what the literature and structure establish, what the paired screens observed, and what the lab should do next.</p>'
+      +'<nav class="workup-route" aria-label="Report sections"></nav></header>';
+    body.appendChild(report);
+    var nav=report.querySelector(".workup-route");
+    var summary=document.createElement("div");
+    summary.className="workup-summary-block";
+    summary.innerHTML='<div class="workup-summary-label">Executive summary</div>';
+    summary.appendChild(narration);
+    nav.before(summary);
+    var sections=[];
+    views.forEach(function(v,i){
+      var g=v.gene||"Gene", action=v.action;
+      var meta=(action==="protein_report")
+        ? {k:"Protein foundation",h:g+" identity, biology, and structure",d:"Authoritative identity, cited findings, and the best available three-dimensional reference."}
+        : ((action==="reconcile" || action==="compare")
+          ? {k:"Screen analysis",h:g+" mRNA × protein reconciliation",d:"The measured transcript and secreted-protein responses, kept separate from mechanistic interpretation."}
+          : (action==="plan"
+            ? {k:"Experimental decision",h:g+" decision brief",d:"Comparability limits, the discriminating experiment, expected outcomes, and the stop/go rule."}
+            : {k:"Supporting analysis",h:g+" supporting evidence",d:"Additional evidence requested for this workup."}));
+      var id="workup-"+seq+"-"+(i+1);
+      var section=document.createElement("section");
+      section.className="workup-section";
+      section.id=id;
+      section.setAttribute("data-workup-action",action);
+      section.innerHTML='<header class="workup-section-head"><div class="workup-section-eyebrow">'
+        +'<span class="workup-section-num">'+String(i+1).padStart(2,"0")+'</span>'
+        +'<span class="workup-section-k">'+esc(meta.k)+'</span></div>'
+        +'<h3>'+esc(meta.h)+'</h3><p>'+esc(meta.d)+'</p></header>'
+        +'<div class="workup-section-body"></div>';
+      report.appendChild(section);
+      sections.push(section.querySelector(".workup-section-body"));
+      nav.insertAdjacentHTML("beforeend",'<a href="#'+id+'"><span class="n">'
+        +String(i+1).padStart(2,"0")+'</span><span><b>'+esc(meta.k)+'</b>'+esc(g)+'</span></a>');
+    });
+    return {root:report,sections:sections};
+  }
+
   // The verdict the CODE assigned to the gene now shown, read off the rendered reconcile turn's
   // per-condition state (so the trace can say "verdict computed by code → discordant").
   function verdictOf(gene){
@@ -2827,17 +2974,19 @@ ZNF250</div>
       el.classList.remove("streaming"); if(!startedText) el.textContent="The agent is unavailable (network error).";
     }
     el.classList.remove("streaming");
-    // DEFERRED PANELS: render every card the turn produced NOW — after the narration has finished —
-    // so the user reads the plain-language explanation FIRST, then sees the supporting data below it
-    // (narration-first, per the dense-panel UX). A multi-tool turn stacks its cards in arrival order.
+    // DEFERRED PANELS: a simple turn keeps arrival order. A complete workup is reorganised into the
+    // lab-report reading order: protein foundation → paired-screen analysis → experimental decision.
+    pendingViews=orderWorkupViews(pendingViews);
+    var workup=buildWorkupReport(el.parentElement, el, pendingViews);
     for(var vi=0; vi<pendingViews.length; vi++){
       var pv=pendingViews[vi];
-      var pg=await applyAgentView(pv, text, el.parentElement); if(pg) renderedGene=pg;
+      var viewTarget=workup?workup.sections[vi]:el.parentElement;
+      var pg=await applyAgentView(pv, text, viewTarget); if(pg) renderedGene=pg;
       if(pv.action==="reconcile" || pv.action==="compare"){
         // attachReconcileFigure moves thread.lastElementChild (the figure just appended by
         // applyAgentView->loadGene) into this agent bubble — so it must run immediately after THIS
         // card renders, before the next card appends and becomes lastElementChild.
-        attachReconcileFigure(added, el, pv.action);
+        attachReconcileFigure(added, el, pv.action, workup?viewTarget:null);
         if(pv.action==="reconcile"){
           var vd=verdictOf(pg||renderedGene);
           act(actEl,"verdict",vd?("verdict computed by code → "+vd):null,"verdict");
@@ -2862,10 +3011,10 @@ ZNF250</div>
   // turn is always thread.lastElementChild at call time (loadGene / appendCompareTurn appended it
   // last). Shared by the LIVE agent turn (runAgent) and the REPLAY renderer (replayAgentTurn) so both
   // produce the same DOM — the write/read parity whose absence caused reopened chats to render wrong.
-  function attachReconcileFigure(agentTurn, el, action){
+  function attachReconcileFigure(agentTurn, el, action, reportTarget){
     var evidenceTurn=thread.lastElementChild;
     if(!evidenceTurn || evidenceTurn===agentTurn) return;
-    if(action==="reconcile"){
+    if(action==="reconcile" && !reportTarget){
       var erow=(evidenceTurn._byCondition||{})[COND_API[evidenceTurn._cond||"Stim48h"]];
       if(erow){
         var ref=document.createElement("p");
@@ -2877,7 +3026,7 @@ ZNF250</div>
       }
     }
     evidenceTurn.classList.add("inline-evidence");
-    el.parentElement.appendChild(evidenceTurn);
+    (reportTarget||el.parentElement).appendChild(evidenceTurn);
   }
 
   // Human label for a tool call while it runs.
@@ -3053,43 +3202,46 @@ ZNF250</div>
       html+='<div class="protein-id"><span class="kv">Identity could not be retrieved from UniProt — no accession is shown rather than a guessed one.</span></div>';
     }
 
-    // --- structure block: strap line + a viewport the loader fills (or a static fallback) ---
+    // Build the two evidence panels separately so the full workup can place known biology beside
+    // the structure without changing the compact single-report card.
     var st=identity && identity.structure;
+    var structureHtml="";
     if(st){
       var predicted = st.source==="alphafold";
-      html+='<div class="protein-struct">';
-      html+='<div class="strap">';
-      html+='<span class="tag'+(predicted?' pred':'')+'">'+(predicted?'AlphaFold model':'Experimental')+'</span>';
-      html+='<span class="pdbid"><a href="'+esc(st.page_url)+'" target="_blank" rel="noopener">'+esc(st.identifier)+'</a></span>';
-      if(st.method) html+='<span>'+esc(st.method)+'</span>';
-      if(st.resolution) html+='<span>'+esc(String(st.resolution))+' Å</span>';
-      html+='</div>';
-      html+='<div class="viewer3d" data-viewer><div class="v-load">loading structure…</div></div>';
-      html+='</div>';
+      structureHtml+='<div class="protein-struct"><div class="lit-head">3D structure · interactive view</div>';
+      structureHtml+='<div class="strap">';
+      structureHtml+='<span class="tag'+(predicted?' pred':'')+'">'+(predicted?'AlphaFold model':'Experimental')+'</span>';
+      structureHtml+='<span class="pdbid"><a href="'+esc(st.page_url)+'" target="_blank" rel="noopener">'+esc(st.identifier)+'</a></span>';
+      if(st.method) structureHtml+='<span>'+esc(st.method)+'</span>';
+      if(st.resolution) structureHtml+='<span>'+esc(String(st.resolution))+' Å</span>';
+      structureHtml+='</div>';
+      structureHtml+='<div class="viewer3d" data-viewer><div class="v-load">loading structure…</div></div>';
+      structureHtml+='</div>';
     }
 
     // --- literature: cited findings, styled like Node B's cited hypotheses (.hcard family) ---
     var lit=literature||{}; var finds=(lit.findings)||[];
-    html+='<div class="protein-lit">';
-    html+='<div class="lit-head">What we know · cited literature</div>';
+    var literatureHtml='<div class="protein-lit">';
+    literatureHtml+='<div class="lit-head">What we know · cited literature</div>';
     if(finds.length){
-      html+='<div class="hyp-list">';
+      literatureHtml+='<div class="hyp-list">';
       for(var i=0;i<finds.length;i++){
         var f=finds[i]; var c=f.citation||{};
-        html+='<div class="hcard"><p>'+esc(f.statement||"")+'</p>';
-        html+='<div class="src">';
-        if(c.url){ html+='<a href="'+esc(c.url)+'" target="_blank" rel="noopener">PMID '+esc(c.accession||"")+'</a>'; }
-        html+='<span class="st">retrieved</span>';
-        if(c.title) html+='<span class="tt">'+esc(c.title)+'</span>';
-        html+='</div></div>';
+        literatureHtml+='<div class="hcard"><p>'+esc(f.statement||"")+'</p>';
+        literatureHtml+='<div class="src">';
+        if(c.url){ literatureHtml+='<a href="'+esc(c.url)+'" target="_blank" rel="noopener">PMID '+esc(c.accession||"")+'</a>'; }
+        literatureHtml+='<span class="st">retrieved</span>';
+        if(c.title) literatureHtml+='<span class="tt">'+esc(c.title)+'</span>';
+        literatureHtml+='</div></div>';
       }
-      html+='</div>';
+      literatureHtml+='</div>';
     } else if(lit.replay){
-      html+='<p class="say-empty">Cited literature is regenerated live — ask about '+esc(gene)+' again to re-run the search. Identity and structure above are re-derived from code.</p>';
+      literatureHtml+='<p class="say-empty">Cited literature is regenerated live — ask about '+esc(gene)+' again to re-run the search. Identity and structure are re-derived from code.</p>';
     } else {
-      html+='<p class="say-empty">No literature was retrieved for this protein — nothing is summarised from memory.</p>';
+      literatureHtml+='<p class="say-empty">No literature was retrieved for this protein — nothing is summarised from memory.</p>';
     }
-    html+='</div>';
+    literatureHtml+='</div>';
+    html+='<div class="protein-report-grid">'+literatureHtml+structureHtml+'</div>';
 
     // --- caption: the provenance receipt, journal-style ---
     html+='<div class="protein-cap"><b>Sources</b>Identity from UniProt · structure from '
