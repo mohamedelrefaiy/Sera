@@ -1820,7 +1820,35 @@ ZNF250</div>
     loadSessions();
   }
 
-  // Reopen a saved chat: fetch its descriptors and REPLAY them to rebuild the exact transcript.
+  // Render ONE saved agent turn from its descriptor: a user bubble + the agent's SAVED narration, and
+  // — if the turn resolved a gene — the deterministic reconcile figure re-attached inline. This
+  // reproduces exactly what the user saw live, WITHOUT a second agent/answer call: the descriptor
+  // already carries the resolved gene and the final narration text (see runAgent's persistTurn). We
+  // only re-fetch the deterministic concordance figure, which is code, not an LLM.
+  async function replayAgentTurn(userText, agentText, gene){
+    var frag=$("answerTpl").content.cloneNode(true);
+    var turn=frag.querySelector(".turn");
+    q(turn,"js-user").textContent=userText||"";
+    thread.appendChild(frag);
+    var added=thread.lastElementChild;
+    var el=q(added,"js-answerText");
+    el.textContent=stripMd(agentText||"");
+    // The saved run is finished — show the trace as a settled receipt, never a live "Working" spinner.
+    var actEl=q(added,"js-activity");
+    if(actEl){ actEl.hidden=true; actEl.open=false; }
+    if(gene){
+      // Deterministic figure only (no user bubble — the agent bubble above already showed the message).
+      var shown=await loadGene(gene, null, "", true);
+      if(shown) attachReconcileFigure(added, el, "reconcile");
+    }
+    return added;
+  }
+
+  // Reopen a saved chat: fetch its descriptors and rebuild the transcript from what was PERSISTED —
+  // the user's words + the agent's saved narration + the deterministic figure — pairing each user
+  // turn with the agent turn that followed it (the write path always emits user-then-agent). Legacy
+  // sessions saved under the old fixed router (a lone user turn carrying a resolved {intent,gene},
+  // no paired agent turn) fall back to dispatchIntent so old chats still open.
   async function openSession(sid){
     var s=null;
     try{ var r=await fetch("api/sessions/"+encodeURIComponent(sid)); if(r.ok){ s=await r.json(); } }catch(e){}
@@ -1830,14 +1858,23 @@ ZNF250</div>
     $("convoTitle").textContent="Chat";
     _replaying=true;
     try{
-      // Replay each user turn through the normal dispatch path — descriptors already carry the
-      // resolved {intent,gene}, so no re-routing (and no LLM call) is needed on reopen.
-      for(var i=0;i<(s.turns||[]).length;i++){
-        var t=s.turns[i];
-        if(t.role!=="user") continue;
-        await dispatchIntent(t.text, {gene:t.gene||null, intent:t.intent||"answer", known:!!t.gene, source:"replay"});
+      var turns=s.turns||[];
+      for(var i=0;i<turns.length;i++){
+        var t=turns[i];
+        if(t.role!=="user") continue;                 // agent turns are consumed alongside their user turn
+        var next=turns[i+1];
+        if(next && next.role==="agent"){
+          // Modern agent turn: render user words + saved narration + (optional) deterministic figure.
+          await replayAgentTurn(t.text, next.text, next.gene||null);
+          i++;                                          // skip the agent turn we just consumed
+        }else{
+          // Legacy / router turn with no paired agent reply: re-dispatch by its saved {intent,gene}.
+          await dispatchIntent(t.text, {gene:t.gene||null, intent:t.intent||"answer", known:!!t.gene, source:"replay"});
+        }
       }
     } finally { _replaying=false; }
+    // Land the user at the newest turn, matching the live chat convention.
+    var last=thread.lastElementChild; if(last) scrollToTurn(last);
     loadSessions();
   }
 
@@ -2642,6 +2679,7 @@ ZNF250</div>
               else if(ev.update.action==="known_biology") act(actEl,"data","validation panel — canonical IL-2 regulators","done");
               else if(ev.update.action==="plan") act(actEl,"data","decision brief — verdict, comparability, discriminating experiment","done");
               else if(ev.update.action==="hitlist_biology") act(actEl,"data","pathway enrichment over the replicated hits","done");
+              else if(ev.update.action==="rank_targets") act(actEl,"data","ranked candidate shortlist — impact × druggability × disease","done");
               else if(ev.update.action==="sketch") act(actEl,"data","bench sketch — code-drawn from the verdict","done");
             }
           }
@@ -2665,22 +2703,7 @@ ZNF250</div>
     if(pendingView){
       var pg=await applyAgentView(pendingView, text, el.parentElement); if(pg) renderedGene=pg;
       if(pendingView.action==="reconcile" || pendingView.action==="compare"){
-        var evidenceTurn=thread.lastElementChild;
-        if(evidenceTurn && evidenceTurn!==added){
-          if(pendingView.action==="reconcile"){
-            var erow=(evidenceTurn._byCondition||{})[COND_API[evidenceTurn._cond||"Stim48h"]];
-            if(erow){
-              var ref=document.createElement("p");
-              ref.className="figure-reference";
-              var rnaDir=erow.z_rna<0?"decreased":erow.z_rna>0?"increased":"did not change";
-              var protDir=erow.lfc_prot<0?"decreased":erow.lfc_prot>0?"increased":"did not change";
-              ref.textContent="Figure 1 below separates the assay readouts because their effect sizes use different units. It shows IL-2 mRNA "+rnaDir+" while secreted IL-2 protein "+protDir+".";
-              el.after(ref);
-            }
-          }
-          evidenceTurn.classList.add("inline-evidence");
-          el.parentElement.appendChild(evidenceTurn);
-        }
+        attachReconcileFigure(added, el, pendingView.action);
         if(pendingView.action==="reconcile"){
           var vd=verdictOf(renderedGene);
           act(actEl,"verdict",vd?("verdict computed by code → "+vd):null,"verdict");
@@ -2690,6 +2713,30 @@ ZNF250</div>
     settleActivity(actEl);
     scrollToTurn(added);
     await persistTurn({role:"agent", text:acc||"", intent:"agent", gene:renderedGene||null});
+  }
+
+  // Move the just-appended reconcile/compare figure turn INSIDE the agent bubble, and for a reconcile
+  // view drop the one-line "Figure 1 below…" reference above it. `agentTurn` is the answer turn that
+  // owns the narration; `el` is its narration <p> (so el.parentElement is the reply-body). The figure
+  // turn is always thread.lastElementChild at call time (loadGene / appendCompareTurn appended it
+  // last). Shared by the LIVE agent turn (runAgent) and the REPLAY renderer (replayAgentTurn) so both
+  // produce the same DOM — the write/read parity whose absence caused reopened chats to render wrong.
+  function attachReconcileFigure(agentTurn, el, action){
+    var evidenceTurn=thread.lastElementChild;
+    if(!evidenceTurn || evidenceTurn===agentTurn) return;
+    if(action==="reconcile"){
+      var erow=(evidenceTurn._byCondition||{})[COND_API[evidenceTurn._cond||"Stim48h"]];
+      if(erow){
+        var ref=document.createElement("p");
+        ref.className="figure-reference";
+        var rnaDir=erow.z_rna<0?"decreased":erow.z_rna>0?"increased":"did not change";
+        var protDir=erow.lfc_prot<0?"decreased":erow.lfc_prot>0?"increased":"did not change";
+        ref.textContent="Figure 1 below separates the assay readouts because their effect sizes use different units. It shows IL-2 mRNA "+rnaDir+" while secreted IL-2 protein "+protDir+".";
+        el.after(ref);
+      }
+    }
+    evidenceTurn.classList.add("inline-evidence");
+    el.parentElement.appendChild(evidenceTurn);
   }
 
   // Human label for a tool call while it runs.
@@ -2749,6 +2796,39 @@ ZNF250</div>
       var tt=thread.lastElementChild;
       if(tt){ var tu=tt.querySelector(".js-user"); if(tu){ var trow=tu.closest(".user-row"); (trow||tu).style.display="none"; } }
       return "__known_biology__";
+    }
+    if(update.action==="rank_targets" && update.candidates){
+      // DISCOVERY card: the code-ranked candidate shortlist. Every gene, rank, and verdict is
+      // code-computed (agents on the rim) — the client only lays them out. Each row reconciles that
+      // gene on click, flowing the scientist from "what should I look at" into the per-gene view.
+      if(agentBody){
+        var rc=document.createElement("div"); rc.className="rank-card js-facetCard";
+        var rows=(update.candidates||[]).map(function(c){
+          var tags=[];
+          if(c.druggability) tags.push('<span class="rt-tag drug">'+esc(c.druggability)+'</span>');
+          if(c.disease) tags.push('<span class="rt-tag dis">'+esc(c.disease)+'</span>');
+          if(c.clinical_stage) tags.push('<span class="rt-tag clin">'+esc(c.clinical_stage)+'</span>');
+          var vk=String(c.verdict||'').toUpperCase();
+          var vcls=vk.indexOf('PROMOTE')===0?'promote':(vk.indexOf('REJECT')===0?'reject':'neutral');
+          var dis=c.top_disease?('<span class="rt-dis">'+esc(c.top_disease)+'</span>'):'';
+          return '<button class="rt-row" data-gene="'+esc(c.gene)+'" title="Reconcile '+esc(c.gene)+'">'+
+                   '<span class="rt-rank">'+esc(String(c.rank))+'</span>'+
+                   '<span class="rt-gene">'+esc(c.gene)+'</span>'+
+                   '<span class="rt-verdict '+vcls+'">'+esc(c.verdict||'')+'</span>'+
+                   '<span class="rt-tags">'+tags.join('')+'</span>'+
+                   dis+
+                 '</button>';
+        }).join('');
+        rc.innerHTML='<div class="rt-head"><span class="rt-k">Candidate shortlist</span>'+
+          '<span class="rt-sub">code-ranked · impact × druggability × disease · click a gene to reconcile</span></div>'+
+          '<div class="rt-list">'+rows+'</div>';
+        agentBody.appendChild(rc);
+        // Each row reconciles its gene — reuse the composer submit path so the flow matches typing it.
+        rc.querySelectorAll(".rt-row").forEach(function(b){
+          b.addEventListener("click",function(){ var g=b.getAttribute("data-gene"); if(g) submitGene(g); });
+        });
+      }
+      return "__rank_targets__";
     }
     if(update.action==="evidence" && update.gene){
       // Fetch the gene's enrichment and render the deterministic druggability card inline, so the
@@ -3550,11 +3630,26 @@ ZNF250</div>
   // ── First load: an EMPTY agentic chat. No pre-loaded example — the user asks, the agent decides
   // whether to run a workflow or answer conversationally. A ?gene=SYMBOL deep-link still opens that
   // gene directly (shareable link); only the no-param case shows the greeting landing. ──────────
-  (function init(){
+  (async function init(){
     loadSessions();   // populate the Recent list from persisted sessions
-    var qg=null; try{ qg=new URL(window.location).searchParams.get("gene"); }catch(e){}
-    if(qg){ hideLanding(); loadGene(qg.toUpperCase()); }
-    else{ showLanding(); $("urlPath").textContent="chat"; renderArtifacts(null); }
+    var qg=null,newChat=false;
+    try{
+      var u=new URL(window.location);
+      qg=u.searchParams.get("gene");
+      newChat=u.searchParams.get("new")==="1";   // explicit "start fresh" escape hatch
+    }catch(e){}
+    if(qg){ hideLanding(); loadGene(qg.toUpperCase()); return; }
+    // No deep-link: RESTORE the most-recent chat so a refresh keeps the conversation instead of
+    // blanking it (the "content disappears on refresh" report). Falls back to the landing when there
+    // are no saved chats, the store is unavailable, or ?new=1 asked for a clean slate.
+    if(!newChat){
+      try{
+        var r=await fetch("api/sessions");
+        var list=r.ok?((await r.json()).sessions||[]):[];
+        if(list.length){ await openSession(list[0].id); return; }
+      }catch(e){ /* fall through to the landing */ }
+    }
+    showLanding(); $("urlPath").textContent="chat"; renderArtifacts(null);
   })();
 })();
 </script>
