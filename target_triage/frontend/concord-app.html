@@ -525,6 +525,27 @@
   .protein-lit{margin-top:4px}
   .protein-lit .lit-head{font-family:var(--font-mono);font-size:10px;letter-spacing:.09em;
     text-transform:uppercase;color:var(--ink-faint);margin:2px 0 9px}
+  /* Known-biology intro — a flowing scientific-paper paragraph in the app's narration voice
+     (inherited). A generous measure fills the section width while staying readable; inline
+     superscript citations anchor to the numbered reference list below. */
+  .lit-intro{margin:0;max-width:74ch;font-size:16px;line-height:1.72;color:var(--ink);text-wrap:pretty}
+  .lit-intro .lit-ref{font-family:var(--font-mono);font-size:.62em;line-height:0;vertical-align:.5em;
+    margin-left:1px}
+  .lit-intro .lit-ref a{color:var(--lock);text-decoration:none;padding:0 1px}
+  .lit-intro .lit-ref a:hover{text-decoration:underline}
+  .lit-refs{margin:16px 0 0;padding:14px 0 0;list-style:none;border-top:1px solid var(--line);
+    display:flex;flex-direction:column;gap:7px}
+  .lit-refs li{display:grid;grid-template-columns:auto 1fr;gap:8px;font-size:12.5px;line-height:1.5;
+    color:var(--ink-soft);scroll-margin-top:80px}
+  .lit-refs li:target{background:var(--lock-soft);border-radius:6px;padding:2px 6px;margin:-2px -6px}
+  .lit-refn{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)}
+  /* Title + PMID share the second grid cell. Title on its own line, PMID a quiet mono line just
+     beneath it — both left-aligned to the title, never orphaned under the number. */
+  .lit-refbody{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+  .lit-reft{color:var(--ink-soft)}
+  .lit-refs a{color:var(--lock);text-decoration:none;border-bottom:1px solid var(--lock-soft);
+    font-family:var(--font-mono);font-size:11px;white-space:nowrap}
+  .lit-refp{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint)}
   .protein-cap{font-family:var(--font-serif);font-size:12.5px;color:var(--ink-soft);line-height:1.6;
     border-top:1px solid var(--prov);padding-top:10px;margin-top:13px}
   .protein-cap b{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;
@@ -3245,28 +3266,43 @@ ZNF250</div>
       structureHtml+='</div>';
     }
 
-    // --- literature: cited findings, styled like Node B's cited hypotheses (.hcard family) ---
+    // --- literature: cited findings rendered as a flowing scientific-introduction paragraph.
+    // Each retrieved finding is one sentence carrying an inline superscript citation that links to
+    // its PMID; a compact numbered reference list follows. The facts and identifiers are code-
+    // retrieved and cited by index — the layout only arranges them, it authors nothing. ---
     var lit=literature||{}; var finds=(lit.findings)||[];
     var literatureHtml='<div class="protein-lit">';
-    literatureHtml+='<div class="lit-head">What we know · cited literature</div>';
+    literatureHtml+='<div class="lit-head">Known biology · cited literature</div>';
     if(finds.length){
-      literatureHtml+='<div class="hyp-list">';
+      // Build the paragraph body: statements joined into prose, each closed by a superscript marker
+      // that anchors to the reference of the same index below.
+      var para='', refs='';
       for(var i=0;i<finds.length;i++){
         var f=finds[i]; var c=f.citation||{};
-        literatureHtml+='<div class="hcard"><p>'+esc(f.statement||"")+'</p>';
-        literatureHtml+='<div class="src">';
-        if(c.url){ literatureHtml+='<a href="'+esc(c.url)+'" target="_blank" rel="noopener">PMID '+esc(c.accession||"")+'</a>'; }
-        literatureHtml+='<span class="st">retrieved</span>';
-        if(c.title) literatureHtml+='<span class="tt">'+esc(c.title)+'</span>';
-        literatureHtml+='</div></div>';
+        var n=i+1;
+        var stmt=(f.statement||"").trim();
+        if(stmt && !/[.!?]$/.test(stmt)) stmt+='.';
+        var marker='<sup class="lit-ref"><a href="#'+esc(gene)+'-ref-'+n+'">'+n+'</a></sup>';
+        para+=(i?' ':'')+esc(stmt)+marker;
+        // The <li> is a 2-column grid (number | body). Title + PMID must share the SECOND cell,
+        // so they are wrapped in one .lit-refbody span — otherwise a bare third child auto-places
+        // onto a new implicit row and the PMID orphans under the number.
+        refs+='<li id="'+esc(gene)+'-ref-'+n+'"><span class="lit-refn">'+n+'.</span>';
+        refs+='<span class="lit-refbody">';
+        if(c.title) refs+='<span class="lit-reft">'+esc(c.title)+'</span>';
+        if(c.url){ refs+=' <a href="'+esc(c.url)+'" target="_blank" rel="noopener">PMID '+esc(c.accession||"")+'</a>'; }
+        else if(c.accession){ refs+=' <span class="lit-refp">PMID '+esc(c.accession)+'</span>'; }
+        refs+='</span></li>';
       }
-      literatureHtml+='</div>';
+      literatureHtml+='<p class="prose lit-intro">'+para+'</p>';
+      literatureHtml+='<ol class="lit-refs">'+refs+'</ol>';
     } else if(lit.replay){
       literatureHtml+='<p class="say-empty">Cited literature is regenerated live — ask about '+esc(gene)+' again to re-run the search. Identity and structure are re-derived from code.</p>';
     } else {
       literatureHtml+='<p class="say-empty">No literature was retrieved for this protein — nothing is summarised from memory.</p>';
     }
     literatureHtml+='</div>';
+    // Literature is its own full-width band; the 3D structure follows below it, also full-width.
     html+='<div class="protein-report-grid">'+literatureHtml+structureHtml+'</div>';
 
     // --- caption: the provenance receipt, journal-style ---
