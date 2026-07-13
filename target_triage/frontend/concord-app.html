@@ -220,6 +220,13 @@
   .lprompt-hero:hover{border-color:var(--accent)}
   .lprompt-hero .lp-k{color:var(--accent)}
   .lprompt-hero .lp-t{font-size:16px}
+  /* The full-workup card — a second full-width card, keyed to the PROTEIN channel so it reads as
+     "see everything" (structure + literature + reconcile + decision) without stealing the hero's
+     accent. Its example line lists the cards it will produce so the click is a known quantity. */
+  .lprompt-tour{grid-column:1/-1;border-color:var(--protein-soft);background:var(--protein-soft)}
+  .lprompt-tour:hover{border-color:var(--protein)}
+  .lprompt-tour .lp-k{color:var(--protein)}
+  .lprompt-tour .lp-ex{color:var(--ink-soft)}
 
   .thread{display:flex;flex-direction:column}
   .turn{max-width:680px;margin:0 auto;width:100%;padding:22px 0}
@@ -406,6 +413,52 @@
   .foot{margin-top:22px;padding:10px 0 10px 14px;border-left:2px solid var(--prov);
     font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);line-height:1.7;max-width:60ch}
   .foot b{color:var(--ink-soft);font-weight:500}
+
+  /* PROTEIN MINI-REPORT — the "what do we know about this protein" card. Same manuscript register
+     as the reconcile figure: a --prov hairline frame on --surface, a mono figure eyebrow, a serif
+     caption. Keyed to the PROTEIN channel (--protein) because this card is about the protein layer.
+     Every identifier on it is code-retrieved (UniProt/PDB/PMID) — the styling says "machine voice"
+     (mono) for every one of them, so a reader never mistakes a retrieved fact for agent prose. */
+  .protein-card{margin:18px 0 6px;max-width:560px;border:1px solid var(--prov);border-radius:12px;
+    background:var(--surface);padding:16px 18px 14px}
+  .protein-eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:12px;display:flex;
+    align-items:center;gap:8px}
+  .protein-eyebrow::before{content:"";width:10px;height:1px;background:var(--protein)}
+  /* identity strip — the machine voice: accession, name, length. Mono, on a soft protein wash. */
+  .protein-id{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;
+    font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);
+    padding:9px 11px;border-radius:8px;background:var(--protein-soft);margin-bottom:13px}
+  .protein-id .acc{color:var(--protein);font-weight:600;letter-spacing:.02em}
+  .protein-id .pname{font-family:var(--font-serif);font-size:14px;color:var(--ink);
+    flex-basis:100%;margin-bottom:2px;letter-spacing:0}
+  .protein-id .kv{color:var(--ink-faint)} .protein-id .kv b{color:var(--ink-soft);font-weight:500}
+  .protein-id a{color:var(--protein);text-decoration:none;border-bottom:1px solid var(--protein-soft)}
+  /* structure block — the 3Dmol viewport, framed like a figure; a mono strap line names the model. */
+  .protein-struct{margin:0 0 14px}
+  .protein-struct .strap{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;
+    color:var(--ink-faint);margin-bottom:7px;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+  .protein-struct .strap .pdbid{color:var(--lock)} .protein-struct .strap .tag{font-size:9px;
+    text-transform:uppercase;letter-spacing:.05em;padding:1px 6px;border-radius:5px;
+    color:var(--lock);background:var(--lock-soft)}
+  .protein-struct .strap .tag.pred{color:var(--warn);background:var(--warn-soft)}
+  .protein-struct .strap a{color:var(--lock);text-decoration:none;border-bottom:1px solid var(--lock-soft)}
+  .viewer3d{position:relative;width:100%;height:280px;border-radius:10px;overflow:hidden;
+    background:radial-gradient(120% 120% at 50% 20%, #201F1D 0%, var(--bg) 100%);
+    box-shadow:inset 0 0 0 1px var(--line)}
+  .viewer3d canvas{border-radius:10px}
+  .viewer3d .v-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);letter-spacing:.04em}
+  .viewer3d .v-load.err{color:var(--warn)}
+  /* literature — reuse the hypothesis-citation look (.hcard family) so cited findings read the same
+     as Node B's cited hypotheses: a factual sentence + a mono source line linking to the paper. */
+  .protein-lit{margin-top:4px}
+  .protein-lit .lit-head{font-family:var(--font-mono);font-size:10px;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--ink-faint);margin:2px 0 9px}
+  .protein-cap{font-family:var(--font-serif);font-size:12.5px;color:var(--ink-soft);line-height:1.6;
+    border-top:1px solid var(--prov);padding-top:10px;margin-top:13px}
+  .protein-cap b{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--ink-faint);font-weight:500;margin-right:2px}
 
   /* chain-of-custody strip — the enterprise signature. Sits under the figure and traces, inline,
      how this verdict was earned: each screen READ (with sign status) → the deterministic verdict.
@@ -1144,6 +1197,9 @@
           <button class="lprompt lprompt-hero" data-q="Find new drug targets in this screen">
             <span class="lp-k">Start here · Discover</span><span class="lp-t">Don't have a gene yet? Surface the top candidate targets from the whole screen.</span>
             <span class="lp-ex">"Find new drug targets in this screen"</span></button>
+          <button class="lprompt lprompt-tour" data-q="Reconcile ITK's mRNA and protein readouts, then tell me what we know about the ITK protein — pull up its structure and the literature — and finally draft a decision brief for TSC1.">
+            <span class="lp-k">Full workup · See everything</span><span class="lp-t">One prompt, the whole tool: reconcile a gene, then its protein structure and cited literature, then a decision brief.</span>
+            <span class="lp-ex">Reconcile figure · 3D structure · cited literature · decision brief</span></button>
           <button class="lprompt" data-q="Should TSC1 advance?">
             <span class="lp-k">Decision brief</span><span class="lp-t">Should a specific target advance to a bench experiment?</span>
             <span class="lp-ex">"Should TSC1 advance?"</span></button>
@@ -1852,7 +1908,42 @@ ZNF250</div>
   // reproduces exactly what the user saw live, WITHOUT a second agent/answer call: the descriptor
   // already carries the resolved gene and the final narration text (see runAgent's persistTurn). We
   // only re-fetch the deterministic concordance figure, which is code, not an LLM.
-  async function replayAgentTurn(userText, agentText, gene){
+  // Rebuild ONE saved card on replay, deterministically (no LLM). reconcile/compare re-fetch the
+  // concordance figure; protein_report re-derives identity+structure from /api/protein (literature
+  // is an LLM call, so it is NOT re-run — the card shows the deterministic half + the honest 'ask
+  // again' note). Shared by single- and multi-card replay so both produce the same DOM.
+  async function replayCard(added, el, action, cardGene){
+    if(action==="protein_report"){
+      // Re-derive identity+structure from CODE; literature is an LLM call so it shows the honest
+      // 'ask again' note rather than a summary from memory (the replay:true flag drives that text).
+      if(!cardGene) return;
+      try{
+        var pr=await fetch("/api/protein/"+encodeURIComponent(cardGene));
+        if(pr.ok){
+          var idt=await pr.json();
+          var pcard=buildProteinCard(cardGene, idt, {findings:[], resolved:false, replay:true});
+          el.parentElement.appendChild(pcard);
+          bootStructureViewer(pcard, cardGene, idt);
+        }
+      }catch(e){ /* narration still stands on its own */ }
+      return;
+    }
+    if(action==="reconcile" || action==="compare"){
+      // Re-fetch the deterministic figure, then move it inline. Must attach immediately so
+      // thread.lastElementChild is still this figure before the next card appends.
+      if(!cardGene) return;
+      var shown=await loadGene(cardGene, null, "", true);
+      if(shown) attachReconcileFigure(added, el, action);
+      return;
+    }
+    // Every OTHER deferred card (plan / evidence / known_biology / hitlist_biology / rank_targets /
+    // sketch / pathway_map) is deterministic — replay by routing the reconstructed descriptor
+    // through the SAME applyAgentView the live path uses, so the DOM is identical. applyAgentView
+    // re-fetches by gene from code; no LLM call is made.
+    await applyAgentView({action:action, gene:cardGene}, "", el.parentElement);
+  }
+
+  async function replayAgentTurn(userText, agentText, gene, view, views){
     var frag=$("answerTpl").content.cloneNode(true);
     var turn=frag.querySelector(".turn");
     q(turn,"js-user").textContent=userText||"";
@@ -1863,10 +1954,16 @@ ZNF250</div>
     // The saved run is finished — show the trace as a settled receipt, never a live "Working" spinner.
     var actEl=q(added,"js-activity");
     if(actEl){ actEl.hidden=true; actEl.open=false; }
-    if(gene){
-      // Deterministic figure only (no user bubble — the agent bubble above already showed the message).
-      var shown=await loadGene(gene, null, "", true);
-      if(shown) attachReconcileFigure(added, el, "reconcile");
+    // Prefer the per-card `views` list (multi-card turns); fall back to the single {view,gene} for
+    // turns saved before views existed, and finally to a bare gene (oldest reconcile-only turns).
+    var cards=null;
+    if(views && views.length){ cards=views; }
+    else if(view){ cards=[{action:view, gene:gene}]; }
+    else if(gene){ cards=[{action:"reconcile", gene:gene}]; }
+    if(cards){
+      for(var ci=0; ci<cards.length; ci++){
+        await replayCard(added, el, cards[ci].action, cards[ci].gene||gene);
+      }
     }
     return added;
   }
@@ -1891,8 +1988,8 @@ ZNF250</div>
         if(t.role!=="user") continue;                 // agent turns are consumed alongside their user turn
         var next=turns[i+1];
         if(next && next.role==="agent"){
-          // Modern agent turn: render user words + saved narration + (optional) deterministic figure.
-          await replayAgentTurn(t.text, next.text, next.gene||null);
+          // Modern agent turn: render user words + saved narration + every deterministic card.
+          await replayAgentTurn(t.text, next.text, next.gene||null, next.view||null, next.views||null);
           i++;                                          // skip the agent turn we just consumed
         }else{
           // Legacy / router turn with no paired agent reply: re-dispatch by its saved {intent,gene}.
@@ -2665,7 +2762,11 @@ ZNF250</div>
     var actEl=q(added,"js-activity");
     act(actEl,"think","reasoning — deciding what to do","running");
 
-    var startedText=false, acc="", renderedGene=null, calledTool=false, pendingView=null;
+    // pendingViews is a QUEUE, not a scalar: a single turn can call several tools (e.g. "reconcile
+    // ITK, then its protein report, then a brief for TSC1"), each emitting its own view_update. A
+    // scalar let each new update clobber the last, so only the final card rendered. We collect every
+    // update and render them all, in arrival order, after the narration finishes.
+    var startedText=false, acc="", renderedGene=null, calledTool=false, pendingViews=[];
     try{
       var resp=await fetch("api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({message:text, mode:"concord", session_id:currentSession?currentSession.id:null})});
@@ -2694,14 +2795,14 @@ ZNF250</div>
             if(_vaction==="reconcile" || _vaction==="compare"){
               // Match a Codex-style response: finish the explanation first, then attach the
               // deterministic figure as supporting evidence inside this same agent turn.
-              pendingView=ev.update;
+              pendingViews.push(ev.update);
               if(_vaction==="reconcile") act(actEl,"verdict","computing the deterministic verdict","running");
               else act(actEl,"compare","comparing verdicts across conditions","running");
             } else {
               // EVIDENCE / KNOWN_BIOLOGY: the panel is a DENSE data block — the user must READ the
               // explanation FIRST to know what they're looking at. So DEFER the panel: stash it and
               // render it only AFTER the narration finishes (see the post-stream block below).
-              pendingView=ev.update;
+              pendingViews.push(ev.update);
               if(ev.update.action==="evidence") act(actEl,"data","druggability read from Open Targets","done");
               else if(ev.update.action==="known_biology") act(actEl,"data","validation panel — canonical IL-2 regulators","done");
               else if(ev.update.action==="plan") act(actEl,"data","decision brief — verdict, comparability, discriminating experiment","done");
@@ -2709,6 +2810,7 @@ ZNF250</div>
               else if(ev.update.action==="rank_targets") act(actEl,"data","ranked candidate shortlist — impact × druggability × disease","done");
               else if(ev.update.action==="sketch") act(actEl,"data","bench sketch — code-drawn from the verdict","done");
               else if(ev.update.action==="pathway_map") act(actEl,"data","pathway-context map — real partners, marked hypotheses","done");
+              else if(ev.update.action==="protein_report") act(actEl,"data","protein mini-report — UniProt identity, PDB/AlphaFold structure, cited literature","done");
             }
           }
           else if(ev.type==="text"){
@@ -2725,22 +2827,33 @@ ZNF250</div>
       el.classList.remove("streaming"); if(!startedText) el.textContent="The agent is unavailable (network error).";
     }
     el.classList.remove("streaming");
-    // DEFERRED PANEL: for evidence / known_biology the data panel renders NOW — after the narration
-    // has finished — so the user reads the plain-language explanation FIRST, then sees the supporting
-    // data below it (narration-first, per the dense-panel UX).
-    if(pendingView){
-      var pg=await applyAgentView(pendingView, text, el.parentElement); if(pg) renderedGene=pg;
-      if(pendingView.action==="reconcile" || pendingView.action==="compare"){
-        attachReconcileFigure(added, el, pendingView.action);
-        if(pendingView.action==="reconcile"){
-          var vd=verdictOf(renderedGene);
+    // DEFERRED PANELS: render every card the turn produced NOW — after the narration has finished —
+    // so the user reads the plain-language explanation FIRST, then sees the supporting data below it
+    // (narration-first, per the dense-panel UX). A multi-tool turn stacks its cards in arrival order.
+    for(var vi=0; vi<pendingViews.length; vi++){
+      var pv=pendingViews[vi];
+      var pg=await applyAgentView(pv, text, el.parentElement); if(pg) renderedGene=pg;
+      if(pv.action==="reconcile" || pv.action==="compare"){
+        // attachReconcileFigure moves thread.lastElementChild (the figure just appended by
+        // applyAgentView->loadGene) into this agent bubble — so it must run immediately after THIS
+        // card renders, before the next card appends and becomes lastElementChild.
+        attachReconcileFigure(added, el, pv.action);
+        if(pv.action==="reconcile"){
+          var vd=verdictOf(pg||renderedGene);
           act(actEl,"verdict",vd?("verdict computed by code → "+vd):null,"verdict");
         } else act(actEl,"compare","verdict per condition, in time order","verdict");
       }
     }
     settleActivity(actEl);
     scrollToTurn(added);
-    await persistTurn({role:"agent", text:acc||"", intent:"agent", gene:renderedGene||null});
+    // Persist each rendered card as an {action, gene} pair so replay rebuilds every card of a
+    // multi-card turn — and rebuilds each with its OWN gene (a turn may reconcile ITK but brief TSC1,
+    // so a single top-level `gene` cannot reconstruct them). `view`/`gene` keep the first card for
+    // backward-compatible single-card replay; `views` carries the full ordered list.
+    var viewDescs=pendingViews.map(function(v){return {action:v.action, gene:v.gene||null};});
+    await persistTurn({role:"agent", text:acc||"", intent:"agent", gene:renderedGene||null,
+                       view:(viewDescs[0]?viewDescs[0].action:null),
+                       views:(viewDescs.length?viewDescs:null)});
   }
 
   // Move the just-appended reconcile/compare figure turn INSIDE the agent bubble, and for a reconcile
@@ -2904,7 +3017,137 @@ ZNF250</div>
       }
       return update.gene;
     }
+    if(update.action==="protein_report" && update.gene){
+      // The protein mini-report: identity (UniProt) + structure (PDB/AlphaFold) + cited literature.
+      // Every field is code-retrieved and shipped in the descriptor — the frontend only lays it out,
+      // and lazy-boots the 3D viewer for the (same-origin, cached) coordinates. Same "agents on the
+      // rim" contract as the sketch: no fact is authored here, the identifiers came from the tool.
+      if(agentBody && !update.error){
+        var pcard=buildProteinCard(update.gene, update.identity||{}, update.literature||{});
+        agentBody.appendChild(pcard);
+        bootStructureViewer(pcard, update.gene, update.identity||{});
+      }
+      return update.gene;
+    }
     return null;
+  }
+
+  // Build the protein mini-report card from the descriptor's code-retrieved facts. Pure DOM — no
+  // fetch, no drawing of facts; identity/structure/literature all arrived from the tool. Structure
+  // coordinates are booted separately (bootStructureViewer) so a viewer failure never blanks identity
+  // or literature. Reused verbatim on live render AND on replay, so the two paths cannot diverge.
+  function buildProteinCard(gene, identity, literature){
+    var card=document.createElement("div");
+    card.className="protein-card";
+    card.setAttribute("data-gene", gene);
+    var html='<div class="protein-eyebrow">Protein mini-report · '+esc(gene)+'</div>';
+
+    // --- identity strip (machine voice) ---
+    if(identity && identity.resolved && identity.accession){
+      html+='<div class="protein-id">';
+      if(identity.protein_name) html+='<span class="pname">'+esc(identity.protein_name)+'</span>';
+      html+='<span class="kv">UniProt <a href="https://www.uniprot.org/uniprotkb/'+esc(identity.accession)+'" target="_blank" rel="noopener"><span class="acc">'+esc(identity.accession)+'</span></a></span>';
+      if(identity.length) html+='<span class="kv"><b>'+esc(String(identity.length))+'</b> aa</span>';
+      html+='</div>';
+    } else {
+      html+='<div class="protein-id"><span class="kv">Identity could not be retrieved from UniProt — no accession is shown rather than a guessed one.</span></div>';
+    }
+
+    // --- structure block: strap line + a viewport the loader fills (or a static fallback) ---
+    var st=identity && identity.structure;
+    if(st){
+      var predicted = st.source==="alphafold";
+      html+='<div class="protein-struct">';
+      html+='<div class="strap">';
+      html+='<span class="tag'+(predicted?' pred':'')+'">'+(predicted?'AlphaFold model':'Experimental')+'</span>';
+      html+='<span class="pdbid"><a href="'+esc(st.page_url)+'" target="_blank" rel="noopener">'+esc(st.identifier)+'</a></span>';
+      if(st.method) html+='<span>'+esc(st.method)+'</span>';
+      if(st.resolution) html+='<span>'+esc(String(st.resolution))+' Å</span>';
+      html+='</div>';
+      html+='<div class="viewer3d" data-viewer><div class="v-load">loading structure…</div></div>';
+      html+='</div>';
+    }
+
+    // --- literature: cited findings, styled like Node B's cited hypotheses (.hcard family) ---
+    var lit=literature||{}; var finds=(lit.findings)||[];
+    html+='<div class="protein-lit">';
+    html+='<div class="lit-head">What we know · cited literature</div>';
+    if(finds.length){
+      html+='<div class="hyp-list">';
+      for(var i=0;i<finds.length;i++){
+        var f=finds[i]; var c=f.citation||{};
+        html+='<div class="hcard"><p>'+esc(f.statement||"")+'</p>';
+        html+='<div class="src">';
+        if(c.url){ html+='<a href="'+esc(c.url)+'" target="_blank" rel="noopener">PMID '+esc(c.accession||"")+'</a>'; }
+        html+='<span class="st">retrieved</span>';
+        if(c.title) html+='<span class="tt">'+esc(c.title)+'</span>';
+        html+='</div></div>';
+      }
+      html+='</div>';
+    } else if(lit.replay){
+      html+='<p class="say-empty">Cited literature is regenerated live — ask about '+esc(gene)+' again to re-run the search. Identity and structure above are re-derived from code.</p>';
+    } else {
+      html+='<p class="say-empty">No literature was retrieved for this protein — nothing is summarised from memory.</p>';
+    }
+    html+='</div>';
+
+    // --- caption: the provenance receipt, journal-style ---
+    html+='<div class="protein-cap"><b>Sources</b>Identity from UniProt · structure from '
+         +(st?(st.source==="alphafold"?'AlphaFold':'RCSB PDB'):'—')
+         +' · literature retrieved from PubMed and cited by index (never authored). '
+         +'Every identifier on this card is code-retrieved.</div>';
+
+    card.innerHTML=html;
+    return card;
+  }
+
+  // Lazy-load 3Dmol.js ONCE, only when a structure actually needs rendering — the rest of the app
+  // stays zero-JS-library. Returns a promise that resolves when window.$3Dmol is available, or
+  // rejects if the vendored script can't load (the caller then shows a static reference).
+  var _molmolLoading=null;
+  function ensure3Dmol(){
+    if(window.$3Dmol) return Promise.resolve(window.$3Dmol);
+    if(_molmolLoading) return _molmolLoading;
+    _molmolLoading=new Promise(function(resolve,reject){
+      var s=document.createElement("script");
+      s.src="/3dmol-min.js"; s.async=true;
+      s.onload=function(){ window.$3Dmol ? resolve(window.$3Dmol) : reject(new Error("3Dmol absent after load")); };
+      s.onerror=function(){ reject(new Error("failed to load 3Dmol")); };
+      document.head.appendChild(s);
+    });
+    return _molmolLoading;
+  }
+
+  // Boot the 3D viewer inside a card's [data-viewer] slot. Fetches coordinates SAME-ORIGIN from our
+  // cached proxy (/api/structure/{gene}), so the browser never depends on RCSB being reachable. Any
+  // failure — no WebGL, script blocked, no coordinates — degrades to a labelled static reference,
+  // never a broken canvas. The structure identifier still shows above, so the card stays useful.
+  function bootStructureViewer(card, gene, identity){
+    var slot=card.querySelector("[data-viewer]");
+    if(!slot) return;                                  // no structure on this card — nothing to boot
+    var st=identity && identity.structure;
+    var loadEl=slot.querySelector(".v-load");
+    function fail(msg){ if(loadEl){ loadEl.className="v-load err"; loadEl.textContent=msg||"structure unavailable — see the linked entry above"; } }
+    ensure3Dmol().then(function($3Dmol){
+      var fmt="pdb";
+      return fetch("/api/structure/"+encodeURIComponent(gene)).then(function(r){
+        if(!r.ok) throw new Error("no coordinates");
+        // 3Dmol needs the right parser: recent/large entries are mmCIF-only, and AlphaFold serves
+        // either. The API tells us which via a header; default to pdb.
+        fmt=(r.headers.get("X-Structure-Format")==="mmcif")?"cif":"pdb";
+        return r.text();
+      }).then(function(coords){
+        if(loadEl) loadEl.remove();
+        var viewer=$3Dmol.createViewer(slot, {backgroundColor:"#1C1B1A"});
+        viewer.addModel(coords, fmt);
+        // Cartoon coloured by chain — the standard "read the fold" view. Spectrum on a single chain
+        // reads as N→C; multi-chain gets distinct chain colours. Kept deliberately simple.
+        viewer.setStyle({}, {cartoon:{color:"spectrum"}});
+        viewer.zoomTo(); viewer.render(); viewer.zoom(1.15, 800);
+        // A gentle idle spin makes it read as interactive at a glance; the user can still drag.
+        try{ viewer.spin("y", 0.4); }catch(e){}
+      });
+    }).catch(function(){ fail(); });
   }
 
   // Map a routed {gene,intent} to a concrete turn. Every branch shows the user's `text` as the

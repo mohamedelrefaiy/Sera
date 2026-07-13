@@ -1,0 +1,17 @@
+3Dmol.js — vendored third-party library
+========================================
+
+File:     3dmol-min.js
+Version:  2.4.2
+Source:   https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.4.2/3Dmol-min.js
+Project:  https://3dmol.csb.pitt.edu/  •  https://github.com/3dmol/3Dmol.js
+License:  BSD-3-Clause
+
+3Dmol.js is Copyright (c) the 3Dmol.js authors (David Koes et al.,
+University of Pittsburgh) and is distributed under the BSD-3-Clause licence.
+See the upstream repository LICENSE for the full text:
+https://github.com/3dmol/3Dmol.js/blob/master/LICENSE
+
+Vendored locally (rather than loaded from a CDN) so the app has no runtime
+dependency on an external script host, and lazy-loaded by the frontend only
+when a protein_report card actually has a structure to render.
