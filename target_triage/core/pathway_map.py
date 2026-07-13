@@ -26,6 +26,8 @@ import math
 from dataclasses import dataclass
 
 from .decision_brief import EXPLANATION_CLASSES, EXPLANATION_LABELS
+from .pathway_render import render_topology
+from .pathway_topology import select_for
 
 # Verdict → focal-node colour + a short plain word for the badge. Matches the app's verdict palette.
 _VERDICT_STYLE: dict[str, tuple[str, str]] = {
@@ -55,7 +57,13 @@ _HYP = "#8A6D3B"
 @dataclass(frozen=True)
 class PathwayMap:
     """The whole biological-context figure: a code-owned spec plus a self-contained SVG. Immutable
-    and JSON-serialisable — the agent ships it, the frontend drops it in, the golden test pins it."""
+    and JSON-serialisable — the agent ships it, the frontend drops it in, the golden test pins it.
+
+    Two rendering styles share this spec. When the focal gene is in a CURATED pathway, `style` is
+    "topology" and the figure is the CST-style compartment/cascade diagram; `topology_nodes`,
+    `topology_edges`, and `provenance` carry exactly what was drawn and where it came from (the
+    honesty test pins these). Otherwise `style` is "starburst" — the honest fallback: the gene ringed
+    by its real Enrichr partners, with those topology fields empty."""
     focal_gene: str
     focal_verdict: str
     focal_colour: str
@@ -64,6 +72,10 @@ class PathwayMap:
     hypotheses: tuple[str, ...]
     caption: str
     svg: str
+    style: str = "starburst"                       # "topology" | "starburst"
+    topology_nodes: tuple[str, ...] = ()           # node ids actually drawn (curated only)
+    topology_edges: tuple[tuple[str, str, str], ...] = ()   # (src, dst, type) actually drawn
+    provenance: dict | None = None                 # {source_db, reactome_id, curator, curated_on, …}
 
 
 @dataclass(frozen=True)
@@ -198,15 +210,62 @@ def _render_svg(m: _Draft) -> str:
     return "".join(parts)
 
 
-def build_pathway_map(row: dict, pathways) -> PathwayMap:
+def _build_topology_map(
+    gene: str, verdict: str, colour: str, verdict_word: str,
+    node_status: dict[str, str] | None,
+) -> PathwayMap | None:
+    """CST-style figure when the focal gene is in a CURATED pathway. Returns None if it is not, so
+    the caller degrades to the starburst. Everything drawn is code-owned: the curated topology and
+    (optionally) the concordance hit-status. The LLM only selected the gene; it authored nothing."""
+    curated = select_for(gene)
+    if curated is None:
+        return None
+    result = render_topology(
+        curated, focal_gene=gene, focal_colour=colour, verdict_word=verdict_word,
+        node_status=node_status)
+    hits = tuple(g for g, s in (node_status or {}).items() if s == "hit")
+    provenance = {
+        "source_db": "Reactome",
+        "reactome_id": curated.reactome_id,
+        "term": curated.term,
+        "curator": curated.curator,
+        "curated_on": curated.curated_on,
+        "n_nodes": len(result.node_ids),
+        "n_edges": len(result.edges),
+    }
+    label = curated.term
+    caption = (
+        f"{gene} in the {label} cascade — signal flows from the receptor at the membrane down to "
+        f"IL-2 transcription in the nucleus. Solid nodes are confident hits in these screens; faded "
+        f"nodes are the surrounding biology (real pathway members, not hits here). Every arrow is a "
+        f"curated, cited interaction (Reactome {curated.reactome_id}), never inferred."
+    )
+    return PathwayMap(
+        focal_gene=gene, focal_verdict=verdict, focal_colour=colour,
+        pathway=curated.reactome_id, partners=hits, hypotheses=(),
+        caption=caption, svg=result.svg, style="topology",
+        topology_nodes=result.node_ids, topology_edges=result.edges,
+        provenance=provenance)
+
+
+def build_pathway_map(row: dict, pathways, node_status: dict[str, str] | None = None) -> PathwayMap:
     """Assemble the pathway-context map. Pure and deterministic: no I/O, no LLM.
 
     `row` is a concordance row (verdict is read, never recomputed). `pathways` are `enrichr.Pathway`
-    records WITH their overlap members, most-significant first. Partners and pathway are code-owned;
-    hypotheses come from the decision brief's closed set for a disagreement verdict."""
+    records WITH their overlap members, most-significant first. `node_status` (optional) maps a gene
+    id → 'hit' | 'context', from the concordance table, so the curated figure can shade the cascade
+    by what the screens actually moved.
+
+    Preference order: if the focal gene is in a CURATED pathway, draw the CST-style topology figure
+    (real compartments + directed, cited edges). Otherwise degrade honestly to the starburst — the
+    gene ringed by its real Enrichr partners, with candidate mechanisms as marked hypotheses."""
     gene = str(row.get("gene", "")).upper()
     verdict = str(row.get("verdict", ""))
     colour, verdict_word = _VERDICT_STYLE.get(verdict, _DEFAULT_STYLE)
+
+    topo = _build_topology_map(gene, verdict, colour, verdict_word, node_status)
+    if topo is not None:
+        return topo
 
     pw, partners = _select_pathway(gene, pathways)
     pathway_term = pw.term if pw else None

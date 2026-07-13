@@ -20,6 +20,7 @@ import re
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
 from ..core.explanation import build_record
+from ..core.pathway_topology import CURATED_PATHWAYS as _CURATED_PATHWAYS
 
 # --- load-once immutable state -------------------------------------------------
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -529,6 +530,26 @@ _REPLICATED_GENES = tuple(sorted({
     (r.get("gene") or "").strip().upper()
     for r in _CONCORDANCE if r.get("verdict") == "replicated" and (r.get("gene") or "").strip()}))
 
+# every gene named in ANY curated topology, so we can shade the CST figure by hit-status.
+_CURATED_NODE_IDS = frozenset(
+    n.id for pw in _CURATED_PATHWAYS for n in pw.nodes)
+
+
+def _curated_node_status(condition: str) -> dict[str, str]:
+    """Hit-status for each curated-topology node at `condition`: 'hit' if it is a confident hit in
+    either screen there, else 'context'. Read straight from the concordance table, never inferred; a
+    curated node absent from the screens (e.g. the second-messenger IP3 or the output IL2) is simply
+    omitted, so the renderer draws it solid. This is code-owned truth, like the verdict itself."""
+    status: dict[str, str] = {}
+    for gid in _CURATED_NODE_IDS:
+        rows = _BY_GENE.get(gid)
+        if not rows:
+            continue
+        row = next((r for r in rows if r.get("condition") == condition), rows[0])
+        is_hit = bool(row.get("hit_rna")) or bool(row.get("hit_prot"))
+        status[gid] = "hit" if is_hit else "context"
+    return status
+
 
 @tool(
     "pathway_map",
@@ -568,10 +589,16 @@ async def pathway_map(args):
     anchor = requested or next((c for c in _SKETCH_ANCHOR_ORDER if c in by_cond),
                                hits[0]["condition"])
     # Enrichment over the replicated hit set gives real pathways WITH their overlap members, so the
-    # map places the gene among genuine partners. Cached (offline for the demo set).
+    # STARBURST fallback places the gene among genuine partners. Cached (offline for the demo set).
     pathways = enrichr.enrich(_REPLICATED_GENES) if _REPLICATED_GENES else []
+    # For the CURATED topology figure, shade each curated node by whether it is a confident hit in
+    # THESE screens (solid) or surrounding context (faded). Read straight from the concordance table
+    # at the same anchor condition — never inferred. A curated gene absent from the screens stays
+    # unshaded (solid). This is a second axis of truth the starburst never had.
+    node_status = _curated_node_status(anchor)
     try:
-        pmap = dataclasses.asdict(build_pathway_map(by_cond[anchor], pathways))
+        pmap = dataclasses.asdict(
+            build_pathway_map(by_cond[anchor], pathways, node_status=node_status))
     except (ValueError, KeyError) as e:
         return _text({"gene": gene, "error": "could not build a pathway map", "detail": str(e),
                       "note": "Say the pathway map isn't available for this gene; do not invent one."})
