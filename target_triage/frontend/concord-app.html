@@ -699,8 +699,17 @@
   .vtag{font-family:var(--font-mono);font-size:11px;padding:4px 9px;border-radius:7px;white-space:nowrap}
   .vtag.rep{background:var(--lock);color:#fff}.vtag.mo{background:var(--mrna-soft);color:#0a6a55}
   .vtag.po{background:var(--protein-soft);color:#8f2568}.vtag.no{background:var(--absent-soft);color:#59636f}
+  /* .ctag = the confidence badge in the Hit-list TABLE (High/Medium/Low) — colour carries the
+     confidence level, so it stays a filled coloured tag. (Do NOT reuse it for the plan Decision
+     condition; that uses .cond-chip below, which is a quiet outlined sibling of the verdict badge.) */
   .ctag{font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:6px}
   .ctag.High{background:var(--lock);color:#fff}.ctag.Medium{background:var(--warn-soft);color:#7a561b}.ctag.Low{background:var(--absent-soft);color:#59636f}
+  /* Condition chip — the assay context ("IL2 · Stim48hr") next to the plan verdict badge. A QUIET
+     sibling, NOT a second verdict: matched to .verdict-badge's box (height/radius/font) so the pair
+     reads as one row, but outlined-neutral so the verdict is the only coloured thing. */
+  .cond-chip{display:inline-flex;align-items:center;font-family:var(--font-mono);font-size:13px;
+    font-weight:500;padding:8px 13px;border-radius:10px;background:transparent;color:var(--ink-soft);
+    box-shadow:inset 0 0 0 1px var(--line-strong)}
   .drugcell{font-family:var(--font-mono);font-size:12px}
   /* "why chase it" — the one reasoning column; serif so it reads as a written judgement, not data. */
   .chase{font-family:var(--font-serif);color:var(--ink-soft);font-size:14px;line-height:1.5;max-width:34ch}
@@ -1599,7 +1608,7 @@ ZNF250</div>
               <div class="rec-l">
                 <span class="rec-action js-recAction"></span>
                 <span class="verdict-badge vb rep js-planVerdict"><span class="vdot"></span><span class="js-planVerdictTxt"></span></span>
-                <span class="ctag High js-planConf"></span>
+                <span class="cond-chip js-planConf"></span>
               </div>
               <p class="rec-why js-recWhy"></p>
             </div>
@@ -3435,7 +3444,7 @@ ZNF250</div>
     var pr=q(turn,"js-planRec"); pr.className="rec "+T.cls+" js-planRec";
     q(turn,"js-recAction").textContent=T.action;
     var pv=q(turn,"js-planVerdict"); pv.className="verdict-badge vb "+vm.cls+" js-planVerdict"; q(turn,"js-planVerdictTxt").textContent=vm.txt;
-    var pc=q(turn,"js-planConf"); pc.textContent="IL2 · Stim 48h"; pc.className="ctag High js-planConf";
+    var pc=q(turn,"js-planConf"); pc.textContent="IL2 · Stim 48h"; pc.className="cond-chip js-planConf";
     q(turn,"js-recWhy").textContent=T.why;
     q(turn,"js-pPert").textContent=T.pert;
     q(turn,"js-pCond").textContent=T.cond;
@@ -3468,7 +3477,7 @@ ZNF250</div>
     q(turn,"js-planVerdictTxt").textContent=vm.txt;
     var pc=q(turn,"js-planConf");
     pc.textContent=((b.snapshot&&b.snapshot.cytokine)||"IL2")+" · "+((b.snapshot&&b.snapshot.condition)||"Stim48hr");
-    pc.className="ctag High js-planConf";
+    pc.className="cond-chip js-planConf";
     q(turn,"js-recWhy").textContent=b.decision||"";
     // 4. The discriminating experiment (perturbation + controls, conditions, readouts).
     var guides=(exp.guides||[]).join(", ");
