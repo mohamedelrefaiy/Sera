@@ -21,7 +21,8 @@ from __future__ import annotations
 from typing import Any
 
 from .decision_brief import (
-    ConcordanceSnapshot, GroundedClaim, ScreenPairContext, TargetDossier)
+    ConcordanceSnapshot, GroundedClaim, PositiveControl, ScreenPairContext, TargetDossier,
+    select_positive_control)
 
 # The adapter's known constant for the Zhu mRNA screen — CD4 T cells. Provenance stores null (the
 # on-target rows that would name it were dropped upstream), so we supply the adapter's fact.
@@ -147,3 +148,20 @@ def resolve_dossier(enrichment: dict | None) -> TargetDossier | None:
         top_disease=dis.get("top_disease"),
         qc_confidence=qual.get("confidence") or "Low",
     )
+
+
+def resolve_positive_control(
+    rows: list[dict[str, Any]],
+    ground_truth: dict,
+    cytokine: str,
+    condition: str,
+) -> PositiveControl | None:
+    """Map the ground-truth artifact's curated regulator list onto `select_positive_control`.
+
+    `ground_truth["positive_regulators"]` is a LIST OF DICTS (not gene strings) — each entry looks
+    like `{"gene": "VAV1", "role": ..., "verdict": ..., ...}`. The gene symbol must be pulled out of
+    each dict; passing the dicts straight through would silently match nothing (a dict is never `in`
+    a curated-genes membership test the way a string is), so this extraction is not optional
+    boilerplate — it is the fix for that exact gotcha."""
+    curated_genes = [d["gene"] for d in ground_truth.get("positive_regulators", [])]
+    return select_positive_control(rows, curated_genes, cytokine, condition)

@@ -336,33 +336,47 @@ def _parse_constraints(readouts: str | None, donors: int | None, days: int | Non
     return ExperimentConstraints(readouts=ros, donors=donors or 0, days=days or 0)
 
 
-def _decision_brief_for(hits: list[dict], constraints=None) -> dict | None:
-    """Build the decision brief for a gene's anchor condition, serialised to a plain dict.
+def _brief_for_row(row: dict, constraints=None) -> dict | None:
+    """Build the decision brief for ONE concordance row (a specific gene/cytokine/condition),
+    serialised to a plain dict. Degrades to None (never raises) so a missing artifact or an
+    unexpected verdict shows the frontend's fallback rather than 500-ing the gene view.
 
-    Degrades to None (never raises) so a missing provenance artifact or an unexpected verdict shows
-    the frontend's fallback rather than 500-ing the whole gene view. The verdict inside the brief is
-    the code-computed value from the row — this endpoint never recomputes it. `constraints`, when
-    present, drives feasibility — an infeasible ask is reported as infeasible, never downgraded."""
+    Every input is resolved for THIS row's own condition — snapshot, context, claims, and the
+    positive control are all condition-scoped — so a gene whose verdict differs by condition gets a
+    brief whose experiment matches the condition being shown, not a stale anchor. `constraints`, when
+    present, drives feasibility; the positive control comes from the already-loaded `_CONCORDANCE` +
+    `_GROUND_TRUTH` globals and degrades to None on empty ground truth, inside the same try/except."""
     import dataclasses
 
     from ..core.brief_resolver import (
-        resolve_claims, resolve_context, resolve_dossier, resolve_snapshot)
+        resolve_claims, resolve_context, resolve_dossier, resolve_positive_control,
+        resolve_snapshot)
     from ..core.decision_brief import build_decision_brief
 
+    cond = row["condition"]
+    try:
+        snapshot = resolve_snapshot(row, _PROVENANCE)
+        context = resolve_context(row, _PROVENANCE)
+        claims = resolve_claims(row["gene"], row["cytokine"], cond, _PROVENANCE)
+        dossier = resolve_dossier(_ENRICHMENT.get(row["gene"]))
+        positive_control = resolve_positive_control(
+            _CONCORDANCE, _GROUND_TRUTH, row["cytokine"], cond)
+        brief = build_decision_brief(
+            snapshot, context, claims, constraints, dossier, positive_control)
+        return dataclasses.asdict(brief)
+    except (ValueError, KeyError, AssertionError):
+        return None
+
+
+def _decision_brief_for(hits: list[dict], constraints=None) -> dict | None:
+    """The gene's ANCHOR-condition brief (the default one the plan-intent card and tests consume).
+    Picks the anchor condition by `_BRIEF_ANCHOR_ORDER`, then delegates to `_brief_for_row`. Kept as
+    a stable entry point so existing callers/tests are unaffected by the per-condition addition."""
     by_cond = {r["condition"]: r for r in hits}
     anchor = next((c for c in _BRIEF_ANCHOR_ORDER if c in by_cond), None)
     if anchor is None:
         anchor = hits[0]["condition"]
-    row = by_cond[anchor]
-    try:
-        snapshot = resolve_snapshot(row, _PROVENANCE)
-        context = resolve_context(row, _PROVENANCE)
-        claims = resolve_claims(row["gene"], row["cytokine"], anchor, _PROVENANCE)
-        dossier = resolve_dossier(_ENRICHMENT.get(row["gene"]))
-        brief = build_decision_brief(snapshot, context, claims, constraints, dossier)
-        return dataclasses.asdict(brief)
-    except (ValueError, KeyError, AssertionError):
-        return None
+    return _brief_for_row(by_cond[anchor], constraints)
 
 
 @app.get("/api/concordance/{gene}")
@@ -397,6 +411,10 @@ def concordance_gene(gene: str, cytokine: str | None = None,
         exp = _EXPLANATIONS.get(key)
         if exp:
             row["explanation"] = exp["explanation"]
+        # Each condition carries its OWN brief, so the single-gene view's condition tabs render the
+        # experiment for the verdict AT THAT CONDITION — a gene that is `replicated` at Stim48hr but
+        # `protein_only` at Rest gets the right archetype under each tab, not the anchor's.
+        row["decision_brief"] = _brief_for_row(r, constraints)
         by_condition[r["condition"]] = row
     return {"gene": g, "cytokine": hits[0]["cytokine"], "by_condition": by_condition,
             "enrichment": _ENRICHMENT.get(g),

@@ -145,11 +145,15 @@ def test_valid_constraints_are_feasible_and_respected():
         assert "qpcr" in ro and "facs" in ro
 
 
-def test_short_window_drops_timecourse_and_says_so():
+def test_short_window_is_infeasible_for_a_discordant_verdict():
+    """TSC1 is discordant -> resolve_split, whose time course is MANDATORY (Task #3): a single
+    timepoint cannot resolve why the two layers disagree, so a short window is an infeasibility,
+    not a silent drop of the timecourse."""
     with TestClient(app) as client:
         b = client.get("/api/concordance/TSC1?readouts=qpcr,facs&donors=3&days=2").json()["decision_brief"]
-        assert b["experiment"]["timecourse"] is None
-        assert any("timepoint" in a.lower() or "window" in a.lower() for a in b["adaptations"])
+        assert b["experiment"]["timecourse"] is not None
+        assert b["feasible"] is False
+        assert any("time course" in u.lower() for u in b["unmet_requirements"])
 
 
 def test_unknown_readout_token_is_a_400():
@@ -177,7 +181,11 @@ def test_saved_lab_profile_adapts_feasibility_without_changing_the_scientific_de
 
 
 def test_infeasible_saved_lab_profile_reports_every_blocker_and_safe_adaptation():
-    """The API must explain a constrained lab honestly instead of silently weakening the test."""
+    """The API must explain a constrained lab honestly instead of silently weakening the test.
+
+    TSC1 is discordant -> resolve_split, whose time course is MANDATORY (Task #3), so a short
+    window under 3 days is now a BLOCKER alongside the missing transcript readout and donor count
+    — not a silently-dropped adaptation."""
     with TestClient(app) as client:
         response = client.get(
             "/api/concordance/TSC1",
@@ -187,9 +195,8 @@ def test_infeasible_saved_lab_profile_reports_every_blocker_and_safe_adaptation(
         assert response.status_code == 200
         brief = response.json()["decision_brief"]
         blockers = " ".join(brief["unmet_requirements"]).lower()
-        adaptations = " ".join(brief["adaptations"]).lower()
         assert brief["feasible"] is False
         assert "transcript" in blockers
         assert "donor" in blockers
-        assert brief["experiment"]["timecourse"] is None
-        assert "timepoint" in adaptations or "window" in adaptations
+        assert "time course" in blockers
+        assert brief["experiment"]["timecourse"] is not None
