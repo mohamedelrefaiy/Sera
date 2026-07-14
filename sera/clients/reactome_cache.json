@@ -1,0 +1,62 @@
+{
+"STAT3": {
+"term": "Interleukin-7 signaling",
+"stid": "R-HSA-1266695",
+"genes": [
+"BRWD1",
+"CISH",
+"CRLF2",
+"H3C1",
+"H3C15",
+"HGF",
+"IL2RG",
+"IL7",
+"IL7R",
+"IRS1",
+"IRS2",
+"JAK1",
+"JAK3",
+"PIK3R1",
+"PIK3R2",
+"PIK3R3",
+"RAG1",
+"RAG2",
+"SMARCA4",
+"SOCS1",
+"SOCS2",
+"STAT3",
+"STAT5A",
+"STAT5B"
+]
+},
+"EGFR": {
+"term": "Signaling by ERBB2",
+"stid": "R-HSA-1227986",
+"genes": [
+"AKT1",
+"AKT2",
+"AKT3",
+"BTC",
+"CDC37",
+"CUL5",
+"DIAPH1",
+"EGF",
+"EGFR",
+"ERBB2",
+"ERBB3",
+"ERBB4",
+"ERBIN",
+"EREG",
+"FYN",
+"GAB1",
+"GRB2",
+"GRB7",
+"HBEGF",
+"HRAS",
+"HSP90AA1",
+"KRAS",
+"MATK",
+"MEMO1"
+]
+}
+}

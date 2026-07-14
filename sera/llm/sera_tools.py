@@ -641,6 +641,78 @@ async def pathway_map(args):
     return _pathway_map_view(gene, by_cond, anchor)
 
 
+def _web_pathway_view(gene: str):
+    """Build the pathway-context view for a gene we did NOT curate and that is NOT in the screens, by
+    RETRIEVING its real Reactome pathway + real member genes and drawing the honest starburst.
+
+    The honesty contract holds unchanged: the client (code) fetches structured, cited facts; the
+    starburst rings the gene with the pathway's REAL members and NO invented directed edges; the
+    figure is cited to the Reactome stable id. The model authored nothing — it only asked us to look
+    the gene up. Returns an honest 'could not place it' view when retrieval finds no pathway."""
+    import dataclasses
+
+    from ..clients import reactome
+    from ..core.pathway_map import build_pathway_map
+
+    remote = reactome.fetch(gene)
+    if remote is None:
+        return _text({
+            "gene": gene, "error": "no pathway found",
+            "note": f"Say plainly that {gene} could not be placed in a real pathway from Reactome, so "
+                    "there is nothing to draw — do NOT invent a pathway, partners, or a mechanism."})
+
+    # Duck-type the remote pathway into the shape the starburst consumes: append the Reactome stable
+    # id to the term the way Enrichr does (' R-HSA-…'), so the figure's `pathway` field carries the
+    # accession (the citation) and `_pretty_pathway` still renders the clean label.
+    from ..clients.enrichr import Pathway
+    pathways = [Pathway(term=f"{remote.term} {remote.stid}", adj_p=0.0,
+                        n_genes=remote.n_genes, library="Reactome", genes=remote.genes)]
+
+    # An unknown gene has NO screen verdict — we never measured it here. Pass an empty verdict so the
+    # focal node reads as 'unknown' (grey), and no disagreement hypotheses fire (honest: we can't
+    # hypothesise about a split we didn't observe). condition is not applicable off-screen.
+    row = {"gene": gene, "verdict": ""}
+    try:
+        pmap = dataclasses.asdict(build_pathway_map(row, pathways))
+    except (ValueError, KeyError) as e:
+        return _text({"gene": gene, "error": "could not build a web pathway map", "detail": str(e),
+                      "note": "Say the pathway map isn't available for this gene; invent nothing."})
+    return _view(
+        {"gene": gene, "pathway": pmap["pathway"], "source": "Reactome", "reactome_id": remote.stid,
+         "note": "ONE plain lead-in sentence only (e.g. 'Here's where " + gene + " sits, from "
+                 "Reactome.'). Say the neighbourhood is RETRIEVED from Reactome (cite " + remote.stid +
+                 "), not from these screens, and that " + gene + " was NOT measured here. Do NOT list "
+                 "the partners or name a pathway the map didn't return."},
+        {"action": "pathway_map", "gene": gene, "pathway_map": pmap},
+    )
+
+
+@tool(
+    "web_pathway_map",
+    "Place a gene we do NOT have in our screens/curated set into its REAL pathway context by "
+    "retrieving it live from Reactome. Call this ONLY when reconcile_gene / sketch_gene / pathway_map "
+    "reported the gene is 'not in the screens' and the user still wants to see where it sits (e.g. "
+    "'what about STAT3', 'show me EGFR anyway', 'look it up'). The pathway and its member genes are "
+    "RETRIEVED from Reactome (code-owned, cited to a stable R-HSA id) — never invented; the figure is "
+    "the honest starburst (the gene ringed by its real partners, NO directed edges, because those "
+    "cannot be trusted from the API). It renders as a figure: give ONE plain lead-in sentence, say "
+    "the context is from Reactome and the gene was NOT measured in these screens, and do NOT restate "
+    "the partners or quote a pathway the map didn't return. If nothing is found, say so plainly.",
+    {
+        "type": "object",
+        "properties": {
+            "gene": {"type": "string", "description": "Gene symbol to look up, e.g. STAT3."},
+        },
+        "required": ["gene"],
+    },
+)
+async def web_pathway_map(args):
+    gene = (args.get("gene") or "").strip().upper()
+    if not gene:
+        return _text({"error": "no gene given", "note": "Ask which gene to look up."})
+    return _web_pathway_view(gene)
+
+
 _BRIEF_ANCHOR_ORDER = ("Stim48hr", "Stim8hr", "Rest")
 
 
@@ -716,7 +788,7 @@ def build_sera_server():
         version="0.1.0",
         tools=[reconcile_gene, compare_conditions, gene_evidence, known_biology,
                draft_decision_brief, hitlist_biology, sketch_gene, rank_targets, pathway_map,
-               protein_report],
+               web_pathway_map, protein_report],
     )
 
 
@@ -730,5 +802,6 @@ SERA_ALLOWED_TOOLS = [
     "mcp__sera__sketch_gene",
     "mcp__sera__rank_targets",
     "mcp__sera__pathway_map",
+    "mcp__sera__web_pathway_map",
     "mcp__sera__protein_report",
 ]
