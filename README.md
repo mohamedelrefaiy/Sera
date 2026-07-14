@@ -6,7 +6,7 @@
 
 Rank and adversarially verify druggable T-cell regulators from Perturb-seq — a
 reusable instrument that runs the same pipeline on any screen. Built for the
-*Built with Claude: Life Sciences* hackathon. New work, MIT-licensed.
+*Built with Claude: Life Sciences* hackathon.
 
 Claude is not handed a finished shortlist. It ranks candidates, tries to **refute**
 the ones worth trusting (donor/guide robustness, real-knockdown, power gates),
