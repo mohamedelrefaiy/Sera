@@ -223,7 +223,11 @@ def _build_topology_map(
     result = render_topology(
         curated, focal_gene=gene, focal_colour=colour, verdict_word=verdict_word,
         node_status=node_status)
-    hits = tuple(g for g, s in (node_status or {}).items() if s == "hit")
+    # Partners are the pathway CONTEXT — every real curated member the figure drew, minus the focal
+    # gene itself — not just the confident hits. Hit-vs-context is still distinguished visually in the
+    # SVG via `node_status` shading; the partner list names the neighbourhood, which is the whole
+    # curated cascade. Ordered as the curated record lists them, for a stable, deterministic list.
+    partners = tuple(g for g in result.node_ids if g != gene)
     provenance = {
         "source_db": "Reactome",
         "reactome_id": curated.reactome_id,
@@ -242,7 +246,7 @@ def _build_topology_map(
     )
     return PathwayMap(
         focal_gene=gene, focal_verdict=verdict, focal_colour=colour,
-        pathway=curated.reactome_id, partners=hits, hypotheses=(),
+        pathway=curated.reactome_id, partners=partners, hypotheses=(),
         caption=caption, svg=result.svg, style="topology",
         topology_nodes=result.node_ids, topology_edges=result.edges,
         provenance=provenance)

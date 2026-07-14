@@ -256,8 +256,52 @@ MAPK = CuratedPathway(
     ),
 )
 
+# Noncanonical (alternative) NF-κB. The demo's hero split. A subset of TNF-receptor-superfamily
+# receptors (LTβR, CD40, BAFFR) signal NOT through the fast canonical IKKβ→IκB arm but through a
+# slow, processing-dependent arm: the receptor stabilises NIK (MAP3K14) by relieving its constitutive
+# degradation; NIK activates IKKα (CHUK); IKKα phosphorylates the p100 precursor (NFKB2), which is
+# then PROCESSED (partial proteasomal cleavage, not synthesis) to the mature p52 subunit; p52 pairs
+# with RELB and the p52:RELB dimer translocates to drive target transcription (CXCL13, CCL19, ICAM1).
+#
+# Why this is the right figure for NFKB2's disagreement: the activating step is p100→p52 PROCESSING —
+# a post-translational event that changes the PROTEIN pool without a matching change in NFKB2
+# transcript. A transcript-only screen watches the wrong molecule; a protein readout catches it. That
+# is the mechanistic reason "protein moved, transcript didn't", drawn as curated wiring rather than
+# asserted in prose. Transcribed from Reactome "NIK→noncanonical NF-kB signaling" (R-HSA-5676590) +
+# curated sub-reactions; each edge cites a Reactome accession and a backing PMID.
+#
+# Deliberate simplifications (documented so they read as choices, not errors):
+#   - LTBR stands in for the whole noncanonical-competent receptor set (CD40, BAFFR/TNFRSF13C, RANK);
+#     they converge on the same NIK-stabilising step, collapsed to one stimulus node for the figure.
+#   - p100→p52 is drawn as a single "translocation" edge on NFKB2 (the processing+nuclear-entry step);
+#     Reactome splits phosphorylation, ubiquitination and partial proteolysis into sub-reactions, kept
+#     as one node-level event because p52 is not a separate curated HGNC symbol (it is NFKB2-derived).
+
+NONCANONICAL_NFKB = CuratedPathway(
+    id="noncanonical_nfkb",
+    term="Noncanonical NF-kB Signaling",
+    reactome_id="R-HSA-5676590",
+    curator="moelrefaiy",
+    curated_on="2026-07-13",
+    nodes=(
+        TopoNode("LTBR",    "membrane",  "receptor", label="LTβR / CD40 / BAFFR"),
+        TopoNode("MAP3K14", "cytoplasm", "kinase",   label="NIK"),
+        TopoNode("CHUK",    "cytoplasm", "kinase",   label="IKKα"),
+        TopoNode("NFKB2",   "cytoplasm", "tf",       label="p100 → p52 (NFKB2)"),
+        TopoNode("RELB",    "nucleus",   "tf",       label="p52:RELB"),
+        TopoNode("CXCL13",  "output",    "cytokine", label="CXCL13 / CCL19"),
+    ),
+    edges=(
+        TopoEdge("LTBR",    "MAP3K14", "activation",    "Reactome", "R-HSA-5676594", pmid="21772278"),
+        TopoEdge("MAP3K14", "CHUK",    "activation",    "Reactome", "R-HSA-5676591", pmid="11239468"),
+        TopoEdge("CHUK",    "NFKB2",   "activation",    "Reactome", "R-HSA-5676591", pmid="11239468"),
+        TopoEdge("NFKB2",   "RELB",    "translocation", "Reactome", "R-HSA-5676596", pmid="11530390"),
+        TopoEdge("RELB",    "CXCL13",  "transcription", "Reactome", "R-HSA-5676590", pmid="21772278"),
+    ),
+)
+
 # The closed set. The LLM selects an id from here and nothing else; it never edits a record.
-CURATED_PATHWAYS: tuple[CuratedPathway, ...] = (TCR_IL2, BCR, MAPK)
+CURATED_PATHWAYS: tuple[CuratedPathway, ...] = (TCR_IL2, BCR, MAPK, NONCANONICAL_NFKB)
 
 
 def select_for(gene: str) -> CuratedPathway | None:

@@ -546,13 +546,24 @@ _CURATED_NODE_IDS = frozenset(
     n.id for pw in _CURATED_PATHWAYS for n in pw.nodes)
 
 
-def _curated_node_status(condition: str) -> dict[str, str]:
+def _curated_node_status(condition: str, gene: str | None = None) -> dict[str, str]:
     """Hit-status for each curated-topology node at `condition`: 'hit' if it is a confident hit in
     either screen there, else 'context'. Read straight from the concordance table, never inferred; a
     curated node absent from the screens (e.g. the second-messenger IP3 or the output IL2) is simply
-    omitted, so the renderer draws it solid. This is code-owned truth, like the verdict itself."""
+    omitted, so the renderer draws it solid. This is code-owned truth, like the verdict itself.
+
+    Scoped to the focal gene's SELECTED pathway when `gene` is given, so the status dict (and the
+    partner list derived from it) never mixes in hits from a different curated pathway. With no gene,
+    it falls back to the union of all curated nodes (used by callers that shade every pathway)."""
+    from ..core.pathway_topology import select_for
+
+    scope = _CURATED_NODE_IDS
+    if gene:
+        curated = select_for(gene)
+        if curated is not None:
+            scope = curated.node_ids()
     status: dict[str, str] = {}
-    for gid in _CURATED_NODE_IDS:
+    for gid in scope:
         rows = _BY_GENE.get(gid)
         if not rows:
             continue
@@ -578,7 +589,7 @@ def _pathway_map_view(gene: str, by_cond: dict, anchor: str):
     # THESE screens (solid) or surrounding context (faded). Read straight from the concordance table
     # at the same anchor condition — never inferred. A curated gene absent from the screens stays
     # unshaded (solid). This is a second axis of truth the starburst never had.
-    node_status = _curated_node_status(anchor)
+    node_status = _curated_node_status(anchor, gene)
     try:
         pmap = dataclasses.asdict(
             build_pathway_map(by_cond[anchor], pathways, node_status=node_status))
