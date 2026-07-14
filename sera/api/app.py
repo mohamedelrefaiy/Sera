@@ -28,6 +28,7 @@ import asyncio
 import json
 import math
 import os
+import re
 import shutil
 from contextlib import asynccontextmanager
 
@@ -659,22 +660,44 @@ ANSWER_TIMEOUT_S = 45
 
 # Deterministic backstop for the conversational answer. The prompt tells the model to stay in
 # scope, but a prompt is probabilistic — on an off-topic or product-name question it occasionally
-# names a removed product ("Sera") or offers to act as a coding assistant ("let me read
-# the codebase"). These terms must NEVER reach the browser, so after the full answer is buffered we
-# scan it; a hit replaces the whole reply with the safe redirect. Lowercased substring match.
+# names a REMOVED product ("Target Triage", "Concord") or breaks the fourth wall by describing
+# itself as a hackathon build / a codebase it can read. These must NEVER reach the browser, so
+# after the full answer is buffered we scan it; a hit replaces the whole reply with the safe
+# redirect. Lowercased match: plain substrings, plus a few regexes for name variants and the
+# meta-framing that betrays the app is a project under construction.
+#
+# NOTE: the current product name ("Sera") is deliberately NOT banned — legitimate in-scope answers
+# say "In Sera, 'discordant' means…". The leak is the meta-framing around it ("Sera is the tool
+# you're building", "the broader platform"), which the regexes below target, not the bare word.
 _ANSWER_BANNED_TERMS = (
-    "target triage", "sera",
+    "target triage", "target_triage",
     "codebase", "code base", "repository", "the repo",
     "read the project", "read the file", "project layout", "the pipeline",
     "train/test", "train / test", "frontend", "backend",
 )
 
+# Regexes for name variants and meta-framing that leaks "this is a project being built",
+# regardless of the product name used. "Concord" must be a whole word — a bare substring would
+# also strike the legitimate domain terms "concordance"/"concordant" the tool exists to explain.
+_ANSWER_BANNED_PATTERNS = tuple(
+    re.compile(p) for p in (
+        r"\bconcord\b",                  # the removed product, without hitting "concordance"
+        r"you(?:'re| are) building",     # "the tool you're building for the hackathon"
+        r"\bhackathon\b",                # any mention of the hackathon
+        r"broader platform",             # "the reconciliation interface / the broader platform"
+    )
+)
+
 
 def _scrub_answer(text: str) -> str | None:
-    """Return None if the answer is clean, or the safe redirect sentence if it mentions a banned
-    term. Kept pure and importable so eval/ can assert the backstop without a live model call."""
+    """Return None if the answer is clean, or the safe redirect sentence if it names a removed
+    product or leaks the app's meta-framing. Kept pure and importable so eval/ can assert the
+    backstop without a live model call."""
     low = text.lower()
-    if any(term in low for term in _ANSWER_BANNED_TERMS):
+    hit = any(term in low for term in _ANSWER_BANNED_TERMS) or any(
+        pat.search(low) for pat in _ANSWER_BANNED_PATTERNS
+    )
+    if hit:
         return ("I reconcile a gene's mRNA and protein CRISPR screens for IL-2 and give a "
                 "deterministic verdict — replicated, discordant, mRNA-only, protein-only, or "
                 "neither — plus druggability, disease genetics, and a validation plan. Ask me to "
