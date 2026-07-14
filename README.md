@@ -10,6 +10,16 @@ cross-checks them against Open Targets and ClinicalTrials.gov, and reasons over 
 numbers to produce a mechanism-annotated, scrutiny-survived shortlist — showing its
 work, including the candidates it rejects.
 
+## Novelty
+
+Sera's mRNA evidence is built on the genome-scale CD4+ T cell Perturb-seq release
+(Zhu et al. 2025). A due-diligence audit against the authors' own released tables and
+code confirmed that Sera's per-gene, per-condition **mRNA × protein concordance call**
+— cross-referencing this release against the independent Schmidt & Steinhart 2022
+CRISPRi screen — is not computed or released anywhere in the source materials. It is
+new analytical work, not a re-serving of a conclusion the original authors already
+published.
+
 ## Layout
 
 The package and its build files sit at the repo root — a conventional, installable
