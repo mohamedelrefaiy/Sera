@@ -1090,6 +1090,7 @@
   .how-p b{color:var(--ink);font-weight:600}
   .how-p .mrna{color:var(--mrna);font-weight:600}
   .how-p .protein{color:var(--protein);font-weight:600}
+  .how-h--nowrap{white-space:nowrap;font-size:clamp(18px,2.05vw,27px)}
 
   /* Put the scientific output before the problem: judges can identify the product in one scan. */
   .how-output{display:grid;grid-template-columns:repeat(3,1fr);margin-top:28px;border-top:1px solid var(--line)}
@@ -1518,7 +1519,7 @@
 
           <section class="how-sec">
             <div class="how-kicker">Biological question</div>
-            <h2 class="how-h">Which genetic perturbations alter IL-2 production in human CD4+ T cells?</h2>
+            <h2 class="how-h how-h--nowrap">Which genetic perturbations alter IL-2 production in human CD4+ T cells?</h2>
             <p class="how-p"><b>Interleukin-2 couples T-cell activation to proliferation, differentiation, and regulatory T-cell homeostasis through the IL-2–IL2RA–STAT5 axis.</b> Its pathway is therapeutically relevant to immune tolerance, engineered T-cell persistence, and Treg-directed intervention. Identifying upstream regulators could therefore enable modulation of IL-2 output without administering the cytokine itself.</p>
             <p class="how-p">The relevant phenotype is not defined by a single molecular measurement. A perturbation can alter IL-2 transcription, translation, secretion, or the fraction of responding cells; transcript- and protein-level assays may consequently support different conclusions.</p>
           </section>
