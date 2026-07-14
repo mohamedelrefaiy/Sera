@@ -2,7 +2,7 @@
   <img src="assets/sera-logo.svg" alt="Sera" width="300">
 </p>
 
-# Sera
+# Sera : Gene
 
 Rank and adversarially verify druggable T-cell regulators from Perturb-seq — a
 reusable instrument that runs the same pipeline on any screen. Built for the
