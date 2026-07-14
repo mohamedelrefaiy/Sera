@@ -1010,7 +1010,7 @@
   :focus-visible{outline:3px solid rgba(8,124,240,.45);outline-offset:3px}
 
   /* Experimental decision brief: one numbered reading order, from result to bench decision. */
-  .turn{max-width:960px}.brief-shell{display:block;max-width:900px;margin:0 auto}
+  .turn{max-width:960px}.brief-shell{display:block;max-width:900px;margin:0 auto;--report-copy-width:78ch}
   .brief-main{min-width:0}
   .brief-k{font:600 10px/1.2 var(--font-mono);letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint)}
   .decision-gate{display:grid;grid-template-columns:minmax(210px,.34fr) minmax(0,1fr) auto;gap:24px;align-items:center;margin:0 0 22px;padding:18px 20px;border-radius:16px;background:rgba(255,255,255,.82);box-shadow:inset 0 0 0 1px var(--line),0 16px 38px -34px rgba(20,43,50,.34)}
@@ -1025,8 +1025,8 @@
     background:rgba(255,255,255,.72);color:var(--ink-faint);font:650 9px/1 var(--font-mono);font-variant-numeric:tabular-nums}
   .reconcile-section-k{display:block;margin:1px 0 5px;color:var(--accent);font:650 9px/1.3 var(--font-mono);letter-spacing:.12em;text-transform:uppercase}
   .reconcile-section-title{margin:0;color:var(--ink);font:700 28px/1.12 var(--font-ui);letter-spacing:-.035em;text-wrap:balance}
-  .reconcile-section-deck{margin:7px 0 0;max-width:68ch;color:var(--ink-soft);font-size:13px;line-height:1.5}
-  .interpretation-block{margin:0;padding:0}.interpretation-block .prose{margin:0;max-width:68ch}.interpretation-block .result-narrative{margin-top:10px}
+  .reconcile-section-deck{margin:7px 0 0;max-width:var(--report-copy-width);color:var(--ink-soft);font-size:13px;line-height:1.5;text-wrap:pretty}
+  .interpretation-block{margin:0;padding:0}.interpretation-block .prose{margin:0;max-width:var(--report-copy-width);text-wrap:pretty}.interpretation-block .result-narrative{margin-top:10px}
   .evidence-boundary{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:20px 0 24px;background:var(--line);border-radius:16px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
   .boundary{min-height:152px;padding:17px;background:rgba(255,255,255,.76)}.boundary .brief-k::before{content:"";display:inline-block;width:7px;height:7px;margin-right:7px;border-radius:50%;background:var(--ink-faint)}
   .boundary.observed .brief-k::before{background:var(--mrna)}.boundary.inferred .brief-k::before{background:var(--warn)}

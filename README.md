@@ -47,6 +47,8 @@ Python app:
 Dependency direction reads top-to-bottom: `api → agent → llm → core → clients`.
 `core/` knows nothing about Claude; `llm/` adapts it to the model.
 
+Interface typography and layout conventions are documented in [DESIGN.md](DESIGN.md).
+
 ## Quickstart
 
 One command runs the whole app (it creates the venv and installs on first run):
