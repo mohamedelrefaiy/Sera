@@ -360,7 +360,7 @@ def _brief_for_row(row: dict, constraints=None) -> dict | None:
         claims = resolve_claims(row["gene"], row["cytokine"], cond, _PROVENANCE)
         dossier = resolve_dossier(_ENRICHMENT.get(row["gene"]))
         positive_control = resolve_positive_control(
-            _CONCORDANCE, _GROUND_TRUTH, row["cytokine"], cond)
+            _CONCORDANCE, _GROUND_TRUTH, row["cytokine"], cond, focal_gene=row["gene"])
         brief = build_decision_brief(
             snapshot, context, claims, constraints, dossier, positive_control)
         return dataclasses.asdict(brief)

@@ -252,7 +252,8 @@ def _build_topology_map(
         provenance=provenance)
 
 
-def build_pathway_map(row: dict, pathways, node_status: dict[str, str] | None = None) -> PathwayMap:
+def build_pathway_map(row: dict, pathways, node_status: dict[str, str] | None = None,
+                      force_starburst: bool = False) -> PathwayMap:
     """Assemble the pathway-context map. Pure and deterministic: no I/O, no LLM.
 
     `row` is a concordance row (verdict is read, never recomputed). `pathways` are `enrichr.Pathway`
@@ -262,14 +263,21 @@ def build_pathway_map(row: dict, pathways, node_status: dict[str, str] | None = 
 
     Preference order: if the focal gene is in a CURATED pathway, draw the CST-style topology figure
     (real compartments + directed, cited edges). Otherwise degrade honestly to the starburst — the
-    gene ringed by its real Enrichr partners, with candidate mechanisms as marked hypotheses."""
+    gene ringed by its real Enrichr partners, with candidate mechanisms as marked hypotheses.
+
+    `force_starburst` skips the curated-topology branch entirely. It exists for the RETRIEVED-gene
+    path (web_pathway_map): a gene we pull from Reactome was NOT measured in these screens, yet it may
+    coincidentally be a curated topology NODE (e.g. GRB2). Drawing the curated cascade for it would
+    stamp the false 'confident hits in these screens' caption on a gene the screens never saw. When
+    the caller knows the gene is off-screen retrieved context, it forces the honest starburst."""
     gene = str(row.get("gene", "")).upper()
     verdict = str(row.get("verdict", ""))
     colour, verdict_word = _VERDICT_STYLE.get(verdict, _DEFAULT_STYLE)
 
-    topo = _build_topology_map(gene, verdict, colour, verdict_word, node_status)
-    if topo is not None:
-        return topo
+    if not force_starburst:
+        topo = _build_topology_map(gene, verdict, colour, verdict_word, node_status)
+        if topo is not None:
+            return topo
 
     pw, partners = _select_pathway(gene, pathways)
     pathway_term = pw.term if pw else None

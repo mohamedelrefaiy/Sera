@@ -673,7 +673,10 @@ def _web_pathway_view(gene: str):
     # hypothesise about a split we didn't observe). condition is not applicable off-screen.
     row = {"gene": gene, "verdict": ""}
     try:
-        pmap = dataclasses.asdict(build_pathway_map(row, pathways))
+        # force_starburst: a retrieved off-screen gene may coincidentally be a curated topology node
+        # (e.g. GRB2). Drawing the curated cascade would stamp the false 'confident hits in these
+        # screens' caption on a gene the screens never measured. Force the honest starburst instead.
+        pmap = dataclasses.asdict(build_pathway_map(row, pathways, force_starburst=True))
     except (ValueError, KeyError) as e:
         return _text({"gene": gene, "error": "could not build a web pathway map", "detail": str(e),
                       "note": "Say the pathway map isn't available for this gene; invent nothing."})

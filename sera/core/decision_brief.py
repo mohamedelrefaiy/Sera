@@ -676,14 +676,22 @@ def select_positive_control(
     curated_genes: list[str] | tuple[str, ...] | set[str],
     cytokine: str,
     condition: str,
+    focal_gene: str | None = None,
 ) -> PositiveControl | None:
     """Choose a POSITIVE control from rows the two screens ALREADY agree on at this exact
     cytokine/condition — never a gene under test, never an invented one. Pure and deterministic:
     given the same `rows`, the same gene is picked every time.
 
+    `focal_gene` is the gene the brief is ABOUT. It is excluded from the candidate pool: a positive
+    control exists to prove the assay can detect a KNOWN effect independent of the gene under test —
+    picking the focal gene itself would produce the circular "knock down X to prove the assay detects
+    X". When the focal gene is the only replicated candidate, the honest answer is None (no
+    independent control), not a self-reference.
+
     Algorithm (exact, do not reorder):
       1. Filter to `cytokine`/`condition` rows with verdict == 'replicated' (both screens see a
-         real, detectable effect here). No replicated row -> no honest positive control -> None.
+         real, detectable effect here), EXCLUDING the focal gene. No such row -> no honest positive
+         control -> None.
       2. Score each candidate by combined_q = (q_rna or 1.0) + (q_prot or 1.0) — missing q-values
          are treated as the weakest possible significance, never as a free pass.
       3. Prefer a CURATED known regulator when one was replicated here (the strongest possible
@@ -693,9 +701,11 @@ def select_positive_control(
          the gene-name tie-break makes the pick fully deterministic even on an exact tie.
     """
     curated = set(curated_genes)
+    focal = (focal_gene or "").strip().upper()
     candidates = [r for r in rows
                   if r.get("cytokine") == cytokine and r.get("condition") == condition
-                  and r.get("verdict") == "replicated"]
+                  and r.get("verdict") == "replicated"
+                  and str(r.get("gene", "")).upper() != focal]   # never the gene under test
     if not candidates:
         return None
 

@@ -304,3 +304,30 @@ def test_web_pathway_map_is_registered_in_allowed_tools():
     same guard every other sera tool carries. Without this, the tool would vanish with nothing failing."""
     from sera.llm import sera_tools
     assert "mcp__sera__web_pathway_map" in sera_tools.SERA_ALLOWED_TOOLS
+
+
+def test_retrieved_gene_draws_the_starburst_even_if_it_is_a_curated_topology_node(monkeypatch):
+    """Honesty-contract regression: a gene RETRIEVED from Reactome was NOT measured in these screens,
+    but it may coincidentally be a curated topology NODE. LTBR is exactly that — a real curated node
+    that is NOT in the screens. Without the force-starburst guard, web_pathway_map would fall through
+    to the curated CST cascade and stamp the false caption 'confident hits in these screens' (plus
+    directed edges) on a gene the screens never saw. The retrieved path must FORCE the honest
+    starburst: no directed edges, no curated provenance, caption says the gene was NOT measured here."""
+    from sera.core.pathway_topology import select_for
+
+    focal = "LTBR"
+    assert select_for(focal) is not None, "LTBR must be a curated node for this test to be meaningful"
+
+    fake = RemotePathway(term="TNFR2 non-canonical NF-kB pathway", stid="R-HSA-5668541",
+                         genes=(focal, "TRAF2", "TRAF3", "NFKB2", "RELB"))
+    monkeypatch.setattr("sera.clients.reactome.fetch", lambda gene, progress=None: fake)
+
+    pm = _call_web_pathway(focal)["__view_update__"]["pathway_map"]
+    # the honest starburst, NOT the curated cascade
+    assert pm["style"] == "starburst", "retrieved gene fell through to the curated topology"
+    assert pm["topology_edges"] == [] and pm["topology_nodes"] == []
+    assert pm["provenance"] is None
+    # and never the false 'confident hits in these screens' claim for an unmeasured gene
+    assert "confident hits in these screens" not in pm["caption"].lower()
+    assert "confident hits in these screens" not in pm["svg"].lower()
+    assert "not measured in these screens" in pm["caption"].lower()

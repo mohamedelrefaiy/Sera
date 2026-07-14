@@ -155,6 +155,7 @@ def resolve_positive_control(
     ground_truth: dict,
     cytokine: str,
     condition: str,
+    focal_gene: str | None = None,
 ) -> PositiveControl | None:
     """Map the ground-truth artifact's curated regulator list onto `select_positive_control`.
 
@@ -162,6 +163,9 @@ def resolve_positive_control(
     like `{"gene": "VAV1", "role": ..., "verdict": ..., ...}`. The gene symbol must be pulled out of
     each dict; passing the dicts straight through would silently match nothing (a dict is never `in`
     a curated-genes membership test the way a string is), so this extraction is not optional
-    boilerplate — it is the fix for that exact gotcha."""
+    boilerplate — it is the fix for that exact gotcha.
+
+    `focal_gene` (the gene the brief is about) is passed through so the selector never picks the gene
+    under test as its own positive control — that would be a circular, false claim."""
     curated_genes = [d["gene"] for d in ground_truth.get("positive_regulators", [])]
-    return select_positive_control(rows, curated_genes, cytokine, condition)
+    return select_positive_control(rows, curated_genes, cytokine, condition, focal_gene=focal_gene)

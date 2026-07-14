@@ -455,6 +455,31 @@ def test_select_positive_control_returns_none_when_no_replicated_hit():
     assert brief.experiment.positive_control is None
 
 
+def test_select_positive_control_never_picks_the_gene_under_test():
+    """A positive control proves the assay can detect a KNOWN effect INDEPENDENT of the gene being
+    briefed. Selecting the focal gene itself is circular ('knock down VAV1 to prove the assay detects
+    VAV1'). VAV1 is the top curated replicated gene here, so a VAV1 brief must skip it and pick the
+    next real control — never itself."""
+    rows = _synthetic_rows()   # VAV1 is the would-be winner
+    pc = select_positive_control(rows, _CURATED_GENES, "IL2", "Stim48hr", focal_gene="VAV1")
+    assert pc is not None
+    assert pc.gene != "VAV1"                         # never a self-reference
+    assert pc.gene in {"BCL10", "ITK"}               # the next best CURATED replicated gene
+    # case-insensitive: a lower-case focal gene still excludes the same row
+    assert select_positive_control(rows, _CURATED_GENES, "IL2", "Stim48hr",
+                                   focal_gene="vav1").gene != "VAV1"
+
+
+def test_focal_gene_as_the_only_replicated_candidate_yields_none_not_itself():
+    """If the gene under test is the ONLY replicated candidate at this condition, the honest answer is
+    None (no independent positive control exists), not a circular self-reference."""
+    rows = [
+        _row("VAV1", "Stim48hr", "replicated", z_rna=-3.28, q_rna=0.002, lfc_prot=-2.92, q_prot=0.004),
+        _row("PTPN7", "Stim48hr", "discordant", z_rna=9.9, q_rna=0.0001, lfc_prot=0.3, q_prot=0.0001),
+    ]
+    assert select_positive_control(rows, _CURATED_GENES, "IL2", "Stim48hr", focal_gene="VAV1") is None
+
+
 def test_positive_control_rejects_unknown_source():
     with pytest.raises(ValueError, match="source"):
         PositiveControl(gene="VAV1", source="made_up_source", expected_direction="lowers",
