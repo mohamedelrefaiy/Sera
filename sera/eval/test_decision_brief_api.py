@@ -200,3 +200,52 @@ def test_infeasible_saved_lab_profile_reports_every_blocker_and_safe_adaptation(
         assert "donor" in blockers
         assert "time course" in blockers
         assert brief["experiment"]["timecourse"] is not None
+
+
+# --- per-condition decision briefs (the headline feature) ------------------------------------
+# `concordance_gene` attaches a brief to EVERY condition row, not just the anchor, so the single-gene
+# view's condition tabs render the experiment for the verdict AT THAT CONDITION. Regression gate for
+# the bug where switching tabs showed the anchor's experiment under a different condition's verdict.
+
+
+def test_every_condition_row_carries_its_own_decision_brief():
+    """Each entry in by_condition must carry a decision_brief scoped to that condition — not just the
+    top-level anchor. Without this, a condition tab has no brief of its own to render."""
+    with TestClient(app) as client:
+        by_cond = client.get("/api/concordance/TSC1").json()["by_condition"]
+        assert by_cond, "expected per-condition rows"
+        for cond, row in by_cond.items():
+            assert "decision_brief" in row, f"{cond} has no decision_brief"
+            b = row["decision_brief"]
+            # a brief was built for this condition, and it is FOR this condition (not the anchor's)
+            assert b is not None, f"{cond} decision_brief is null"
+            assert b["snapshot"]["condition"] == cond
+
+
+def test_per_condition_brief_matches_the_verdict_at_that_condition():
+    """A gene whose verdict differs across conditions must get a DIFFERENT experiment archetype under
+    each condition tab. ABCA3 is mrna_only at Stim48hr (propagation test — no split language) but
+    neither at Rest (null-interrogation — 'validation is low-yield'). This is the exact bug the
+    per-condition refactor fixed: the anchor's experiment must not bleed onto the other tabs."""
+    with TestClient(app) as client:
+        by_cond = client.get("/api/concordance/ABCA3").json()["by_condition"]
+
+        stim48 = by_cond["Stim48hr"]["decision_brief"]
+        rest = by_cond["Rest"]["decision_brief"]
+
+        # the verdicts differ by condition, and each brief carries its own condition's verdict
+        assert stim48["snapshot"]["verdict"] == "mrna_only"
+        assert rest["snapshot"]["verdict"] == "neither"
+
+        # mrna_only (propagation test): the objective is about reaching the OTHER layer, no split talk
+        stim_obj = stim48["experiment"]["objective"].lower()
+        assert "other layer" in stim_obj or "reaches" in stim_obj
+        assert "split" not in stim_obj
+
+        # neither (null-interrogation): the objective says validation is low-yield / concordant null,
+        # and its outcome matrix is the no-signal one, NOT the anchor's propagation matrix
+        rest_obj = rest["experiment"]["objective"].lower()
+        assert "low-yield" in rest_obj or "nothing" in rest_obj or "null" in rest_obj
+        rest_outcomes = " ".join(o["result"] for o in rest["outcome_matrix"]).lower()
+        assert rest_outcomes != " ".join(
+            o["result"] for o in stim48["outcome_matrix"]).lower(), "tabs share one matrix — the bug"

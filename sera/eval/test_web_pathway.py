@@ -157,3 +157,150 @@ def test_caption_does_not_claim_hits_or_layer_agreement_for_a_retrieved_gene(mon
     assert "retrieved" in cap and "not measured in these screens" in cap
     # and nowhere in the SVG should the misleading "shares … with the other hits" label appear
     assert "with the other hits" not in pm["svg"].lower()
+
+
+# --- the cache layer: resolve offline, tolerate corruption, never crash a write ------------------
+
+def test_cache_hit_returns_without_touching_the_network(monkeypatch, tmp_path):
+    """A gene already in the cache must resolve from disk — the client must NOT call _get_json again
+    (the offline/instant promise). Prove it by making the network raise if touched."""
+    cache_file = tmp_path / "reactome_cache.json"
+    cache_file.write_text(json.dumps({
+        "STAT3": {"term": "Interleukin-7 signaling", "stid": "R-HSA-1266695",
+                  "genes": ["STAT3", "JAK1", "IL7R"]}}))
+    monkeypatch.setattr(reactome, "CACHE", str(cache_file))
+
+    def explode(url):
+        raise AssertionError("network was hit on a cache HIT — offline promise broken")
+    monkeypatch.setattr(reactome, "_get_json", explode)
+
+    pw = reactome.fetch("stat3")            # lower-case in → upper-cased key lookup
+    assert pw is not None
+    assert pw.stid == "R-HSA-1266695"
+    assert pw.genes == ("STAT3", "JAK1", "IL7R")
+
+
+def test_cache_hit_of_a_stored_none_returns_none_without_network(monkeypatch, tmp_path):
+    """A cached negative result (gene mapped to no pathway) must return None from disk, not re-query.
+    Otherwise every un-placeable gene re-hits the API on every view."""
+    cache_file = tmp_path / "reactome_cache.json"
+    cache_file.write_text(json.dumps({"NOTAREALGENE": None}))
+    monkeypatch.setattr(reactome, "CACHE", str(cache_file))
+
+    def explode(url):
+        raise AssertionError("network hit on a cached-None")
+    monkeypatch.setattr(reactome, "_get_json", explode)
+    assert reactome.fetch("NOTAREALGENE") is None
+
+
+def test_corrupt_cache_file_degrades_to_empty_not_a_crash(monkeypatch, tmp_path):
+    """A truncated / non-JSON cache file must not crash the client — _load_cache swallows the parse
+    error and returns {}, so the lookup proceeds as a cold cache instead of 500-ing the view."""
+    cache_file = tmp_path / "reactome_cache.json"
+    cache_file.write_text("{ this is not valid json ")
+    monkeypatch.setattr(reactome, "CACHE", str(cache_file))
+    assert reactome._load_cache() == {}          # corrupt → empty, no exception
+
+    # and a full fetch over a corrupt cache still works (falls through to the network stub)
+    monkeypatch.setattr(reactome, "_get_json", lambda url: (
+        [{"stId": "R-HSA-1266695", "displayName": "Interleukin-7 signaling", "isInDisease": False}]
+        if "/mapping/UniProt/" in url
+        else [{"geneName": ["STAT3"]}, {"geneName": ["JAK1"]}, {"geneName": ["IL7R"]}]))
+    pw = reactome.fetch("STAT3")
+    assert pw is not None and pw.stid == "R-HSA-1266695"
+
+
+def test_cache_write_failure_never_breaks_the_lookup(monkeypatch):
+    """If the cache is unwritable (read-only dir, disk full), _save_cache must swallow the OSError so
+    a lookup still returns its result. A cache write failure must never surface to the caller."""
+    import builtins
+    real_open = builtins.open
+
+    def write_fails(file, mode="r", *a, **k):
+        if "w" in mode:
+            raise OSError("disk full")
+        return real_open(file, mode, *a, **k)
+    monkeypatch.setattr("builtins.open", write_fails)
+
+    # _save_cache catches the OSError internally and returns None — no exception escapes.
+    assert reactome._save_cache({"X": None}) is None
+
+
+def test_fetch_degrades_to_none_when_the_pathways_call_raises(monkeypatch, tmp_path):
+    """A network failure on the pathways lookup must degrade to None (honest 'could not place it'),
+    never raise up into the view. Exercises fetch()'s `except Exception` around _pathways_for_gene."""
+    monkeypatch.setattr(reactome, "CACHE", str(tmp_path / "reactome_cache.json"))
+
+    def dead_network(url):
+        raise ConnectionError("reactome unreachable")
+    monkeypatch.setattr(reactome, "_get_json", dead_network)
+
+    seen = []
+    assert reactome.fetch("STAT3", progress=seen.append) is None
+    # the degrade path reports the error through the progress callback, not by raising
+    assert any("reactome error (pathways)" in m for m in seen)
+
+
+def test_fetch_skips_a_pathway_whose_members_call_raises(monkeypatch, tmp_path):
+    """If ONE pathway's member lookup fails mid-scan, that pathway is skipped (logged via progress)
+    and the other candidates still resolve — a single flaky members call must not sink the whole
+    lookup. Exercises fetch()'s `except Exception` around _members_of_pathway."""
+    monkeypatch.setattr(reactome, "CACHE", str(tmp_path / "reactome_cache.json"))
+
+    def flaky(url):
+        if "/mapping/UniProt/" in url:
+            return [
+                {"stId": "R-HSA-BAD", "displayName": "Flaky pathway", "isInDisease": False},
+                {"stId": "R-HSA-1266695", "displayName": "Interleukin-7 signaling",
+                 "isInDisease": False},
+            ]
+        if "/participants/R-HSA-BAD/" in url:
+            raise TimeoutError("members call timed out")
+        if "/participants/R-HSA-1266695/" in url:
+            return [{"geneName": ["STAT3"]}, {"geneName": ["JAK1"]}, {"geneName": ["IL7R"]}]
+        return []
+    monkeypatch.setattr(reactome, "_get_json", flaky)
+
+    seen = []
+    pw = reactome.fetch("STAT3", progress=seen.append)
+    assert pw is not None and pw.stid == "R-HSA-1266695"     # the healthy pathway still wins
+    assert any("reactome error (members R-HSA-BAD)" in m for m in seen)
+
+
+# --- the tool: guard the empty gene, the un-buildable map, and the registration ------------------
+
+def test_tool_guards_an_empty_or_blank_gene(monkeypatch):
+    """web_pathway_map with a blank gene must ask which gene, not call Reactome. Prove no fetch fires."""
+    def explode(*a, **k):
+        raise AssertionError("fetch called for a blank gene")
+    monkeypatch.setattr("sera.clients.reactome.fetch", explode)
+    for blank in ("", "   ", "\t"):
+        out = _call_web_pathway(blank)
+        assert out["error"] == "no gene given"
+        assert "gene" in out["note"].lower()          # tells the model to ask which gene
+        assert "__view_update__" not in out
+
+
+def test_tool_degrades_when_the_map_cannot_be_built(monkeypatch):
+    """If build_pathway_map raises for a retrieved row (e.g. an unexpected shape), the tool must return
+    an honest 'could not build' note and invent nothing — never 500 the view. Exercises the
+    _web_pathway_view except (ValueError, KeyError) branch."""
+    fake = RemotePathway(term="Interleukin-7 signaling", stid="R-HSA-1266695",
+                         genes=("STAT3", "JAK1", "IL7R"))
+    monkeypatch.setattr("sera.clients.reactome.fetch", lambda gene, progress=None: fake)
+
+    def boom(row, pathways, **kw):
+        raise ValueError("unexpected pathway shape")
+    monkeypatch.setattr("sera.core.pathway_map.build_pathway_map", boom)
+
+    out = _call_web_pathway("STAT3")
+    assert "__view_update__" not in out               # no figure drawn from a failed build
+    assert out["error"] == "could not build a web pathway map"
+    assert "invent nothing" in out["note"].lower()
+
+
+def test_web_pathway_map_is_registered_in_allowed_tools():
+    """A future refactor must not silently drop web_pathway_map from the agent's allowed-tools list —
+    same guard every other sera tool carries. Without this, the tool would vanish with nothing failing."""
+    from sera.llm import sera_tools
+    assert "mcp__sera__web_pathway_map" in sera_tools.SERA_ALLOWED_TOOLS
