@@ -275,10 +275,23 @@ def build_pathway_map(row: dict, pathways, node_status: dict[str, str] | None = 
     pathway_term = pw.term if pw else None
     hypotheses = _hypotheses(verdict)   # hypotheses stand on the verdict, not on pathway membership
 
+    # An empty verdict means the gene was NOT measured in these screens (e.g. a gene we retrieved from
+    # an external source). It has no hits and no two-layer result here, so the caption must NOT claim
+    # it "shares a pathway with the other hits" or that "its layers agree" — both would be false.
+    retrieved = verdict == ""
+
     if pw is None:
-        caption = (f"{gene} is not in an enriched pathway for this hit set, so there is no shared "
+        caption = (f"{gene} could not be placed in a pathway, so there is no neighbourhood to map."
+                   if retrieved else
+                   f"{gene} is not in an enriched pathway for this hit set, so there is no shared "
                    "neighbourhood to map — its verdict still stands on its own.")
-        pathway_label = "no enriched pathway for this gene"
+        pathway_label = "no pathway found for this gene"
+    elif retrieved:
+        label = _pretty_pathway(pw.term)
+        caption = (f"{gene} sits in {label} among {', '.join(partners) or 'no other members'}. This "
+                   "neighbourhood is retrieved context — {gene} was not measured in these screens, so "
+                   "there is no verdict and no mRNA/protein result to show here.").format(gene=gene)
+        pathway_label = f"retrieved context · {label}"
     else:
         label = _pretty_pathway(pw.term)
         caption = (f"{gene} sits in {label} alongside {', '.join(partners) or 'no other hits'}. "

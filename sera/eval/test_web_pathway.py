@@ -141,3 +141,19 @@ def test_tool_never_claims_a_screen_verdict_for_an_offscreen_gene(monkeypatch):
     monkeypatch.setattr("sera.clients.reactome.fetch", lambda gene, progress=None: fake)
     pm = _call_web_pathway("STAT3")["__view_update__"]["pathway_map"]
     assert pm["focal_verdict"] == ""                  # never fabricates 'replicated'/'discordant'/…
+
+
+def test_caption_does_not_claim_hits_or_layer_agreement_for_a_retrieved_gene(monkeypatch):
+    # the figure caption for a NOT-measured gene must not say it shares a pathway "with the other
+    # hits" or that "its two layers agree" — it has no hits and no measured layers here.
+    fake = RemotePathway(term="Interleukin-7 signaling", stid="R-HSA-1266695",
+                         genes=("STAT3", "JAK1", "IL7R", "IL2RG"))
+    monkeypatch.setattr("sera.clients.reactome.fetch", lambda gene, progress=None: fake)
+    pm = _call_web_pathway("STAT3")["__view_update__"]["pathway_map"]
+    cap = pm["caption"].lower()
+    assert "with the other hits" not in cap
+    assert "two layers agree" not in cap and "layers disagree" not in cap
+    # it must say plainly this is retrieved context, not a measured result
+    assert "retrieved" in cap and "not measured in these screens" in cap
+    # and nowhere in the SVG should the misleading "shares … with the other hits" label appear
+    assert "with the other hits" not in pm["svg"].lower()

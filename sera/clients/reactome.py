@@ -37,7 +37,13 @@ BASE = "https://reactome.org/ContentService"
 CACHE = os.path.join(os.path.dirname(__file__), "reactome_cache.json")
 SPECIES = "9606"          # Homo sapiens; we only place human genes
 _TIMEOUT = 20
-_MAX_MEMBERS = 24         # cap members kept per pathway (readability + payload size)
+_MAX_MEMBERS = 7          # partners (incl. the focal gene) kept for the starburst ring
+# A useful "neighbourhood" pathway is SPECIFIC, not a catch-all. Reactome pathways containing a gene
+# span from ~3 members (too sparse to ring) to ~380 (generic buckets like "Affinity selection of
+# immunoglobulins" that contain the gene but are not its signalling identity). Prefer a pathway whose
+# size falls in this band; only if none do, fall back to the one closest to it.
+_MIN_PATHWAY_SIZE = 6
+_MAX_PATHWAY_SIZE = 60
 # Reactome's ContentService rejects the default urllib User-Agent with 403; a named UA is accepted.
 # Sending it means a real transport failure surfaces as an error we can log, not a silent "no
 # pathway" that would masquerade as an honest empty result.
@@ -120,8 +126,15 @@ def fetch(gene: str, progress=None) -> RemotePathway | None:
     to an honest 'could not place this gene', inventing nothing.
 
     Selection is deterministic and code-owned: among the gene's pathways, pick the one with the most
-    retrievable member genes (the richest real neighbourhood), breaking ties by stable id. The model
-    never chooses here; it only narrates what this returns."""
+    retrievable member genes (the richest real neighbourhood), breaking ties by stable id. Within that
+    pathway, partners are ORDERED by cross-pathway connectivity — how many of the gene's OTHER Reactome
+    pathways each partner also appears in — so the gene's real signalling hubs (e.g. JAK1, STAT5 for
+    STAT3) rank above incidental co-members (histones, etc.) that Reactome lists but that aren't part
+    of the gene's signalling story. That score is a COUNT of real co-occurrences, not an invented
+    relevance judgement, so the honesty contract holds: the model never chooses here; it only narrates
+    what this returns."""
+    from collections import Counter
+
     g = (gene or "").strip().upper()
     if not g:
         return None
@@ -141,7 +154,11 @@ def fetch(gene: str, progress=None) -> RemotePathway | None:
             progress(f"  reactome error (pathways): {e}")
         return None
 
-    best: RemotePathway | None = None
+    # Two passes, no extra requests beyond the members already fetched. First, gather every pathway's
+    # members once and accumulate how often each partner co-occurs with the gene across ALL its
+    # pathways — the connectivity score that measures who the gene's real signalling hubs are.
+    connectivity: Counter = Counter()
+    candidates: list[tuple[str, str, tuple[str, ...]]] = []   # (stid, term, members)
     for p in pathways:
         stid = p["stId"]
         try:
@@ -150,17 +167,35 @@ def fetch(gene: str, progress=None) -> RemotePathway | None:
             if progress:
                 progress(f"  reactome error (members {stid}): {e}")
             continue
+        connectivity.update(m for m in members if m != g)
         # only keep a pathway that actually contains the focal gene AND has partners to ring it with
-        if g not in members or len(members) < 2:
-            continue
-        # cap for readability; always keep the focal gene in the kept set
-        kept = members if len(members) <= _MAX_MEMBERS else (
-            (g,) + tuple(m for m in members if m != g)[: _MAX_MEMBERS - 1])
-        kept = tuple(sorted(set(kept)))
-        cand = RemotePathway(term=str(p.get("displayName") or stid), stid=stid, genes=kept)
-        # richest real neighbourhood wins; deterministic tie-break by stable id
-        if best is None or (cand.n_genes, best.stid) > (best.n_genes, cand.stid):
-            best = cand
+        if g in members and len(members) >= 2:
+            candidates.append((stid, str(p.get("displayName") or stid), members))
+
+    # Now pick the pathway. Prefer a SPECIFIC one (size in-band, not a 3-member stub or a 380-member
+    # catch-all), and among those the one whose members are the gene's most-connected neighbourhood —
+    # summed partner connectivity, so a JAK/STAT cytokine pathway outranks an incidental cofactor
+    # complex of the same size. Both terms are real co-occurrence counts, never invented relevance.
+    def _score(item: tuple[str, str, tuple[str, ...]]) -> tuple:
+        stid, _term, members = item
+        n = len(members)
+        in_band = _MIN_PATHWAY_SIZE <= n <= _MAX_PATHWAY_SIZE
+        distance = 0 if in_band else min(abs(n - _MIN_PATHWAY_SIZE), abs(n - _MAX_PATHWAY_SIZE))
+        centrality = sum(connectivity[m] for m in members if m != g)
+        # in-band beats out-of-band; then most-central neighbourhood; out-of-band ranked by closeness
+        # to the band; stable id last for determinism.
+        return (1 if in_band else 0, centrality, -distance, stid)
+
+    best: RemotePathway | None = None
+    if candidates:
+        best_stid, best_term, best_members = max(candidates, key=_score)
+        # rank partners by connectivity (desc), tie-break alphabetically for determinism; keep the
+        # focal gene first, then the top partners up to the cap. The score is a real co-occurrence
+        # count — the figure surfaces the gene's signalling hubs, never a fabricated ordering.
+        partners = sorted((m for m in best_members if m != g),
+                          key=lambda m: (-connectivity[m], m))
+        kept = (g, *partners[: _MAX_MEMBERS - 1])
+        best = RemotePathway(term=best_term, stid=best_stid, genes=kept)
 
     cache[g] = (None if best is None
                 else {"term": best.term, "stid": best.stid, "genes": list(best.genes)})
