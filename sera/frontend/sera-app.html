@@ -443,9 +443,7 @@
   .prose#proseVerdict b{font-weight:700}
   .prose.interp{color:var(--ink-soft);font-size:var(--t-body);margin-top:22px}
   .prose.interp:empty{margin-top:0}
-  /* Distinct name from the .paste .cur border-blink below. Both were named `blink` with different
-     bodies, so the later border-color one silently overrode this opacity fade — the streaming caret
-     animated a non-existent border instead of blinking. */
+  /* Streaming caret — a soft opacity blink while Claude generates the explanation. */
   .stream::after{content:"▍";color:var(--ink-faint);animation:blink-op 1s steps(2) infinite}
   @keyframes blink-op{50%{opacity:0}}
 
@@ -667,50 +665,17 @@
 
   .srcline{margin-top:16px;text-align:right;font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint)}
 
-  /* batch */
-  .btop{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start}
-  @media(max-width:780px){.btop{grid-template-columns:1fr}}
-  .paste{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:14px 16px;font-family:var(--font-mono);font-size:13px;color:var(--ink-soft);line-height:1.95;min-height:180px}
-  .paste .cur{border-right:2px solid var(--ink);animation:blink 1s steps(1) infinite}
-  @keyframes blink{50%{border-color:transparent}}
-  .sumrow{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}
-  .sumpill{font-family:var(--font-mono);font-size:12px;padding:7px 11px;border-radius:9px;display:flex;gap:7px;align-items:center}
-  .sumpill .n{font-weight:600}
-  .sp.rep{background:var(--lock);color:#fff}
-  .sp.mo{background:var(--mrna-soft);color:#0a6a55}
-  .sp.po{background:var(--protein-soft);color:#8f2568}
-  .sp.no{background:var(--absent-soft);color:#59636f}
-  .enrich{margin-top:4px}
-  .enrich .et{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:9px}
-  .echips{display:flex;gap:8px;flex-wrap:wrap}
-  .echip{font-family:var(--font-mono);font-size:12px;padding:6px 11px;border-radius:8px;background:var(--surface);border:1px solid var(--line-strong);color:var(--ink)}
-  .echip b{color:var(--ink-soft);font-weight:500}
-
-  /* Hit list = a ranked data table. Machine voice (mono) for the header, gene names, tags and
-     priority; serif only for the "why chase it" column, which is reasoning prose, not data. */
-  table.shortlist{width:100%;border-collapse:collapse;margin-top:22px;font-size:13.5px}
-  .shortlist th{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line-strong)}
-  .shortlist td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
-  .shortlist tr:hover td{background:var(--surface-2)}
-  .shortlist .gname{font-family:var(--font-mono);font-weight:600;font-size:13.5px}
+  /* Verdict badge — mono tag coloured by verdict. Shared by the in-thread trajectory (compareRow)
+     and known-biology views. */
   .vtag{font-family:var(--font-mono);font-size:11px;padding:4px 9px;border-radius:7px;white-space:nowrap}
   .vtag.rep{background:var(--lock);color:#fff}.vtag.mo{background:var(--mrna-soft);color:#0a6a55}
   .vtag.po{background:var(--protein-soft);color:#8f2568}.vtag.no{background:var(--absent-soft);color:#59636f}
-  /* .ctag = the confidence badge in the Hit-list TABLE (High/Medium/Low) — colour carries the
-     confidence level, so it stays a filled coloured tag. (Do NOT reuse it for the plan Decision
-     condition; that uses .cond-chip below, a quiet outlined sibling of the verdict badge.) */
-  .ctag{font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:6px}
-  .ctag.High{background:var(--lock);color:#fff}.ctag.Medium{background:var(--warn-soft);color:#7a561b}.ctag.Low{background:var(--absent-soft);color:#59636f}
   /* Condition chip — the assay context ("IL2 · Stim48hr") next to the plan verdict badge. A QUIET
      sibling, NOT a second verdict: matched to .verdict-badge's box (height/radius/font) so the pair
      reads as one row, but outlined-neutral so the verdict is the only coloured thing. */
   .cond-chip{display:inline-flex;align-items:center;font-family:var(--font-mono);font-size:13px;
     font-weight:500;padding:8px 13px;border-radius:10px;background:transparent;color:var(--ink-soft);
     box-shadow:inset 0 0 0 1px var(--line-strong)}
-  .drugcell{font-family:var(--font-mono);font-size:12px}
-  /* "why chase it" — the one reasoning column; serif so it reads as a written judgement, not data. */
-  .chase{font-family:var(--font-serif);color:var(--ink-soft);font-size:14px;line-height:1.5;max-width:34ch}
-  .prio{font-family:var(--font-mono);font-size:12px;color:var(--ink-faint);text-align:center}
 
   /* ground-truth (known biology) view */
   .gt-claim{border:1px solid var(--line);border-left:4px solid var(--lock);border-radius:12px;background:var(--surface-2);padding:18px 20px;margin-top:22px}
@@ -1385,7 +1350,7 @@
     .workspace{display:block;height:auto}
     .nav,.arts,.convo-head,.composer,.demo-flag,.exports,.srcline{display:none!important}
     .convo,.convo-scroll{height:auto;overflow:visible;background:#fff}
-    #singleView,#batchView,#truthView{display:none!important}
+    #singleView,#truthView{display:none!important}
     .decision{background:#f6f4f0;color:#111;border-left:4px solid var(--lock)}
     .decision .dh{color:var(--lock)}
     .pcard,.rec{background:#fff}
@@ -1406,14 +1371,13 @@
 <a class="skip-link" href="#mainContent">Skip to main content</a>
 <div class="workspace arts-collapsed">
 
-  <!-- LEFT NAV — one primary surface (Chat) + a secondary Hit-list tool. Validation plan and
-       Known biology are no longer destinations; they're produced inside the thread on request. -->
+  <!-- LEFT NAV — one primary surface (Chat). Validation plan and Known biology are no longer
+       destinations; they're produced inside the thread on request. -->
   <nav class="nav" aria-label="Workspace">
     <div class="nav-top"><svg class="sera-mark" viewBox="0 0 72 44" aria-hidden="true" focusable="false"><use href="#seraConvergenceMark"/></svg><span class="txt">Sera <small style="color:var(--ink-faint);font-family:var(--font-mono);font-size:10px">Gene</small></span><button class="nav-collapse" id="navCollapse" aria-label="Collapse sidebar" title="Collapse sidebar" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button></div>
     <button class="nav-item newchat" id="newChat" aria-label="New chat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">New chat</span></button>
     <div class="modes" role="tablist" style="display:contents">
       <button class="nav-item mode on" id="mChat" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span class="lbl">Chat</span></button>
-      <button class="nav-item mode" id="mBatch" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="lbl">Hit list</span></button>
       <button class="nav-item mode" id="mHow" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.6 1c0 1.7-2.5 2-2.5 3.5"/><path d="M12 17h.01"/></svg><span class="lbl">How it works</span></button>
     </div>
     <button class="nav-item lab-nav" id="openLabNav" aria-haspopup="dialog"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 3h6M10 3v5l-5.5 9.5A2.3 2.3 0 0 0 6.5 21h11a2.3 2.3 0 0 0 2-3.5L14 8V3M7.5 15h9"/></svg><span class="lbl">My Lab</span></button>
@@ -1477,34 +1441,6 @@
            agent reply) cloned from #turnTpl. Validation plan / Known biology are appended as
            extra agent turns via the follow-up chips under each reply. -->
       <div id="thread" class="thread"></div>
-
-      <!-- HIT LIST — kept as a distinct tool (it takes a pasted list, not a single message). -->
-      <div id="batchView" class="hidden">
-        <div class="btop" style="margin-top:22px">
-          <div>
-            <div class="ct" style="font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px" id="batchCount">Your hit list</div>
-            <div class="paste" id="batchPaste" contenteditable="true" spellcheck="false">ITK
-BCL10
-TSC1
-LCP2
-VPS37B
-ZNF250</div>
-            <button class="go" id="batchGo" style="margin-top:10px;width:100%">Reconcile list</button>
-          </div>
-          <div>
-            <div class="sumrow" id="batchSum"></div>
-            <div class="enrich">
-              <div class="et">Pathways your replicated hits share · Enrichr / Reactome</div>
-              <div class="echips" id="batchPathways"><span class="echip">—</span></div>
-            </div>
-          </div>
-        </div>
-
-        <table class="shortlist">
-          <thead><tr><th>Prio</th><th>Gene</th><th>Verdict</th><th>Confidence</th><th>Druggable</th><th>Why chase it</th></tr></thead>
-          <tbody id="batchRows"></tbody>
-        </table>
-      </div>
 
       <!-- HOW IT WORKS — read-before-you-use explainer. Static prose; explains goal, function,
            value, and the design thesis using the app's own serif/mono + two-channel grammar. -->
@@ -3985,93 +3921,8 @@ ZNF250</div>
     }
   }
 
-  // ---- hit-list (batch) reconciliation ----
-  // Priority = verdict rank × confidence × druggability. replicated+druggable floats to the top;
-  // concordant negatives sink. Uses IL2/Stim48hr as the anchor condition (the brief's default).
-  var VERDICT_RANK={replicated:5,discordant:4,protein_only:3,mrna_only:2,neither:0};
-  var CONF_W={High:1.0,Medium:0.6,Low:0.3};
+  // Verdict → [css-class, label] map. Shared by the in-thread compare/known-biology views.
   var VTAG={replicated:["rep","Replicated"],discordant:["disc","Discordant"],mrna_only:["mo","mRNA-only"],protein_only:["po","Protein-only"],neither:["no","Neither"]};
-  var CHASE={
-    replicated:"Both screens agree — the strongest kind of hit.",
-    discordant:"Both hit but directions disagree — resolve which endpoint matters.",
-    mrna_only:"mRNA lead — confirm it reaches the protein.",
-    protein_only:"Protein-only — a transcriptome-only search misses it; confirm before assigning a mechanism.",
-    neither:"Concordant negative — safe to drop."
-  };
-
-  async function renderBatch(){
-    var raw=$("batchPaste").innerText||"";
-    var genes=raw.split(/[\s,]+/).map(function(s){return s.trim().toUpperCase();}).filter(Boolean);
-    genes=genes.filter(function(g,i){return genes.indexOf(g)===i;});   // dedupe
-    $("batchCount").textContent="Your hit list · "+genes.length+" gene"+(genes.length===1?"":"s");
-    var results=[];
-    for(var i=0;i<genes.length;i++){
-      try{
-        var r=await fetch(concordanceURL(genes[i]));
-        if(!r.ok){ results.push({gene:genes[i],missing:true}); continue; }
-        var d=await r.json();
-        var row=(d.by_condition||{}).Stim48hr||(d.by_condition||{}).Stim8hr||(d.by_condition||{}).Rest||null;
-        var e=d.enrichment||{};
-        results.push({gene:d.gene,verdict:row?row.verdict:"neither",
-          conf:(e.quality&&e.quality.confidence)||"Low",
-          sm:(e.druggability&&e.druggability.sm_score)||0, smStage:(e.druggability&&e.druggability.sm_stage)||null,
-          ab:(e.druggability&&e.druggability.ab_score)||0, abStage:(e.druggability&&e.druggability.ab_stage)||null});
-      }catch(err){ results.push({gene:genes[i],missing:true}); }
-    }
-    // score + sort
-    results.forEach(function(x){
-      if(x.missing){x.score=-1;return;}
-      var drug=Math.max(x.sm,x.ab)+(x.smStage||x.abStage?0.5:0);
-      x.score=(VERDICT_RANK[x.verdict]||0)*(CONF_W[x.conf]||0.3)*(1+drug);
-    });
-    results.sort(function(a,b){return b.score-a.score;});
-
-    // summary pills
-    var tally={};
-    results.forEach(function(x){ if(!x.missing) tally[x.verdict]=(tally[x.verdict]||0)+1; });
-    var pills="";
-    [["replicated","rep"],["discordant","disc"],["protein_only","po"],["mrna_only","mo"],["neither","no"]].forEach(function(p){
-      if(tally[p[0]]) pills+='<span class="sumpill sp '+p[1]+'"><span class="n">'+tally[p[0]]+'</span> '+VTAG[p[0]][1]+'</span>';
-    });
-    $("batchSum").innerHTML=pills||'<span class="sumpill sp no">no genes found</span>';
-
-    // rows
-    var html="";
-    results.forEach(function(x,i){
-      if(x.missing){ html+='<tr><td class="prio">—</td><td class="gname">'+x.gene+'</td><td colspan="4" class="chase">not in the concordance table</td></tr>'; return; }
-      var vt=VTAG[x.verdict]||VTAG.neither;
-      var drugCell=x.smStage?("SM · "+x.smStage):x.abStage?("AB · "+x.abStage):x.sm>=0.34?"SM · discovery":x.ab>=0.34?"AB · discovery":"—";
-      html+='<tr><td class="prio">'+(i+1)+'</td><td class="gname">'+x.gene+'</td>'+
-            '<td><span class="vtag '+vt[0]+'">'+vt[1]+'</span></td>'+
-            '<td><span class="ctag '+x.conf+'">'+x.conf+'</span></td>'+
-            '<td class="drugcell">'+drugCell+'</td>'+
-            '<td class="chase">'+(CHASE[x.verdict]||"")+'</td></tr>';
-    });
-    $("batchRows").innerHTML=html;
-
-    // pathway enrichment over the REPLICATED subset (Enrichr / Reactome, cached server-side)
-    var repl=results.filter(function(x){return !x.missing&&x.verdict==="replicated";}).map(function(x){return x.gene;});
-    renderPathways(repl);
-  }
-
-  async function renderPathways(genes){
-    var box=$("batchPathways");
-    if(!genes.length){ box.innerHTML='<span class="echip">Need ≥1 replicated hit for pathway enrichment.</span>'; return; }
-    box.innerHTML='<span class="echip">enriching…</span>';
-    try{
-      var r=await fetch("api/enrichr?genes="+encodeURIComponent(genes.join(",")));
-      var d=await r.json();
-      var p=(d.pathways||[]).slice(0,4);
-      if(!p.length){ box.innerHTML='<span class="echip">No significant pathway enrichment.</span>'; return; }
-      box.innerHTML=p.map(function(x){
-        // strip the Reactome id suffix for a cleaner chip label
-        var name=x.term.replace(/\s+R-HSA-\d+.*$/,"");
-        // Enrichr clamps tiny adj-p to 0 — show "<1e-10", not "0.000" (which reads as n.s.).
-        var q=x.adj_p<=0?"<1e-10":x.adj_p<1e-3?x.adj_p.toExponential(0):x.adj_p.toFixed(3);
-        return '<span class="echip">'+name+' <b>q='+q+'</b></span>';
-      }).join("");
-    }catch(e){ box.innerHTML='<span class="echip">Pathway enrichment unavailable.</span>'; }
-  }
 
   // ---- known biology — appended as an in-thread turn (corpus-wide, gene-independent) ----
   // Clone the template first (so the turn appears immediately with its "—" seed), then fill it once
@@ -4343,28 +4194,23 @@ ZNF250</div>
     return "I compare a gene's mRNA and protein screens and give a deterministic verdict (replicated, discordant, mRNA-only, protein-only, or neither), plus druggability, disease genetics, and a validation plan. Ask me to reconcile a gene like TSC1 to see it in action.";
   }
 
-  // ---- mode toggle (2 modes: the chat thread, and the hit-list tool) ----
+  // ---- mode toggle (2 modes: the chat thread, and the How-it-works explainer) ----
   function setMode(m){
-    var isChat=m==="chat", isBatch=m==="batch", isHow=m==="how";
+    var isChat=m==="chat", isHow=m==="how";
     $("mChat").setAttribute("aria-selected",String(isChat));
-    $("mBatch").setAttribute("aria-selected",String(isBatch));
     $("mHow").setAttribute("aria-selected",String(isHow));
     $("thread").classList.toggle("hidden",!isChat);
-    $("batchView").classList.toggle("hidden",!isBatch);
     $("howView").classList.toggle("hidden",!isHow);
     // the landing only belongs to an empty chat: hide it in the other views, and only show it
     // back in chat mode if no turn has been created yet.
-    var l=$("landing"); if(l){ l.classList.toggle("hidden", isBatch || isHow || thread.children.length>0); }
+    var l=$("landing"); if(l){ l.classList.toggle("hidden", isHow || thread.children.length>0); }
     // the composer is a chat control — hide it in the non-chat views.
     document.querySelector(".composer").style.display=isChat?"":"none";
-    if(isBatch){ $("convoTitle").textContent="Hit list"; $("urlPath").textContent="list"; if(!$("batchRows").children.length) renderBatch(); }
-    else if(isHow){ $("convoTitle").textContent="How it works"; $("urlPath").textContent="how"; showHowPage("hsOverview"); $("convoScroll").scrollTop=0; }
+    if(isHow){ $("convoTitle").textContent="How it works"; $("urlPath").textContent="how"; showHowPage("hsOverview"); $("convoScroll").scrollTop=0; }
     else{ $("convoTitle").textContent="Chat"; $("urlPath").textContent=state.gene?("gene/"+state.gene):"chat"; }
   }
   $("mChat").addEventListener("click",function(){setMode("chat");});
-  $("mBatch").addEventListener("click",function(){setMode("batch");});
   $("mHow").addEventListener("click",function(){setMode("how");});
-  $("batchGo").addEventListener("click",renderBatch);
 
   // "How it works" is read-only until you act: its capability cards and the start button drop you
   // into a real chat turn with the sample question, reusing the same dispatch as the landing prompts.
