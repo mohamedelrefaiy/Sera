@@ -1081,11 +1081,11 @@
     background:linear-gradient(180deg,var(--mrna) 0 48%,var(--protein) 52% 100%)}
   .how-hero-h{font-family:var(--font-serif);font-size:42px;line-height:1.08;letter-spacing:-.025em;
     text-wrap:balance;font-weight:600;color:var(--ink);margin:0 0 18px;max-width:18ch}
-  .how-lede{font-size:17px;line-height:1.62;color:var(--ink-soft);max-width:64ch;margin:0;text-wrap:pretty}
+  .how-lede{font-size:17px;line-height:1.62;color:var(--ink-soft);max-width:78ch;margin:0;text-wrap:pretty}
   .how-lede b{color:var(--ink);font-weight:600}
   .how-h{font-family:var(--font-serif);font-size:27px;line-height:1.18;letter-spacing:-.012em;
     text-wrap:balance;font-weight:600;color:var(--ink);margin:0 0 12px}
-  .how-p{font-size:var(--t-body);line-height:1.62;color:var(--ink-soft);max-width:62ch;margin:0 0 14px}
+  .how-p{font-size:var(--t-body);line-height:1.62;color:var(--ink-soft);max-width:78ch;margin:0 0 14px;text-wrap:pretty}
   .how-p:last-child{margin-bottom:0}
   .how-p b{color:var(--ink);font-weight:600}
   .how-p .mrna{color:var(--mrna);font-weight:600}
@@ -1099,9 +1099,9 @@
     letter-spacing:.11em;text-transform:uppercase;color:var(--accent-text);margin-bottom:7px}
   .how-output-v{display:block;font-size:13.5px;line-height:1.48;color:var(--ink-soft)}
   .how-output-v b{display:block;color:var(--ink);font-size:14px;font-weight:600;margin-bottom:2px}
-  .how-thesis{display:grid;grid-template-columns:minmax(180px,.42fr) 1fr;gap:34px;align-items:start}
-  .how-thesis .how-kicker{margin:4px 0 0}
-  .how-thesis-copy{max-width:62ch}
+  .how-thesis{display:block}
+  .how-thesis .how-kicker{margin:0 0 16px}
+  .how-thesis-copy{width:100%;max-width:78ch}
   .how-method{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:22px;
     border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
   .how-method-step{padding:18px 18px 20px 0}
@@ -1219,12 +1219,11 @@
   .how-cta .go{width:auto;padding:12px 20px}
   .how-cta .cta-note{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-faint)}
 
-  /* ══ HOW-IT-WORKS HUB — three sub-pages under one destination. A segmented control switches
-     Overview / The science / Architecture; each is a .how-page. The sub-nav is sticky so the
-     reader keeps their place on the long science page. Reuses the app's chrome idiom (mono labels,
-     surface + hairline), no new colour language. */
-  .how-subnav{position:sticky;top:0;z-index:4;display:flex;flex-wrap:wrap;gap:6px;
-    margin:0 0 6px;padding:16px 0 12px;background:linear-gradient(var(--bg) 76%,transparent)}
+  /* ══ HOW-IT-WORKS HUB — three sub-pages under one destination. Keep the segmented control in
+     normal document flow: a sticky bar obscured section labels while scrolling and made otherwise
+     aligned page content appear offset. */
+  .how-subnav{position:relative;display:flex;flex-wrap:wrap;gap:6px;
+    margin:0 0 6px;padding:16px 0 12px;background:transparent}
   .how-subtab{display:inline-flex;align-items:center;gap:9px;min-height:40px;padding:8px 15px;
     font-family:var(--font-ui);font-size:13.5px;font-weight:500;color:var(--ink-soft);
     background:var(--surface);border:1px solid var(--line);border-radius:10px;cursor:pointer;transition:.12s}
@@ -1313,7 +1312,6 @@
     .how-hero{padding:28px 24px 30px!important}.how-hero-h{font-size:32px}
     .how-output{grid-template-columns:1fr}.how-output-item{padding:14px 0}
     .how-output-item+.how-output-item{padding-left:0;border-left:0;border-top:1px solid var(--line)}
-    .how-thesis{grid-template-columns:1fr;gap:14px}
     .how-voices,.how-cap-grid{grid-template-columns:1fr}
     .how-trust li{flex-direction:column;gap:4px}.how-trust .tk{flex-basis:auto}
   }
