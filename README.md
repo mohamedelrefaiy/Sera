@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/sera-logo.svg" alt="Sera" width="300">
+</p>
+
 # Sera
 
 Rank and adversarially verify druggable T-cell regulators from Perturb-seq — a

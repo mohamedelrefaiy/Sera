@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 96" role="img" aria-label="Sera logo">
+  <title>Sera</title>
+  <!-- Convergence mark: two screens (mRNA teal + protein magenta) merging into one call. -->
+  <g transform="translate(8, 26)">
+    <path d="M4 8h20c11 0 11 14 22 14" fill="none" stroke="#00A88C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M4 36h20c11 0 11-14 22-14" fill="none" stroke="#D65A97" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M46 22h22" fill="none" stroke="#7C8B99" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <!-- Wordmark. #7C8B99 is a mid slate that holds contrast on both light and dark GitHub themes. -->
+  <text x="96" y="63" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="52" font-weight="600" letter-spacing="-1" fill="#7C8B99">Sera</text>
+</svg>
