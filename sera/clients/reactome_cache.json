@@ -1,0 +1,15 @@
+{
+"STAT3": {
+"term": "Signaling by CSF3 (G-CSF)",
+"stid": "R-HSA-9674555",
+"genes": [
+"STAT3",
+"STAT1",
+"JAK1",
+"JAK2",
+"STAT5A",
+"STAT5B",
+"TYK2"
+]
+}
+}

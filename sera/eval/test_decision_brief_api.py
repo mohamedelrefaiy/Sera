@@ -145,11 +145,15 @@ def test_valid_constraints_are_feasible_and_respected():
         assert "qpcr" in ro and "facs" in ro
 
 
-def test_short_window_drops_timecourse_and_says_so():
+def test_short_window_is_infeasible_for_a_discordant_verdict():
+    """TSC1 is discordant -> resolve_split, whose time course is MANDATORY (Task #3): a single
+    timepoint cannot resolve why the two layers disagree, so a short window is an infeasibility,
+    not a silent drop of the timecourse."""
     with TestClient(app) as client:
         b = client.get("/api/concordance/TSC1?readouts=qpcr,facs&donors=3&days=2").json()["decision_brief"]
-        assert b["experiment"]["timecourse"] is None
-        assert any("timepoint" in a.lower() or "window" in a.lower() for a in b["adaptations"])
+        assert b["experiment"]["timecourse"] is not None
+        assert b["feasible"] is False
+        assert any("time course" in u.lower() for u in b["unmet_requirements"])
 
 
 def test_unknown_readout_token_is_a_400():
@@ -177,7 +181,11 @@ def test_saved_lab_profile_adapts_feasibility_without_changing_the_scientific_de
 
 
 def test_infeasible_saved_lab_profile_reports_every_blocker_and_safe_adaptation():
-    """The API must explain a constrained lab honestly instead of silently weakening the test."""
+    """The API must explain a constrained lab honestly instead of silently weakening the test.
+
+    TSC1 is discordant -> resolve_split, whose time course is MANDATORY (Task #3), so a short
+    window under 3 days is now a BLOCKER alongside the missing transcript readout and donor count
+    — not a silently-dropped adaptation."""
     with TestClient(app) as client:
         response = client.get(
             "/api/concordance/TSC1",
@@ -187,9 +195,57 @@ def test_infeasible_saved_lab_profile_reports_every_blocker_and_safe_adaptation(
         assert response.status_code == 200
         brief = response.json()["decision_brief"]
         blockers = " ".join(brief["unmet_requirements"]).lower()
-        adaptations = " ".join(brief["adaptations"]).lower()
         assert brief["feasible"] is False
         assert "transcript" in blockers
         assert "donor" in blockers
-        assert brief["experiment"]["timecourse"] is None
-        assert "timepoint" in adaptations or "window" in adaptations
+        assert "time course" in blockers
+        assert brief["experiment"]["timecourse"] is not None
+
+
+# --- per-condition decision briefs (the headline feature) ------------------------------------
+# `concordance_gene` attaches a brief to EVERY condition row, not just the anchor, so the single-gene
+# view's condition tabs render the experiment for the verdict AT THAT CONDITION. Regression gate for
+# the bug where switching tabs showed the anchor's experiment under a different condition's verdict.
+
+
+def test_every_condition_row_carries_its_own_decision_brief():
+    """Each entry in by_condition must carry a decision_brief scoped to that condition — not just the
+    top-level anchor. Without this, a condition tab has no brief of its own to render."""
+    with TestClient(app) as client:
+        by_cond = client.get("/api/concordance/TSC1").json()["by_condition"]
+        assert by_cond, "expected per-condition rows"
+        for cond, row in by_cond.items():
+            assert "decision_brief" in row, f"{cond} has no decision_brief"
+            b = row["decision_brief"]
+            # a brief was built for this condition, and it is FOR this condition (not the anchor's)
+            assert b is not None, f"{cond} decision_brief is null"
+            assert b["snapshot"]["condition"] == cond
+
+
+def test_per_condition_brief_matches_the_verdict_at_that_condition():
+    """A gene whose verdict differs across conditions must get a DIFFERENT experiment archetype under
+    each condition tab. ABCA3 is mrna_only at Stim48hr (propagation test — no split language) but
+    neither at Rest (null-interrogation — 'validation is low-yield'). This is the exact bug the
+    per-condition refactor fixed: the anchor's experiment must not bleed onto the other tabs."""
+    with TestClient(app) as client:
+        by_cond = client.get("/api/concordance/ABCA3").json()["by_condition"]
+
+        stim48 = by_cond["Stim48hr"]["decision_brief"]
+        rest = by_cond["Rest"]["decision_brief"]
+
+        # the verdicts differ by condition, and each brief carries its own condition's verdict
+        assert stim48["snapshot"]["verdict"] == "mrna_only"
+        assert rest["snapshot"]["verdict"] == "neither"
+
+        # mrna_only (propagation test): the objective is about reaching the OTHER layer, no split talk
+        stim_obj = stim48["experiment"]["objective"].lower()
+        assert "other layer" in stim_obj or "reaches" in stim_obj
+        assert "split" not in stim_obj
+
+        # neither (null-interrogation): the objective says validation is low-yield / concordant null,
+        # and its outcome matrix is the no-signal one, NOT the anchor's propagation matrix
+        rest_obj = rest["experiment"]["objective"].lower()
+        assert "low-yield" in rest_obj or "nothing" in rest_obj or "null" in rest_obj
+        rest_outcomes = " ".join(o["result"] for o in rest["outcome_matrix"]).lower()
+        assert rest_outcomes != " ".join(
+            o["result"] for o in stim48["outcome_matrix"]).lower(), "tabs share one matrix — the bug"

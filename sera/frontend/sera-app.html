@@ -411,6 +411,13 @@
   .outcome[aria-pressed="true"]{box-shadow:inset 0 2px 0 var(--accent)}
   .outcome strong{display:block;color:var(--ink);font:600 12px/1.35 var(--font-ui);margin-bottom:5px}
   .outcome span{display:block;font:11px/1.45 var(--font-ui);color:var(--ink-faint)}
+  /* Positive-control + assay-sensitivity proof strip — the control that makes a flat result interpretable. */
+  .res-proof-wrap{margin-top:14px;display:grid;gap:8px}
+  .res-proof{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:7px;background:var(--surface)}
+  .res-proof-k{font:600 9px/1.5 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
+  .res-proof-v{font:12px/1.5 var(--font-ui);color:var(--ink-soft)}
+  .res-proof-v strong{color:var(--ink)}
+  @media(max-width:700px){.res-proof{grid-template-columns:1fr;gap:4px}}
   .resolution-preview{min-height:54px;margin-top:10px;padding:12px 14px;border-radius:7px;background:#10171A;color:var(--ink-soft);
     font:13px/1.55 var(--font-ui);display:flex;align-items:center;gap:10px}
   .resolution-preview::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft);flex:none}
@@ -777,6 +784,10 @@
   .brief-infeasible .bi-h{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#D0864F;margin-bottom:6px}
   .brief-adapt{border:1px solid var(--line);border-left:4px solid var(--lock);border-radius:10px;background:var(--surface);padding:12px 16px;margin-top:14px}
   .brief-adapt .ba-h{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--lock);margin-bottom:6px}
+  /* Low-yield advisory (a `neither`/deprioritise verdict): muted, not alarm-coloured — it is guidance, not an error. */
+  .brief-lowyield{border:1px solid var(--line);border-left:4px solid var(--ink-soft);border-radius:10px;background:var(--surface);padding:12px 16px;margin-top:14px}
+  .brief-lowyield .bi-h{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px}
+  .brief-lowyield .bi-r{padding-left:0}
   .bi-r{margin:0;padding-left:18px;font-family:var(--font-serif);font-size:13.5px;line-height:1.55;color:var(--ink-soft)}
   .bi-r li{margin:2px 0}
 
@@ -1090,6 +1101,7 @@
   .how-p b{color:var(--ink);font-weight:600}
   .how-p .mrna{color:var(--mrna);font-weight:600}
   .how-p .protein{color:var(--protein);font-weight:600}
+  .how-h--nowrap{white-space:nowrap;font-size:clamp(18px,2.05vw,27px)}
 
   /* Put the scientific output before the problem: judges can identify the product in one scan. */
   .how-output{display:grid;grid-template-columns:repeat(3,1fr);margin-top:28px;border-top:1px solid var(--line)}
@@ -1410,9 +1422,9 @@
           <button class="lprompt lprompt-hero" data-q="Find new drug targets in this screen">
             <span class="lp-k">Start from the screen</span><span class="lp-t">Surface candidate targets, then open the evidence behind the strongest signals.</span>
             <span class="lp-ex">Find new drug targets in this screen</span></button>
-          <button class="lprompt lprompt-tour" data-q="Prepare a full lab progress report: begin by defining the ITK protein and summarising what the cited literature establishes, show its 3D structure, then reconcile ITK's mRNA and protein readouts, and finish with a decision brief for TSC1.">
+          <button class="lprompt lprompt-tour" data-q="Prepare a full lab progress report: begin by defining the NFKB2 protein and summarising what the cited literature establishes, show its 3D structure, then reconcile NFKB2's mRNA and protein readouts, and finish with a decision brief for NFKB2.">
             <span class="lp-k">Review one target end to end</span><span class="lp-t">Build a lab progress report from protein identity through the next experimental decision.</span>
-            <span class="lp-ex">Identity · literature · 3D structure · paired screens · decision brief</span></button>
+            <span class="lp-ex">NFKB2 · identity · literature · 3D structure · paired screens · decision brief</span></button>
           <div class="landing-secondary">
             <button class="lprompt" data-q="Should TSC1 advance?">
               <span class="lp-k">Draft a decision brief</span><span class="lp-t">Should TSC1 advance?</span>
@@ -1518,7 +1530,7 @@
 
           <section class="how-sec">
             <div class="how-kicker">Biological question</div>
-            <h2 class="how-h">Which genetic perturbations alter IL-2 production in human CD4+ T cells?</h2>
+            <h2 class="how-h how-h--nowrap">Which genetic perturbations alter IL-2 production in human CD4+ T cells?</h2>
             <p class="how-p"><b>Interleukin-2 couples T-cell activation to proliferation, differentiation, and regulatory T-cell homeostasis through the IL-2–IL2RA–STAT5 axis.</b> Its pathway is therapeutically relevant to immune tolerance, engineered T-cell persistence, and Treg-directed intervention. Identifying upstream regulators could therefore enable modulation of IL-2 output without administering the cytokine itself.</p>
             <p class="how-p">The relevant phenotype is not defined by a single molecular measurement. A perturbation can alter IL-2 transcription, translation, secretion, or the fraction of responding cells; transcript- and protein-level assays may consequently support different conclusions.</p>
           </section>
@@ -2431,7 +2443,11 @@
       var turn = existingTurn || appendTurn(d.gene);
       if(hideUser) turn._hideUser=true;   // agent-driven: the agent bubble already showed the message
       // per-turn state lives ON the element, so each turn keeps its own gene/conditions/enrichment.
+      // The decision brief (verdict-specific experiment, outcomes, positive control) is CODE-OWNED and
+      // controls-gated in the backend — store it so renderResolution renders IT, never re-derives the
+      // science in JS. Anchor-condition brief; null when the backend couldn't build one (fallback then).
       turn._gene=d.gene; turn._byCondition=d.by_condition||{}; turn._enrichment=d.enrichment||null;
+      turn._brief=d.decision_brief||null;
       // STARTING condition = the one the AGENT chose (view_update.condition), mapped to a UI key —
       // not a hardcoded Stim48h. Tabs change turn._cond locally afterwards; this only seeds it.
       if(!turn._cond) turn._cond=(condition && COND_UI[condition]) || "Stim48h";
@@ -2696,19 +2712,51 @@
     items.forEach(function(item){var p=document.createElement("p");p.textContent=item;el.appendChild(p);});
   }
 
+  // Recommendation -> gate CSS class (the gate's colour band) and a SHORT next-step phrase. The
+  // RECOMMENDATION set is the verdict-INDEPENDENT advancement axis (folds in the dossier); it is a
+  // DIFFERENT question from the reconciliation verdict, which is why it drives the gate. The next-step
+  // is intentionally terse (the gate's third column is narrow) — the FULL experiment objective renders
+  // in the resolution card below, not here.
+  var RECOMMENDATION_GATE_CLASS={
+    advance:"advance", validate_first:"validate", hold_weak_target:"hold",
+    deprioritize:"deprioritize", unknown:"insufficient"
+  };
+  var RECOMMENDATION_NEXT_STEP={
+    advance:"Advance to validation", validate_first:"Run the discriminating experiment",
+    hold_weak_target:"Hold — resolve the biology first", deprioritize:"Deprioritise this condition",
+    unknown:"Pull the target dossier"
+  };
+
   function renderDecisionBrief(turn,row){
     if(!row) return;
     var gene=turn._gene, cond=COND_LABEL[turn._cond||"Stim48h"];
+    var brief=row.decision_brief||turn._brief||null;
     function briefQ(v){return v==null?"not available":(Number(v)<0.001?Number(v).toExponential(1):Number(v).toFixed(3));}
     var gate=q(turn,"decision-gate"), state=q(turn,"js-gateState"), reason=q(turn,"js-gateReason"), next=q(turn,"js-gateNext");
-    var gateData;
-    if(row.prot_tested===false) gateData=["insufficient","NOT ENOUGH EVIDENCE","The protein — what the cell actually makes — was never measured here. Don't decide from the mRNA alone."];
-    else if(row.verdict==="discordant") gateData=["hold","HOLD FOR PAIRED VALIDATION","Do not advance or discard "+gene+" yet. Repeat both readouts in the same samples to learn whether the split is biological or screen-specific."];
-    else if(row.verdict==="replicated") gateData=["advance","READY TO VALIDATE","Both assays agree on the direction. Confirm it once in a small, focused donor experiment, then advance."];
-    else if(row.verdict==="mrna_only"||row.verdict==="protein_only") gateData=["validate","CHECK THE MISSING HALF","Only one of the two assays saw the effect. Keep the claim narrow until you measure the other half too."];
-    else gateData=["deprioritize","DEPRIORITISE","Neither screen sees a convincing effect here. Only revisit if a strong outside reason turns up."];
-    if(gate){gate.className="decision-gate "+gateData[0];} if(state) state.textContent=gateData[1]; if(reason) reason.textContent=gateData[2];
-    if(next) next.textContent=row.verdict==="discordant"?"Run the paired assay":row.verdict==="replicated"?"Confirm in new donors":row.prot_tested===false?"Measure the protein layer":row.verdict==="neither"?"Deprioritize this condition":"Measure the missing layer";
+    // The gate renders the CODE-OWNED advancement stance from the brief (recommendation +
+    // recommendation_rationale), NOT a verdict-reaction re-derived in JS. This keeps the "should it
+    // advance?" answer (dossier-informed) distinct from "do the screens agree?" (the verdict) — a
+    // replicated gene is NOT automatically "advance". Fall back to a verdict-keyed label only when no
+    // brief is available (never overclaiming an advancement the dossier hasn't justified).
+    if(brief && brief.recommendation){
+      var recMeta=RECOMMENDATION_LABEL[brief.recommendation]||RECOMMENDATION_LABEL.unknown;
+      var gateCls=RECOMMENDATION_GATE_CLASS[brief.recommendation]||"insufficient";
+      if(gate){gate.className="decision-gate "+gateCls;}
+      if(state) state.textContent=recMeta.txt;
+      if(reason) reason.textContent=brief.recommendation_rationale||"";
+      // Next step = a SHORT recommendation-keyed phrase (the gate's third column is narrow). The full
+      // experiment objective renders in the resolution card below, so it is not repeated here.
+      if(next) next.textContent=RECOMMENDATION_NEXT_STEP[brief.recommendation]||"Review the paired evidence";
+    }else{
+      // Fallback: no brief. A terse, honest verdict-keyed note — no fabricated advancement stance.
+      var gd = (row.prot_tested===false)
+        ? ["insufficient","Advanceability unknown","The protein layer was never measured — the advancement call can't be made from the mRNA alone."]
+        : (row.verdict==="neither")
+          ? ["deprioritize","Deprioritise","Neither screen sees a convincing effect here."]
+          : ["insufficient","Review the evidence","The full advancement brief is unavailable for "+gene+" right now."];
+      if(gate){gate.className="decision-gate "+gd[0];} if(state) state.textContent=gd[1]; if(reason) reason.textContent=gd[2];
+      if(next) next.textContent="Review the paired evidence";
+    }
 
     var observed=["IL-2 mRNA (the transcript): "+(row.hit_rna?(row.z_rna<0?"went down":"went up")+" — a confident hit (z-score "+fmt(row.z_rna)+", q "+briefQ(row.q_rna)+")":"no confident change")];
     observed.push(row.prot_tested===false?"Secreted IL-2 protein was not measured in this screen.":"Secreted IL-2 protein (what the cell actually makes): "+(row.hit_prot?(row.lfc_prot<0?"went down":"went up")+" — a confident hit (log₂ fold change "+fmt(row.lfc_prot)+", q "+briefQ(row.q_prot)+")":"no confident change"));
@@ -2725,38 +2773,102 @@
     if(threats) threats.innerHTML='<div class="threat-row"><span>These are two separate screens — the mRNA and the protein were not collected from the same wells.</span></div>'
       +'<div class="threat-row"><span>The two assays are measured on different scales, so their numbers can’t be compared side by side — only their direction (up vs down).</span></div>'
       +'<div class="threat-row"><span>A confident hit means the screen reproducibly saw the change — it does not, on its own, explain the biological mechanism.</span></div>';
+    // Bench spec — render the CODE-OWNED, verdict-specific experiment from the decision brief. The old
+    // hardcoded "same condition / measure both" 5-liner was a generic protocol that CONTRADICTED the
+    // backend's verdict-specific templates (e.g. it said "same condition" for a `neither` gene whose
+    // brief prescribes VARYING the condition). Render the brief's actual experiment; fall back to a
+    // terse note when no brief is available (never re-derive a protocol in JS).
     var spec=q(turn,"js-benchSpec");
-    if(spec) spec.innerHTML='<div class="spec-row"><span>Knock out the gene</span><span>2 independent '+gene+' guides + an untouched (non-targeting) control</span></div>'
-      +'<div class="spec-row"><span>Repeat across people</span><span>≥3 donors, so the result isn’t one person’s quirk</span></div>'
-      +'<div class="spec-row"><span>Same condition</span><span>'+cond+'; keep the original stimulation exactly as the screens had it</span></div>'
-      +'<div class="spec-row"><span>Collect from one place</span><span>take the mRNA and the protein from the same wells</span></div>'
-      +'<div class="spec-row"><span>Measure both</span><span>IL-2 mRNA (transcript) + secreted IL-2 protein</span></div>';
+    if(spec){
+      var brief=row.decision_brief||turn._brief||null, exp=brief&&brief.experiment;
+      if(exp){
+        function specRow(k,val){ return val?('<div class="spec-row"><span>'+esc(k)+'</span><span>'+esc(val)+'</span></div>'):''; }
+        var guides=(exp.guides||[]).join(", ");
+        var readouts=(exp.readouts||[]).join(" + ");
+        var controlsTxt=(exp.controls||[]).join("; ");
+        if(exp.positive_control) controlsTxt+=(controlsTxt?"; ":"")+"positive control: "+exp.positive_control.gene+" (proves the assay reads a known effect)";
+        spec.innerHTML=
+          specRow("Perturb the gene", exp.perturbation+(guides?(" — "+guides):""))
+          +specRow("Controls", controlsTxt)
+          +specRow("Repeat across people","≥3 donors, so the result isn’t one person’s quirk")
+          +specRow("Conditions", exp.conditions)
+          +specRow("Readouts", readouts)
+          +specRow(exp.timecourse?"Time course":"", exp.timecourse||"")
+          +specRow("Assay sensitivity", exp.assay_sensitivity);
+      }else{
+        spec.innerHTML='<div class="spec-row"><span>Validation plan</span><span>Unavailable for '+esc(gene)+' right now.</span></div>';
+      }
+    }
+  }
+
+  // Code-owned TITLE per experiment archetype. The archetype + all the SCIENCE (objective, outcomes,
+  // positive control) come from the backend decision brief (core/decision_brief.py) — the single,
+  // controls-gated source of truth. Only the short display title lives here (presentation, not fact).
+  var ARCHETYPE_TITLE={
+    resolve_split:"Resolve why the layers disagree",
+    propagation_test:"Test whether the effect reaches the other layer",
+    escalate_mechanism:"Advance toward mechanism",
+    null_interrogation:"Both screens agree — validation is low-yield",
+    measure_missing_layer:"Measure the untested protein layer"
+  };
+  // Mirror the backend's archetype selector (core/decision_brief.select_experiment_archetype) so the
+  // title resolves even before we read it off the brief. protein-untested = coverage gap, takes
+  // precedence; otherwise map by verdict. Kept in lockstep with the backend closed set.
+  function archetypeFor(verdict,protTested){
+    if(protTested===false) return "measure_missing_layer";
+    if(verdict==="discordant") return "resolve_split";
+    if(verdict==="replicated") return "escalate_mechanism";
+    if(verdict==="neither") return "null_interrogation";
+    return "propagation_test";  // mrna_only | protein_only
   }
 
   function renderResolution(turn,row){
     var box=q(turn,"js-resolution"); if(!box||!row) return;
-    var gene=turn._gene, v=row.verdict;
+    // Prefer the CURRENT condition's own brief (each by_condition row now carries one) so switching
+    // condition tabs shows the experiment for THAT condition's verdict, not the anchor's. Fall back
+    // to the anchor brief only if the row has none.
+    var gene=turn._gene, v=row.verdict, brief=row.decision_brief||turn._brief||null;
     var title=q(turn,"js-resolutionTitle"), copy=q(turn,"js-resolutionCopy"), outcomes=q(turn,"js-outcomes"), preview=q(turn,"js-resolutionPreview");
-    var items;
-    if(v==="discordant"){
-      title.textContent="Measure both layers in the same wells";
-      copy.textContent="Repeat "+gene+" perturbation with paired IL-2 transcript and secreted-protein readouts. One experiment can distinguish regulation from a screen-specific artifact.";
-      items=[
-        ["Both increase","Protein direction wins","The functional increase is supported; investigate why the original transcript screen reported the opposite direction."],
-        ["The split remains","Decoupling is real","Persistent opposite directions support post-transcriptional regulation or feedback between transcript and secretion."],
-        ["Neither reproduces","Screen artifact likely","Failure to reproduce either effect lowers confidence in the original discordant hit."]
-      ];
-    }else if(v==="replicated"){
-      title.textContent="Confirm the shared direction";
-      copy.textContent="Repeat "+gene+" perturbation with both readouts in a new donor set. The goal is confirmation, not conflict resolution.";
-      items=[["Both reproduce","Advance the target","Independent confirmation supports moving to mechanism or therapeutic follow-up."],["Only one reproduces","Re-open the verdict","The hit becomes layer-specific and needs assay-level QC."],["Neither reproduces","Do not advance","The original cross-screen agreement did not survive targeted validation."]];
+
+    // Prefer the CODE-OWNED brief: its experiment.objective is the copy, its outcome_matrix is the
+    // tiles, and the positive control + assay-sensitivity ride below. Fall back to a minimal
+    // row-derived note ONLY when the backend could not build a brief (never re-deriving the science).
+    var items, headline, extraHTML="";
+    if(brief && brief.experiment){
+      var exp=brief.experiment;
+      var arch=archetypeFor(v, row.prot_tested);
+      headline=ARCHETYPE_TITLE[arch]||"Decisive next experiment";
+      copy.textContent=exp.objective||brief.decision||"";
+      items=(brief.outcome_matrix||[]).map(function(o){return [o.result,o.next_action,o.interpretation];});
+      // Positive control + assay-sensitivity proof strip — code-selected, never invented. This is the
+      // control that makes a flat result interpretable (true null vs dead assay).
+      var pc=exp.positive_control;
+      if(pc){
+        var dirVerb=(pc.expected_direction==="lowers")?"lower":(pc.expected_direction==="raises")?"raise":esc(pc.expected_direction);
+        extraHTML+='<div class="res-proof"><span class="res-proof-k">Positive control</span>'
+          +'<span class="res-proof-v"><strong>'+esc(pc.gene)+'</strong> — a known IL-2 regulator the screens already detect ('
+          +esc(pc.source==="curated_known_regulator"?"canonical regulator":"strongest replicated hit")
+          +'); knocking it down should '+dirVerb+' IL-2. If it doesn’t move, the assay isn’t reading — the result is uninterpretable.</span></div>';
+      }
+      if(exp.assay_sensitivity){
+        extraHTML+='<div class="res-proof"><span class="res-proof-k">Assay sensitivity</span>'
+          +'<span class="res-proof-v">'+esc(exp.assay_sensitivity)+'</span></div>';
+      }
     }else{
-      title.textContent="Test the missing evidence layer";
-      copy.textContent="Run a matched transcript and protein measurement after "+gene+" perturbation to determine whether this one-sided result reaches the functional phenotype.";
-      items=[["Both change","Upgrade confidence","Agreement across layers would upgrade this result to replicated evidence."],["One layer changes","Keep it provisional","A layer-specific effect remains useful, but the biological claim must stay scoped."],["Neither changes","Deprioritize","The targeted experiment does not support the original screen signal."]];
+      // Fallback: no brief available. Keep a terse, honest note keyed on the verdict, no fabricated
+      // protocol. (The full experiment lives in the brief; without it we don't invent one.)
+      headline=(v==="neither")?"Both screens agree — validation is low-yield":"Decisive next experiment";
+      copy.textContent="The full validation plan is unavailable for "+gene+" right now.";
+      items=[];
     }
-    outcomes.innerHTML=items.map(function(it,i){return '<button class="outcome" type="button" aria-pressed="false" data-outcome="'+i+'"><strong>'+it[0]+'</strong><span>'+it[1]+'</span></button>';}).join("");
-    preview.textContent="Choose a possible result to preview how the interpretation would change.";
+    if(title) title.textContent=headline;
+
+    outcomes.innerHTML=items.map(function(it,i){return '<button class="outcome" type="button" aria-pressed="false" data-outcome="'+i+'"><strong>'+esc(it[0])+'</strong><span>'+esc(it[1])+'</span></button>';}).join("");
+    // Append the proof strip once, after the tiles, inside the resolution box.
+    var proofSlot=q(turn,"js-resProof");
+    if(!proofSlot && extraHTML){ proofSlot=document.createElement("div"); proofSlot.className="res-proof-wrap js-resProof"; outcomes.parentNode.insertBefore(proofSlot, outcomes.nextSibling); }
+    if(proofSlot) proofSlot.innerHTML=extraHTML;
+    preview.textContent=items.length?"Choose a possible result to preview how the interpretation would change.":"";
     outcomes.querySelectorAll(".outcome").forEach(function(btn){
       btn.addEventListener("click",function(){
         outcomes.querySelectorAll(".outcome").forEach(function(b){b.setAttribute("aria-pressed",String(b===btn));});
@@ -3828,6 +3940,12 @@
     // --- constraints bar + feasibility banner (Task 4: the adaptive money shot) ---
     var body=turn.querySelector(".reply-body")||turn;
     var con=(b && b.__constraints)||null;   // echo the active constraints on re-render
+    // A `neither` verdict is a no-signal result: there is no split to resolve, so the whole planner
+    // is optional. Say so once, above the controls, instead of presenting it as the recommended path.
+    var lowYield=(v==="neither")||(b.recommendation==="deprioritize");
+    var lowYieldNote=lowYield
+      ? '<div class="brief-lowyield"><div class="bi-h">Validation here is low-yield</div><p class="bi-r">Both screens agree there is no effect at this condition, so this gene is deprioritised. The plan below is an optional confirmatory check — only run it if you have a specific reason to doubt the screens.</p></div>'
+      : '';
     var constraintsBar=b.__labProfileUnavailable
       ? '<div class="brief-infeasible"><div class="bi-h">Lab adaptation unavailable</div><p class="bi-r">This is the unconstrained decision brief. Sera could not apply your saved My Lab capabilities, so do not treat this protocol as lab-adapted.</p></div>'
       : briefConstraintsHTML(con);
@@ -3835,7 +3953,8 @@
     var feasBanner="";
     if(b.feasible===false && (b.unmet_requirements||[]).length){
       var unmet=(b.unmet_requirements||[]).map(function(u){return '<li>'+esc(u)+'</li>';}).join("");
-      feasBanner='<div class="brief-infeasible"><div class="bi-h">This plan can’t resolve the disagreement as specified</div><ul class="bi-r">'+unmet+'</ul></div>';
+      var infeasHead=lowYield?"This plan can’t run as specified":"This plan can’t resolve the disagreement as specified";
+      feasBanner='<div class="brief-infeasible"><div class="bi-h">'+infeasHead+'</div><ul class="bi-r">'+unmet+'</ul></div>';
     } else if(con && (b.adaptations||[]).length){
       feasBanner='<div class="brief-adapt"><div class="ba-h">Adapted to your constraints</div><ul class="bi-r">'+
         (b.adaptations||[]).map(function(a){return '<li>'+esc(a)+'</li>';}).join("")+'</ul></div>';
@@ -3854,7 +3973,7 @@
       return '<li><span class="src-tag">background</span> <a href="'+url+'" target="_blank" rel="noopener">'+esc(c.title)+'</a> · PMID '+esc(c.accession)+'</li>';
     }).join("");
     var sources=cites?('<div class="be-h">Sources <span class="be-note">(background for a hypothesis, not verdict support)</span></div><ul class="src-list">'+cites+'</ul>'):'';
-    extra.innerHTML=constraintsBar+feasBanner+matrix+sources;
+    extra.innerHTML=lowYieldNote+constraintsBar+feasBanner+matrix+sources;
     body.appendChild(extra);
 
     thread.appendChild(frag);

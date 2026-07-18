@@ -171,6 +171,20 @@ def test_every_rendered_node_exists_in_the_curated_record():
     assert set(m.topology_nodes) <= curated.node_ids()
 
 
+def test_topology_partners_are_the_full_pathway_context_not_hits_only():
+    # The partner list names the NEIGHBOURHOOD — every real curated member drawn, minus the focal
+    # gene — not just the confident hits. Hit-vs-context stays visible via node shading in the SVG.
+    m = _topo("ITK")
+    curated = select_for("ITK")
+    assert curated is not None
+    expected = curated.node_ids() - {"ITK"}
+    assert set(m.partners) == expected             # whole context, not a hits-only subset
+    assert "ITK" not in m.partners                 # the focal gene isn't its own partner
+    # a context (non-hit) member must appear — proves we're not filtering to hits.
+    context_members = {g for g, s in _TCR_STATUS.items() if s == "context"}
+    assert context_members & set(m.partners), "pathway-context members must be listed, not just hits"
+
+
 def test_every_rendered_edge_exists_in_the_curated_record_with_direction_and_type():
     # B: the renderer cannot draw an arrow the curated data didn't assert, in a direction it didn't.
     m = _topo("ITK")
@@ -291,6 +305,7 @@ _PATHWAY_PROBES = (
     ("ITK", "tcr_il2", "R-HSA-202403"),
     ("SYK", "bcr", "R-HSA-983705"),
     ("RAF1", "mapk", "R-HSA-5673001"),
+    ("NFKB2", "noncanonical_nfkb", "R-HSA-5676590"),
 )
 
 

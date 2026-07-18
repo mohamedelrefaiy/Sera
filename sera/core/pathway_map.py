@@ -223,7 +223,11 @@ def _build_topology_map(
     result = render_topology(
         curated, focal_gene=gene, focal_colour=colour, verdict_word=verdict_word,
         node_status=node_status)
-    hits = tuple(g for g, s in (node_status or {}).items() if s == "hit")
+    # Partners are the pathway CONTEXT — every real curated member the figure drew, minus the focal
+    # gene itself — not just the confident hits. Hit-vs-context is still distinguished visually in the
+    # SVG via `node_status` shading; the partner list names the neighbourhood, which is the whole
+    # curated cascade. Ordered as the curated record lists them, for a stable, deterministic list.
+    partners = tuple(g for g in result.node_ids if g != gene)
     provenance = {
         "source_db": "Reactome",
         "reactome_id": curated.reactome_id,
@@ -242,13 +246,14 @@ def _build_topology_map(
     )
     return PathwayMap(
         focal_gene=gene, focal_verdict=verdict, focal_colour=colour,
-        pathway=curated.reactome_id, partners=hits, hypotheses=(),
+        pathway=curated.reactome_id, partners=partners, hypotheses=(),
         caption=caption, svg=result.svg, style="topology",
         topology_nodes=result.node_ids, topology_edges=result.edges,
         provenance=provenance)
 
 
-def build_pathway_map(row: dict, pathways, node_status: dict[str, str] | None = None) -> PathwayMap:
+def build_pathway_map(row: dict, pathways, node_status: dict[str, str] | None = None,
+                      force_starburst: bool = False) -> PathwayMap:
     """Assemble the pathway-context map. Pure and deterministic: no I/O, no LLM.
 
     `row` is a concordance row (verdict is read, never recomputed). `pathways` are `enrichr.Pathway`
@@ -258,23 +263,43 @@ def build_pathway_map(row: dict, pathways, node_status: dict[str, str] | None = 
 
     Preference order: if the focal gene is in a CURATED pathway, draw the CST-style topology figure
     (real compartments + directed, cited edges). Otherwise degrade honestly to the starburst — the
-    gene ringed by its real Enrichr partners, with candidate mechanisms as marked hypotheses."""
+    gene ringed by its real Enrichr partners, with candidate mechanisms as marked hypotheses.
+
+    `force_starburst` skips the curated-topology branch entirely. It exists for the RETRIEVED-gene
+    path (web_pathway_map): a gene we pull from Reactome was NOT measured in these screens, yet it may
+    coincidentally be a curated topology NODE (e.g. GRB2). Drawing the curated cascade for it would
+    stamp the false 'confident hits in these screens' caption on a gene the screens never saw. When
+    the caller knows the gene is off-screen retrieved context, it forces the honest starburst."""
     gene = str(row.get("gene", "")).upper()
     verdict = str(row.get("verdict", ""))
     colour, verdict_word = _VERDICT_STYLE.get(verdict, _DEFAULT_STYLE)
 
-    topo = _build_topology_map(gene, verdict, colour, verdict_word, node_status)
-    if topo is not None:
-        return topo
+    if not force_starburst:
+        topo = _build_topology_map(gene, verdict, colour, verdict_word, node_status)
+        if topo is not None:
+            return topo
 
     pw, partners = _select_pathway(gene, pathways)
     pathway_term = pw.term if pw else None
     hypotheses = _hypotheses(verdict)   # hypotheses stand on the verdict, not on pathway membership
 
+    # An empty verdict means the gene was NOT measured in these screens (e.g. a gene we retrieved from
+    # an external source). It has no hits and no two-layer result here, so the caption must NOT claim
+    # it "shares a pathway with the other hits" or that "its layers agree" — both would be false.
+    retrieved = verdict == ""
+
     if pw is None:
-        caption = (f"{gene} is not in an enriched pathway for this hit set, so there is no shared "
+        caption = (f"{gene} could not be placed in a pathway, so there is no neighbourhood to map."
+                   if retrieved else
+                   f"{gene} is not in an enriched pathway for this hit set, so there is no shared "
                    "neighbourhood to map — its verdict still stands on its own.")
-        pathway_label = "no enriched pathway for this gene"
+        pathway_label = "no pathway found for this gene"
+    elif retrieved:
+        label = _pretty_pathway(pw.term)
+        caption = (f"{gene} sits in {label} among {', '.join(partners) or 'no other members'}. This "
+                   "neighbourhood is retrieved context — {gene} was not measured in these screens, so "
+                   "there is no verdict and no mRNA/protein result to show here.").format(gene=gene)
+        pathway_label = f"retrieved context · {label}"
     else:
         label = _pretty_pathway(pw.term)
         caption = (f"{gene} sits in {label} alongside {', '.join(partners) or 'no other hits'}. "
