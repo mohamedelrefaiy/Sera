@@ -14,6 +14,18 @@ cross-checks them against Open Targets and ClinicalTrials.gov, and reasons over 
 numbers to produce a mechanism-annotated, scrutiny-survived shortlist — showing its
 work, including the candidates it rejects.
 
+## Demo
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=VGEH2JhPxJA">
+    <img src="https://img.youtube.com/vi/VGEH2JhPxJA/maxresdefault.jpg" alt="Watch the Sera demo" width="640">
+  </a>
+</p>
+
+<p align="center">
+  ▶ <b><a href="https://www.youtube.com/watch?v=VGEH2JhPxJA">Watch the 3-minute walkthrough on YouTube</a></b>
+</p>
+
 ## Novelty
 
 Sera's mRNA evidence is built on the genome-scale CD4+ T cell Perturb-seq release
